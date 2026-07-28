@@ -68,6 +68,14 @@ enum BarkLines {
         "Connection restored. The universe resumes as scheduled.",
     ]
 
+    static let poked = [
+        "RUDE.",
+        "Do that again and I'm haunting your dreams. Again.",
+        "Was that supposed to hurt? I'm a triangle.",
+        "Hey! I was doing very important nothing.",
+        "Poke me again. I dare you.",
+    ]
+
     static let userReturned = [
         "Oh, you're back. I was just about to stage a coup.",
         "Ah, life returns to the meat sack. Welcome back.",

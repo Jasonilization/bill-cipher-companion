@@ -4,10 +4,11 @@ import SpriteKit
 @MainActor
 final class CharacterWindowController: NSObject {
     private let panel: NSPanel
-    private let skView: SKView
+    private let hitView: BillHitTestView
     let characterEngine: CharacterEngine
     private let preferences: AppPreferences
     private var wanderTimer: Timer?
+    private var wasWanderingBeforeDrag = false
 
     init(characterEngine: CharacterEngine, preferences: AppPreferences) {
         self.characterEngine = characterEngine
@@ -21,7 +22,7 @@ final class CharacterWindowController: NSObject {
             backing: .buffered,
             defer: false
         )
-        skView = SKView(frame: NSRect(origin: .zero, size: size))
+        hitView = BillHitTestView(frame: NSRect(origin: .zero, size: size))
         super.init()
         configure(size: size)
     }
@@ -33,23 +34,28 @@ final class CharacterWindowController: NSObject {
         panel.level = .floating
         panel.collectionBehavior = [.canJoinAllSpaces, .stationary, .fullScreenAuxiliary]
         panel.isMovableByWindowBackground = false
-        // M1 placeholder: nothing hit-testable yet (dragging/pickup lands in a later milestone).
-        panel.ignoresMouseEvents = true
+        // The panel itself accepts mouse events now; BillHitTestView's own
+        // hitTest is what actually passes clicks through everywhere except
+        // Bill's silhouette, so the empty space around him stays click-through.
+        panel.ignoresMouseEvents = false
 
-        skView.allowsTransparency = true
-        skView.ignoresSiblingOrder = true
+        hitView.allowsTransparency = true
+        hitView.ignoresSiblingOrder = true
         // Bill is small and simple — 30fps is imperceptible and halves render cost vs 60fps.
-        skView.preferredFramesPerSecond = 30
+        hitView.preferredFramesPerSecond = 30
+        hitView.onClick = { [weak self] in self?.handleClick() }
+        hitView.onDragStarted = { [weak self] in self?.handleDragStarted() }
+        hitView.onDragEnded = { [weak self] in self?.handleDragEnded() }
 
         let scene = BillScene(size: size, characterEngine: characterEngine)
-        skView.presentScene(scene)
-        panel.contentView = skView
+        hitView.presentScene(scene)
+        panel.contentView = hitView
 
         // Idle Bill has nothing to draw every frame — pause the render loop
         // entirely and only wake it while a clip is actually playing.
-        skView.isPaused = true
-        characterEngine.stateMachine.onActivityChanged = { [weak skView] isActive in
-            skView?.isPaused = !isActive
+        hitView.isPaused = true
+        characterEngine.stateMachine.onActivityChanged = { [weak hitView] isActive in
+            hitView?.isPaused = !isActive
         }
 
         if let screen = NSScreen.main {
@@ -64,6 +70,24 @@ final class CharacterWindowController: NSObject {
     func show() {
         panel.orderFrontRegardless()
         scheduleNextWander()
+    }
+
+    private func handleClick() {
+        characterEngine.request([.surprised, .happy, .annoyed].randomElement()!, force: true)
+        characterEngine.bark(BarkLines.random(from: BarkLines.poked))
+    }
+
+    private func handleDragStarted() {
+        wasWanderingBeforeDrag = true
+        wanderTimer?.invalidate()
+        characterEngine.request(.surprised, force: true)
+    }
+
+    private func handleDragEnded() {
+        characterEngine.request(.idle)
+        if wasWanderingBeforeDrag {
+            scheduleNextWander()
+        }
     }
 
     /// Bill occasionally wanders a short distance across the screen while
