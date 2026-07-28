@@ -5,6 +5,8 @@ import Combine
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private let characterEngine = CharacterEngine()
     private let chatBridge = ChatBridge()
+    private let systemMonitor = SystemMonitor()
+    private var reactionRouter: ReactionRouter!
     private var statusItemController: StatusItemController!
     private var characterWindowController: CharacterWindowController!
     private var chatPanelController: ChatPanelController!
@@ -34,6 +36,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         GlobalHotKey.register { [weak self] in
             self?.chatPanelController.toggle()
         }
+
+        reactionRouter = ReactionRouter(characterEngine: characterEngine)
+        systemMonitor.onEvent = { [weak self] event in
+            self?.reactionRouter.handle(event)
+        }
+        systemMonitor.start()
     }
 
     @objc func quit() {

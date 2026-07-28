@@ -37,6 +37,10 @@ final class StatusItemController: NSObject {
         let dumpItem = NSMenuItem(title: "Debug: Dump State", action: #selector(dumpState), keyEquivalent: "")
         dumpItem.target = self
         menu.addItem(dumpItem)
+
+        let barkItem = NSMenuItem(title: "Debug: Test Bark", action: #selector(testBark), keyEquivalent: "")
+        barkItem.target = self
+        menu.addItem(barkItem)
         menu.addItem(.separator())
 
         let quitItem = NSMenuItem(title: "Quit Bill", action: #selector(AppDelegate.quit), keyEquivalent: "q")
@@ -68,5 +72,9 @@ final class StatusItemController: NSObject {
 
     @objc private func dumpState() {
         characterEngine.stateMachine.debugDump()
+    }
+
+    @objc private func testBark() {
+        characterEngine.bark(BarkLines.random(from: BarkLines.coding))
     }
 }

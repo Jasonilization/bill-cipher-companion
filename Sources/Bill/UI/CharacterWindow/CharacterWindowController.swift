@@ -9,7 +9,9 @@ final class CharacterWindowController: NSObject {
 
     init(characterEngine: CharacterEngine) {
         self.characterEngine = characterEngine
-        let size = NSSize(width: 240, height: 240)
+        // Taller than Bill's own footprint to leave headroom above his hat
+        // for the speech-bubble bark text.
+        let size = NSSize(width: 260, height: 360)
         panel = NSPanel(
             contentRect: NSRect(origin: .zero, size: size),
             styleMask: [.borderless, .nonactivatingPanel],

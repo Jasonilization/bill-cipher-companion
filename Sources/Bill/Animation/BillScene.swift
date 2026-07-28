@@ -19,7 +19,9 @@ final class BillScene: SKScene {
     }
 
     override func didMove(to view: SKView) {
-        characterEngine.rig.root.position = CGPoint(x: size.width / 2, y: size.height * 0.42)
+        // Anchored near the bottom of the canvas (rather than centered) so
+        // the extra height above his hat is free for the bark speech bubble.
+        characterEngine.rig.root.position = CGPoint(x: size.width / 2, y: 110)
         addChild(characterEngine.rig.root)
     }
 }

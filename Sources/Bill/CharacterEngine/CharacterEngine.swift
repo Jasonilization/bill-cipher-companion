@@ -34,6 +34,12 @@ final class CharacterEngine {
         stateMachine.request(state, force: force)
     }
 
+    /// Shows a bark line above Bill's head without necessarily changing his
+    /// animation state — used by the reaction router for ambient commentary.
+    func bark(_ text: String) {
+        stateMachine.showBark(text)
+    }
+
     private func scheduleNextIdleBeat() {
         idleBeatTimer?.invalidate()
         let delay = Double.random(in: 4...9)
