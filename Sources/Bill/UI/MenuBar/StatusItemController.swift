@@ -5,10 +5,12 @@ final class StatusItemController: NSObject {
     private let statusItem: NSStatusItem
     private weak var appDelegate: AppDelegate?
     private let characterEngine: CharacterEngine
+    private let chatPanelController: ChatPanelController
 
-    init(appDelegate: AppDelegate, characterEngine: CharacterEngine) {
+    init(appDelegate: AppDelegate, characterEngine: CharacterEngine, chatPanelController: ChatPanelController) {
         self.appDelegate = appDelegate
         self.characterEngine = characterEngine
+        self.chatPanelController = chatPanelController
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         super.init()
         configure()
@@ -20,7 +22,10 @@ final class StatusItemController: NSObject {
         }
 
         let menu = NSMenu()
-        menu.addItem(NSMenuItem(title: "Open Chat", action: nil, keyEquivalent: ""))
+
+        let openChatItem = NSMenuItem(title: "Open Chat", action: #selector(openChat), keyEquivalent: "")
+        openChatItem.target = self
+        menu.addItem(openChatItem)
         menu.addItem(.separator())
         menu.addItem(NSMenuItem(title: "Settings…", action: nil, keyEquivalent: ""))
         menu.addItem(.separator())
@@ -50,6 +55,10 @@ final class StatusItemController: NSObject {
             submenu.addItem(item)
         }
         return submenu
+    }
+
+    @objc private func openChat() {
+        chatPanelController.toggle()
     }
 
     @objc private func forceState(_ sender: NSMenuItem) {
