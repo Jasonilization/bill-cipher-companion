@@ -1,11 +1,21 @@
 import Foundation
 
-enum AppCategory: String, Sendable {
+enum AppCategory: String, Sendable, CaseIterable, Codable {
     case coding
     case gaming
     case browsing
     case music
     case creative
+
+    var displayName: String {
+        switch self {
+        case .coding: return "Coding"
+        case .gaming: return "Gaming"
+        case .browsing: return "Browsing"
+        case .music: return "Music"
+        case .creative: return "Creative apps"
+        }
+    }
 }
 
 /// Normalized signals from the macOS event monitor. The monitor itself has

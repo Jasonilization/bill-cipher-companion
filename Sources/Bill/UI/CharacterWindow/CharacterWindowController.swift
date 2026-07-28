@@ -6,9 +6,12 @@ final class CharacterWindowController: NSObject {
     private let panel: NSPanel
     private let skView: SKView
     let characterEngine: CharacterEngine
+    private let preferences: AppPreferences
+    private var wanderTimer: Timer?
 
-    init(characterEngine: CharacterEngine) {
+    init(characterEngine: CharacterEngine, preferences: AppPreferences) {
         self.characterEngine = characterEngine
+        self.preferences = preferences
         // Taller than Bill's own footprint to leave headroom above his hat
         // for the speech-bubble bark text.
         let size = NSSize(width: 260, height: 360)
@@ -60,5 +63,43 @@ final class CharacterWindowController: NSObject {
 
     func show() {
         panel.orderFrontRegardless()
+        scheduleNextWander()
+    }
+
+    /// Bill occasionally wanders a short distance across the screen while
+    /// idle — otherwise "roaming" is a settings toggle with nothing behind
+    /// it. Only ever fires from genuine idle, and only while roaming is on.
+    private func scheduleNextWander() {
+        wanderTimer?.invalidate()
+        let delay = Double.random(in: 45...100)
+        wanderTimer = Timer.scheduledTimer(withTimeInterval: delay, repeats: false) { [weak self] _ in
+            Task { @MainActor in self?.performWander() }
+        }
+    }
+
+    private func performWander() {
+        defer { scheduleNextWander() }
+        guard preferences.isRoamingEnabled,
+              characterEngine.stateMachine.currentState == .idle,
+              let screen = NSScreen.main
+        else { return }
+
+        characterEngine.request(.walking)
+
+        let currentOrigin = panel.frame.origin
+        let deltaX = CGFloat.random(in: -160...160)
+        let minX = screen.visibleFrame.minX
+        let maxX = screen.visibleFrame.maxX - panel.frame.width
+        let newX = min(max(currentOrigin.x + deltaX, minX), maxX)
+
+        NSAnimationContext.runAnimationGroup { context in
+            context.duration = 1.8
+            context.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+            panel.animator().setFrameOrigin(NSPoint(x: newX, y: currentOrigin.y))
+        } completionHandler: { [weak self] in
+            Task { @MainActor in
+                self?.characterEngine.request(.idle)
+            }
+        }
     }
 }

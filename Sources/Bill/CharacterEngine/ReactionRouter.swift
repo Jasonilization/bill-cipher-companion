@@ -7,16 +7,21 @@ import Foundation
 @MainActor
 final class ReactionRouter {
     private let characterEngine: CharacterEngine
+    private let preferences: AppPreferences
+    private let memoryStore: MemoryStore
     private var lastCategoryFire: [AppCategory: Date] = [:]
     private static let categoryCooldown: TimeInterval = 5 * 60
 
-    init(characterEngine: CharacterEngine) {
+    init(characterEngine: CharacterEngine, preferences: AppPreferences, memoryStore: MemoryStore) {
         self.characterEngine = characterEngine
+        self.preferences = preferences
+        self.memoryStore = memoryStore
     }
 
     func handle(_ event: SystemEvent) {
         switch event {
-        case .appActivated(_, let name, let category):
+        case .appActivated(let bundleID, let name, let category):
+            memoryStore.recordAppOpen(bundleID: bundleID)
             handleAppActivated(name: name, category: category)
 
         case .batteryLow:
@@ -58,7 +63,7 @@ final class ReactionRouter {
     }
 
     private func handleAppActivated(name: String, category: AppCategory?) {
-        guard let category else { return }
+        guard let category, preferences.isCategoryEnabled(category) else { return }
 
         if let last = lastCategoryFire[category], Date().timeIntervalSince(last) < Self.categoryCooldown {
             return

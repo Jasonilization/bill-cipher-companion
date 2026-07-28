@@ -6,11 +6,18 @@ final class StatusItemController: NSObject {
     private weak var appDelegate: AppDelegate?
     private let characterEngine: CharacterEngine
     private let chatPanelController: ChatPanelController
+    private let settingsWindowController: SettingsWindowController
 
-    init(appDelegate: AppDelegate, characterEngine: CharacterEngine, chatPanelController: ChatPanelController) {
+    init(
+        appDelegate: AppDelegate,
+        characterEngine: CharacterEngine,
+        chatPanelController: ChatPanelController,
+        settingsWindowController: SettingsWindowController
+    ) {
         self.appDelegate = appDelegate
         self.characterEngine = characterEngine
         self.chatPanelController = chatPanelController
+        self.settingsWindowController = settingsWindowController
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         super.init()
         configure()
@@ -27,7 +34,9 @@ final class StatusItemController: NSObject {
         openChatItem.target = self
         menu.addItem(openChatItem)
         menu.addItem(.separator())
-        menu.addItem(NSMenuItem(title: "Settings…", action: nil, keyEquivalent: ""))
+        let settingsItem = NSMenuItem(title: "Settings…", action: #selector(openSettings), keyEquivalent: ",")
+        settingsItem.target = self
+        menu.addItem(settingsItem)
         menu.addItem(.separator())
 
         let debugItem = NSMenuItem(title: "Debug: Force State", action: nil, keyEquivalent: "")
@@ -63,6 +72,10 @@ final class StatusItemController: NSObject {
 
     @objc private func openChat() {
         chatPanelController.toggle()
+    }
+
+    @objc private func openSettings() {
+        settingsWindowController.show()
     }
 
     @objc private func forceState(_ sender: NSMenuItem) {
