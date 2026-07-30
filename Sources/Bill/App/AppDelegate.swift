@@ -16,7 +16,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var cancellables = Set<AnyCancellable>()
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        characterWindowController = CharacterWindowController(characterEngine: characterEngine, preferences: preferences)
+        characterWindowController = CharacterWindowController(characterEngine: characterEngine, preferences: preferences, chatBridge: chatBridge)
         chatPanelController = ChatPanelController(chatBridge: chatBridge)
         settingsWindowController = SettingsWindowController(
             preferences: preferences,
@@ -26,6 +26,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         statusItemController = StatusItemController(
             appDelegate: self,
             characterEngine: characterEngine,
+            characterWindowController: characterWindowController,
             chatPanelController: chatPanelController,
             settingsWindowController: settingsWindowController
         )
@@ -43,7 +44,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             .store(in: &cancellables)
 
         GlobalHotKey.register { [weak self] in
-            self?.chatPanelController.toggle()
+            self?.characterWindowController.talkToBill()
         }
 
         reactionRouter = ReactionRouter(characterEngine: characterEngine, preferences: preferences, memoryStore: memoryStore)

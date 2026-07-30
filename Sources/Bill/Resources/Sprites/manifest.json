@@ -1,0 +1,93 @@
+{
+  "canvasWidth": 124,
+  "canvasHeight": 115,
+  "groups": {
+    "bill_idle": [
+      "bill_idle_01.png",
+      "bill_idle_02.png",
+      "bill_idle_03.png",
+      "bill_idle_04.png",
+      "bill_idle_05.png",
+      "bill_idle_06.png",
+      "bill_idle_07.png"
+    ],
+    "bill_walk": [
+      "bill_walk_01.png",
+      "bill_walk_02.png",
+      "bill_walk_03.png",
+      "bill_walk_04.png"
+    ],
+    "bill_annoyed": [
+      "bill_annoyed_01.png",
+      "bill_annoyed_02.png",
+      "bill_annoyed_03.png"
+    ],
+    "bill_happy": [
+      "bill_happy_01.png",
+      "bill_happy_02.png"
+    ],
+    "bill_confused": [
+      "bill_confused_01.png"
+    ],
+    "bill_heating": [
+      "bill_heating_01.png",
+      "bill_heating_02.png",
+      "bill_heating_03.png"
+    ],
+    "bill_charging": [
+      "bill_charging_01.png"
+    ],
+    "bill_surprised": [
+      "bill_surprised_01.png"
+    ],
+    "bill_poked": [
+      "bill_poked_01.png",
+      "bill_poked_02.png",
+      "bill_poked_03.png",
+      "bill_poked_04.png"
+    ],
+    "bill_dazed": [
+      "bill_dazed_01.png",
+      "bill_dazed_02.png"
+    ],
+    "bill_sleeping": [
+      "bill_sleeping_01.png"
+    ],
+    "bill_thinking": [
+      "bill_thinking_01.png",
+      "bill_thinking_02.png",
+      "bill_thinking_03.png",
+      "bill_thinking_04.png"
+    ],
+    "bill_coding": [
+      "bill_coding_01.png",
+      "bill_coding_02.png"
+    ],
+    "bill_greeting": [
+      "bill_greeting_01.png",
+      "bill_greeting_02.png",
+      "bill_greeting_03.png",
+      "bill_greeting_04.png",
+      "bill_greeting_05.png"
+    ],
+    "bill_smug": [
+      "bill_smug_01.png",
+      "bill_smug_02.png"
+    ],
+    "bill_powersurge": [
+      "bill_powersurge_01.png",
+      "bill_powersurge_02.png",
+      "bill_powersurge_03.png",
+      "bill_powersurge_04.png"
+    ],
+    "bill_zodiac": [
+      "bill_zodiac_01.png",
+      "bill_zodiac_02.png",
+      "bill_zodiac_03.png",
+      "bill_zodiac_04.png"
+    ],
+    "bill_summon": [
+      "bill_summon_01.png"
+    ]
+  }
+}

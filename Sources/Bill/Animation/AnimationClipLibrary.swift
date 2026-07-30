@@ -1,6 +1,10 @@
 import SpriteKit
 
-/// Which FX layer (if any) a state should show alongside its clip.
+/// Which FX layer (if any) a state should show alongside its clip. Kept
+/// exactly as it was for the procedural rig — these are abstract particle
+/// overlays (steam puffs, sparkles, confetti), not representational vector
+/// props, so they don't clash with "pixel-art Bill is the only prop-like
+/// visual" the way a hand-drawn vector laptop or controller would.
 enum BillFX {
     case steam
     case sparkle
@@ -8,12 +12,40 @@ enum BillFX {
     case confettiAndSparkle
 }
 
-/// All of Bill's animation content: one clip per `BillState`, plus a small
-/// pool of idle-variety beats. This is the "data, not code" layer the
-/// architecture calls for — tuning a reaction means editing keyframes here,
-/// never touching the state machine or renderer.
+/// All of Bill's animation content, built entirely from the pixel-art
+/// sprite sheet (`BillSpriteCatalog`) — see `Docs/SpriteAnimationCatalog.md`
+/// for what's on the sheet, the full frame-by-frame analysis, and why each
+/// clip below uses what it uses. No procedural vector props are attached to
+/// any state; the sprite frames themselves carry the "holding something" or
+/// "working" read (e.g. coding's crouched hand pose, gaming's raised-object
+/// grip) rather than a bolted-on vector laptop/controller.
+///
+/// A hard rule that fixes the clipping/snapping bug from the first sprite
+/// pass: every non-continuous (`isContinuous == false`) clip **must** use
+/// `loop: .once` — `BillStateMachine.runClip` only schedules the
+/// auto-settle-back-to-idle timer for `.once` clips, so a one-shot beat
+/// declared with `.loop`/`.pingpong` would play forever and never return to
+/// idle on its own (this was a real bug in the first pass: `celebrating`
+/// was `.pingpong` while `isContinuous == false`, so it never settled).
+/// Clips that want a multi-cycle feel repeat their texture array manually
+/// instead of relying on the loop mode.
 @MainActor
 enum AnimationClipLibrary {
+
+    /// Builds a "there and back" (optionally multi-cycle) frame sequence
+    /// from a base set without duplicating the turnaround frame — naively
+    /// appending `frames.reversed()` repeats the last frame twice in a row,
+    /// a visible one-frame stutter right at the point the motion reverses.
+    private static func pingpong(_ frames: [SKTexture], cycles: Int = 1) -> [SKTexture] {
+        guard frames.count > 1 else { return frames }
+        let oneCycle = frames + frames.dropLast().reversed()
+        guard cycles > 1 else { return oneCycle }
+        var result = oneCycle
+        for _ in 1..<cycles {
+            result += oneCycle.dropFirst()
+        }
+        return result
+    }
 
     static func clip(for state: BillState) -> AnimationClip {
         switch state {
@@ -30,311 +62,195 @@ enum AnimationClipLibrary {
         case .charging: return charging
         case .surprised: return surprised
         case .celebrating: return celebrating
+        case .confused: return confused
+        case .dazed: return dazed
+        case .poked: return poked
+        case .smug: return smug
+        case .powerSurge: return powerSurge
+        case .zodiacVision: return zodiacVision
+        case .summonRitual: return summonRitual
         }
     }
 
-    /// The prop Bill should be holding for a state (states not listed keep
-    /// his default cane).
-    static func prop(for state: BillState) -> BillProp {
-        switch state {
-        case .gaming: return .controller
-        case .coding: return .laptop
-        case .heatingUp: return .thermometer
-        case .charging: return .chargerCable
-        default: return .cane
-        }
-    }
+    /// No state attaches a procedural prop anymore — the pixel-art frames
+    /// themselves are Bill's entire visual identity now. Kept as a function
+    /// (rather than deleting `PropKit`/`equipProp` outright) so the plumbing
+    /// stays available if a future pass adds genuinely pixel-art props.
+    static func prop(for state: BillState) -> BillProp { .none }
 
     static func fx(for state: BillState) -> BillFX? {
         switch state {
         case .heatingUp: return .steam
         case .sleeping: return .zzz
         case .celebrating: return .confettiAndSparkle
-        case .happy: return .sparkle
+        case .happy, .smug: return .sparkle
+        case .powerSurge, .zodiacVision, .summonRitual: return .sparkle
         default: return nil
         }
     }
 
     // MARK: - Ambient rest
 
-    static let idle = AnimationClip(tracks: [:], loop: .once)
+    static let idle = AnimationClip()
 
     // MARK: - Locomotion
 
     static let walking = AnimationClip(
-        tracks: [
-            .body: [
-                PoseKeyframe(duration: 0.28, offset: CGVector(dx: 0, dy: 4)),
-                PoseKeyframe(duration: 0.28, offset: CGVector(dx: 0, dy: 0)),
-            ],
-            .leftLeg: [
-                PoseKeyframe(duration: 0.28, rotation: 0.5),
-                PoseKeyframe(duration: 0.28, rotation: -0.4),
-            ],
-            .rightLeg: [
-                PoseKeyframe(duration: 0.28, rotation: -0.4),
-                PoseKeyframe(duration: 0.28, rotation: 0.5),
-            ],
-            .leftArm: [
-                PoseKeyframe(duration: 0.28, rotation: -0.3),
-                PoseKeyframe(duration: 0.28, rotation: 0.35),
-            ],
-            .rightArm: [
-                PoseKeyframe(duration: 0.28, rotation: 0.35),
-                PoseKeyframe(duration: 0.28, rotation: -0.3),
-            ],
-        ],
+        textures: BillSpriteCatalog.walk,
+        frameDuration: 0.13,
         loop: .loop
     )
 
     // MARK: - Conversational
 
+    /// The sheet's clean 5-frame wave/greeting arc — a big genuine grin and
+    /// a full arm sweep overhead reads far better as "gesturing while
+    /// talking" than a procedural bob ever did.
     static let talking = AnimationClip(
-        tracks: [
-            .body: [
-                PoseKeyframe(duration: 0.32, rotation: 0.035),
-                PoseKeyframe(duration: 0.32, rotation: -0.02),
-            ],
-            .rightArm: [
-                PoseKeyframe(duration: 0.3, rotation: 0.25),
-                PoseKeyframe(duration: 0.3, rotation: 0.05),
-            ],
-            .pupil: [
-                PoseKeyframe(duration: 0.5, offset: CGVector(dx: 2, dy: 1)),
-                PoseKeyframe(duration: 0.5, offset: CGVector(dx: -2, dy: -1)),
-            ],
-        ],
+        textures: BillSpriteCatalog.greeting,
+        frameDuration: 0.1,
         loop: .pingpong
     )
 
+    /// The sheet's dedicated hand-to-head pondering sequence.
     static let thinking = AnimationClip(
-        tracks: [
-            .leftArm: [
-                PoseKeyframe(duration: 0.45, rotation: -1.1, timing: .easeOut),
-                PoseKeyframe(duration: 1.4, rotation: -1.1),
-            ],
-            .body: [
-                PoseKeyframe(duration: 0.9, rotation: -0.03),
-                PoseKeyframe(duration: 0.9, rotation: 0.02),
-            ],
-            .pupil: [
-                PoseKeyframe(duration: 0.8, offset: CGVector(dx: -4, dy: 5)),
-                PoseKeyframe(duration: 0.8, offset: CGVector(dx: 4, dy: 5)),
-            ],
-        ],
+        textures: BillSpriteCatalog.thinking,
+        frameDuration: 0.35,
         loop: .pingpong
     )
 
     // MARK: - Emotional beats (single-shot, settle back to idle)
 
     static let happy = AnimationClip(
-        tracks: [
-            .body: [
-                PoseKeyframe(duration: 0.14, scale: 1.12, timing: .easeOut),
-                PoseKeyframe(duration: 0.12, scale: 0.96),
-                PoseKeyframe(duration: 0.18, scale: 1.0),
-                PoseKeyframe(duration: 0.5),
-            ],
-            .leftArm: [
-                PoseKeyframe(duration: 0.18, rotation: -2.6, timing: .easeOut),
-                PoseKeyframe(duration: 0.5, rotation: -2.6),
-                PoseKeyframe(duration: 0.3),
-            ],
-            .rightArm: [
-                PoseKeyframe(duration: 0.18, rotation: 2.6, timing: .easeOut),
-                PoseKeyframe(duration: 0.5, rotation: 2.6),
-                PoseKeyframe(duration: 0.3),
-            ],
-            .eye: [
-                PoseKeyframe(duration: 0.16, scale: 0.55),
-                PoseKeyframe(duration: 0.5, scale: 1.0),
-                PoseKeyframe(duration: 0.3),
-            ],
-        ],
+        textures: BillSpriteCatalog.happy,
+        frameDuration: 0.16,
         loop: .once
     )
 
     static let annoyed = AnimationClip(
-        tracks: [
-            .body: [
-                PoseKeyframe(duration: 0.06, offset: CGVector(dx: -6, dy: 0)),
-                PoseKeyframe(duration: 0.06, offset: CGVector(dx: 6, dy: 0)),
-                PoseKeyframe(duration: 0.06, offset: CGVector(dx: -4, dy: 0)),
-                PoseKeyframe(duration: 0.06, offset: CGVector(dx: 0, dy: 0)),
-                PoseKeyframe(duration: 0.6),
-            ],
-            .leftArm: [
-                PoseKeyframe(duration: 0.2, offset: CGVector(dx: 20, dy: 20), rotation: -1.9),
-                PoseKeyframe(duration: 0.7, offset: CGVector(dx: 20, dy: 20), rotation: -1.9),
-                PoseKeyframe(duration: 0.3),
-            ],
-            .rightArm: [
-                PoseKeyframe(duration: 0.2, offset: CGVector(dx: -20, dy: 20), rotation: 1.9),
-                PoseKeyframe(duration: 0.7, offset: CGVector(dx: -20, dy: 20), rotation: 1.9),
-                PoseKeyframe(duration: 0.3),
-            ],
-            .eye: [
-                PoseKeyframe(duration: 0.15, scale: 0.7),
-                PoseKeyframe(duration: 0.75, scale: 0.7),
-                PoseKeyframe(duration: 0.3, scale: 1.0),
-            ],
-        ],
+        textures: BillSpriteCatalog.annoyed,
+        frameDuration: 0.2,
         loop: .once
     )
 
     static let surprised = AnimationClip(
-        tracks: [
-            .body: [
-                PoseKeyframe(duration: 0.1, offset: CGVector(dx: 0, dy: 14), scale: 1.08, timing: .easeOut),
-                PoseKeyframe(duration: 0.35, offset: CGVector(dx: 0, dy: 0), scale: 1.0, timing: .easeOut),
-                PoseKeyframe(duration: 0.4),
-            ],
-            .eye: [
-                PoseKeyframe(duration: 0.08, scale: 1.35, timing: .easeOut),
-                PoseKeyframe(duration: 0.4, scale: 1.0),
-                PoseKeyframe(duration: 0.4),
-            ],
-            .leftArm: [
-                PoseKeyframe(duration: 0.1, offset: CGVector(dx: 10, dy: 10), rotation: -1.4, timing: .easeOut),
-                PoseKeyframe(duration: 0.6),
-            ],
-            .rightArm: [
-                PoseKeyframe(duration: 0.1, offset: CGVector(dx: -10, dy: 10), rotation: 1.4, timing: .easeOut),
-                PoseKeyframe(duration: 0.6),
-            ],
-            .hat: [
-                PoseKeyframe(duration: 0.1, offset: CGVector(dx: 0, dy: 8), timing: .easeOut),
-                PoseKeyframe(duration: 0.5),
-            ],
-        ],
+        textures: BillSpriteCatalog.surprised,
+        frameDuration: 0.5,
         loop: .once
     )
 
+    static let confused = AnimationClip(
+        textures: BillSpriteCatalog.confused,
+        frameDuration: 0.7,
+        loop: .once
+    )
+
+    static let dazed = AnimationClip(
+        textures: pingpong(BillSpriteCatalog.dazed),
+        frameDuration: 0.22,
+        loop: .once
+    )
+
+    static let poked = AnimationClip(
+        textures: BillSpriteCatalog.poked,
+        frameDuration: 0.11,
+        loop: .once
+    )
+
+    /// A confident flex — held, with a tiny wobble, not looped forever
+    /// (celebrating's original bug: see the type-level doc comment).
+    static let smug = AnimationClip(
+        textures: pingpong(BillSpriteCatalog.smug),
+        frameDuration: 0.35,
+        loop: .once
+    )
+
+    /// Several full arms-up cheer cycles, then settle — *not* a literal
+    /// `.pingpong` loop (see the type-level doc comment for why that was a
+    /// real bug: a non-continuous state declared with a repeating loop mode
+    /// never fires its auto-settle timer and gets stuck forever).
     static let celebrating = AnimationClip(
-        tracks: [
-            .body: [
-                PoseKeyframe(duration: 0.2, offset: CGVector(dx: 0, dy: 12), timing: .easeOut),
-                PoseKeyframe(duration: 0.2, offset: CGVector(dx: 0, dy: 0), timing: .easeIn),
-                PoseKeyframe(duration: 0.2, offset: CGVector(dx: 0, dy: 12), timing: .easeOut),
-                PoseKeyframe(duration: 0.2, offset: CGVector(dx: 0, dy: 0), timing: .easeIn),
-                PoseKeyframe(duration: 0.2, offset: CGVector(dx: 0, dy: 12), timing: .easeOut),
-                PoseKeyframe(duration: 0.4),
-            ],
-            .leftArm: [
-                PoseKeyframe(duration: 0.2, rotation: -2.8, timing: .easeOut),
-                PoseKeyframe(duration: 0.2, rotation: -2.4),
-                PoseKeyframe(duration: 0.2, rotation: -2.8),
-                PoseKeyframe(duration: 0.2, rotation: -2.4),
-                PoseKeyframe(duration: 0.2, rotation: -2.8),
-                PoseKeyframe(duration: 0.4),
-            ],
-            .rightArm: [
-                PoseKeyframe(duration: 0.2, rotation: 2.8, timing: .easeOut),
-                PoseKeyframe(duration: 0.2, rotation: 2.4),
-                PoseKeyframe(duration: 0.2, rotation: 2.8),
-                PoseKeyframe(duration: 0.2, rotation: 2.4),
-                PoseKeyframe(duration: 0.2, rotation: 2.8),
-                PoseKeyframe(duration: 0.4),
-            ],
-        ],
+        textures: pingpong(BillSpriteCatalog.happy, cycles: 3),
+        frameDuration: 0.15,
+        loop: .once
+    )
+
+    // MARK: - Rare Easter eggs (see BillState.rareEasterEggs — low-probability idle rolls only)
+
+    /// The sheet's dramatic many-eyed energy-surge frames. Deliberately
+    /// intense; gated to a rare random roll rather than any normal trigger.
+    static let powerSurge = AnimationClip(
+        textures: pingpong(BillSpriteCatalog.powerSurge),
+        frameDuration: 0.12,
+        loop: .once
+    )
+
+    /// The zodiac-wheel "prophecy" dial fading in and back out.
+    static let zodiacVision = AnimationClip(
+        textures: pingpong(BillSpriteCatalog.zodiac),
+        frameDuration: 0.35,
+        loop: .once
+    )
+
+    /// The ritual-circle summon — a single striking image, held.
+    static let summonRitual = AnimationClip(
+        textures: BillSpriteCatalog.summon,
+        frameDuration: 2.4,
         loop: .once
     )
 
     // MARK: - Sustained conditions
 
+    /// The sheet's actual lying-down pose, not a borrowed dazed frame —
+    /// combined with a slow breathing bob and the existing Zzz FX overlay.
     static let sleeping = AnimationClip(
-        tracks: [
-            .eye: [
-                PoseKeyframe(duration: 0.4, scale: 0.06, timing: .easeIn),
-                PoseKeyframe(duration: 1.6, scale: 0.06),
-            ],
+        textures: BillSpriteCatalog.sleeping,
+        transform: [
             .body: [
-                PoseKeyframe(duration: 1.4, offset: CGVector(dx: 0, dy: -3)),
-                PoseKeyframe(duration: 1.4, offset: CGVector(dx: 0, dy: 0)),
-            ],
-            .hat: [
-                PoseKeyframe(duration: 0.4, rotation: -0.08),
-                PoseKeyframe(duration: 1.6, rotation: -0.08),
+                PoseKeyframe(duration: 1.6, offset: CGVector(dx: 0, dy: -2)),
+                PoseKeyframe(duration: 1.6, offset: CGVector(dx: 0, dy: 0)),
             ],
         ],
         loop: .pingpong
     )
 
+    /// A single frame lifted from the walk cycle (arm raised, gripping the
+    /// woven object) read as "holding a controller" — combined with a fast,
+    /// excited rock rather than a vector controller bolted onto an idle pose.
     static let gaming = AnimationClip(
-        tracks: [
-            .leftArm: [
-                PoseKeyframe(duration: 0.3, offset: CGVector(dx: 14, dy: 22), rotation: -1.25, timing: .easeOut),
-                PoseKeyframe(duration: 0.5, offset: CGVector(dx: 14, dy: 22), rotation: -1.15),
-                PoseKeyframe(duration: 0.5, offset: CGVector(dx: 14, dy: 22), rotation: -1.25),
-            ],
-            .rightArm: [
-                PoseKeyframe(duration: 0.3, offset: CGVector(dx: -14, dy: 22), rotation: 1.25, timing: .easeOut),
-                PoseKeyframe(duration: 0.5, offset: CGVector(dx: -14, dy: 22), rotation: 1.15),
-                PoseKeyframe(duration: 0.5, offset: CGVector(dx: -14, dy: 22), rotation: 1.25),
-            ],
+        textures: [BillSpriteCatalog.walk[1]],
+        transform: [
             .body: [
-                PoseKeyframe(duration: 0.4, offset: CGVector(dx: 0, dy: 3)),
-                PoseKeyframe(duration: 0.4, offset: CGVector(dx: 0, dy: 0)),
-            ],
-            .pupil: [
-                PoseKeyframe(duration: 0.35, offset: CGVector(dx: -5, dy: 0)),
-                PoseKeyframe(duration: 0.35, offset: CGVector(dx: 5, dy: 0)),
+                PoseKeyframe(duration: 0.3, rotation: -0.08),
+                PoseKeyframe(duration: 0.3, rotation: 0.08),
             ],
         ],
-        loop: .loop
+        loop: .pingpong
     )
 
+    /// The sheet's own crouched, hands-out pose, alternated at a brisk pace
+    /// — reads as active hand movement over a keyboard-height surface.
     static let coding = AnimationClip(
-        tracks: [
-            .leftArm: [
-                PoseKeyframe(duration: 0.35, offset: CGVector(dx: 12, dy: 30), rotation: -1.05, timing: .easeOut),
-                PoseKeyframe(duration: 0.12, offset: CGVector(dx: 12, dy: 30), rotation: -1.0),
-                PoseKeyframe(duration: 0.12, offset: CGVector(dx: 12, dy: 30), rotation: -1.08),
-            ],
-            .rightArm: [
-                PoseKeyframe(duration: 0.35, offset: CGVector(dx: -12, dy: 30), rotation: 1.05, timing: .easeOut),
-                PoseKeyframe(duration: 0.1, offset: CGVector(dx: -12, dy: 30), rotation: 1.1),
-                PoseKeyframe(duration: 0.14, offset: CGVector(dx: -12, dy: 30), rotation: 1.02),
-            ],
-            .body: [
-                PoseKeyframe(duration: 0.4, offset: CGVector(dx: 0, dy: -2), rotation: -0.05, timing: .easeOut),
-                PoseKeyframe(duration: 1.2, offset: CGVector(dx: 0, dy: -2), rotation: -0.05),
-            ],
-        ],
+        textures: BillSpriteCatalog.coding,
+        frameDuration: 0.22,
         loop: .loop
     )
 
     static let heatingUp = AnimationClip(
-        tracks: [
-            .body: [
-                PoseKeyframe(duration: 0.9, offset: CGVector(dx: -3, dy: -4), scale: 0.97),
-                PoseKeyframe(duration: 0.9, offset: CGVector(dx: 3, dy: -4), scale: 0.97),
-            ],
-            .eye: [
-                PoseKeyframe(duration: 0.5, scale: 0.5, timing: .easeOut),
-                PoseKeyframe(duration: 1.3, scale: 0.5),
-            ],
-            .leftArm: [
-                PoseKeyframe(duration: 0.9, rotation: -0.2),
-                PoseKeyframe(duration: 0.9, rotation: -0.35),
-            ],
-            .rightArm: [
-                PoseKeyframe(duration: 0.9, rotation: 0.2),
-                PoseKeyframe(duration: 0.9, rotation: 0.35),
-            ],
-        ],
+        textures: BillSpriteCatalog.heating,
+        frameDuration: 0.25,
         loop: .pingpong
     )
 
+    /// The sheet's own lounge-chair-and-popcorn pose — a direct hit on
+    /// "Charging: Bill relaxes" with zero need for a vector charger-cable
+    /// prop.
     static let charging = AnimationClip(
-        tracks: [
+        textures: BillSpriteCatalog.charging,
+        transform: [
             .body: [
                 PoseKeyframe(duration: 1.1, scale: 1.03),
                 PoseKeyframe(duration: 1.1, scale: 1.0),
-            ],
-            .eye: [
-                PoseKeyframe(duration: 1.1, scale: 0.8),
-                PoseKeyframe(duration: 1.1, scale: 0.85),
             ],
         ],
         loop: .pingpong
@@ -342,64 +258,40 @@ enum AnimationClipLibrary {
 
     // MARK: - Idle variety (short, sparse beats — not a continuous loop)
 
+    @MainActor
     enum IdleVariant: CaseIterable {
-        case blink
-        case lookLeft
-        case lookRight
+        case shiftWeight
         case stretch
         case tiltCheck
 
         var clip: AnimationClip {
             switch self {
-            case .blink:
-                return AnimationClip(tracks: [
-                    .eye: [
-                        PoseKeyframe(duration: 0.08, scale: 0.08, timing: .easeIn),
-                        PoseKeyframe(duration: 0.1, scale: 1.0, timing: .easeOut),
-                    ],
-                ], loop: .once)
-            case .lookLeft:
-                return AnimationClip(tracks: [
-                    .pupil: [
-                        PoseKeyframe(duration: 0.3, offset: CGVector(dx: -7, dy: 1)),
-                        PoseKeyframe(duration: 0.6, offset: CGVector(dx: -7, dy: 1)),
-                        PoseKeyframe(duration: 0.3),
-                    ],
-                ], loop: .once)
-            case .lookRight:
-                return AnimationClip(tracks: [
-                    .pupil: [
-                        PoseKeyframe(duration: 0.3, offset: CGVector(dx: 7, dy: 1)),
-                        PoseKeyframe(duration: 0.6, offset: CGVector(dx: 7, dy: 1)),
-                        PoseKeyframe(duration: 0.3),
-                    ],
-                ], loop: .once)
+            case .shiftWeight:
+                // A different (but still resting) idle frame, held briefly —
+                // reads as a subtle weight shift / glance rather than a
+                // frozen statue.
+                let frame = BillSpriteCatalog.idle[BillSpriteCatalog.idle.count / 2]
+                return AnimationClip(textures: [frame], frameDuration: 0.9, loop: .once)
             case .stretch:
-                return AnimationClip(tracks: [
-                    .body: [
-                        PoseKeyframe(duration: 0.35, scale: 1.05, timing: .easeOut),
-                        PoseKeyframe(duration: 0.45, scale: 1.0, timing: .easeIn),
+                return AnimationClip(
+                    transform: [
+                        .body: [
+                            PoseKeyframe(duration: 0.35, scale: 1.06, timing: .easeOut),
+                            PoseKeyframe(duration: 0.45, scale: 1.0, timing: .easeIn),
+                        ],
                     ],
-                    .leftArm: [
-                        PoseKeyframe(duration: 0.35, rotation: -1.0, timing: .easeOut),
-                        PoseKeyframe(duration: 0.45),
-                    ],
-                    .rightArm: [
-                        PoseKeyframe(duration: 0.35, rotation: 1.0, timing: .easeOut),
-                        PoseKeyframe(duration: 0.45),
-                    ],
-                ], loop: .once)
+                    loop: .once
+                )
             case .tiltCheck:
-                return AnimationClip(tracks: [
-                    .body: [
-                        PoseKeyframe(duration: 0.4, rotation: 0.12),
-                        PoseKeyframe(duration: 0.4, rotation: 0),
+                return AnimationClip(
+                    transform: [
+                        .body: [
+                            PoseKeyframe(duration: 0.4, rotation: 0.1),
+                            PoseKeyframe(duration: 0.4, rotation: 0),
+                        ],
                     ],
-                    .hat: [
-                        PoseKeyframe(duration: 0.4, rotation: 0.12),
-                        PoseKeyframe(duration: 0.4, rotation: 0),
-                    ],
-                ], loop: .once)
+                    loop: .once
+                )
             }
         }
     }

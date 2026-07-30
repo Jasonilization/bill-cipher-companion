@@ -5,17 +5,20 @@ final class StatusItemController: NSObject {
     private let statusItem: NSStatusItem
     private weak var appDelegate: AppDelegate?
     private let characterEngine: CharacterEngine
+    private let characterWindowController: CharacterWindowController
     private let chatPanelController: ChatPanelController
     private let settingsWindowController: SettingsWindowController
 
     init(
         appDelegate: AppDelegate,
         characterEngine: CharacterEngine,
+        characterWindowController: CharacterWindowController,
         chatPanelController: ChatPanelController,
         settingsWindowController: SettingsWindowController
     ) {
         self.appDelegate = appDelegate
         self.characterEngine = characterEngine
+        self.characterWindowController = characterWindowController
         self.chatPanelController = chatPanelController
         self.settingsWindowController = settingsWindowController
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
@@ -30,7 +33,10 @@ final class StatusItemController: NSObject {
 
         let menu = NSMenu()
 
-        let openChatItem = NSMenuItem(title: "Open Chat", action: #selector(openChat), keyEquivalent: "")
+        let talkItem = NSMenuItem(title: "Talk to Bill", action: #selector(talkToBill), keyEquivalent: "")
+        talkItem.target = self
+        menu.addItem(talkItem)
+        let openChatItem = NSMenuItem(title: "Open Full Chat View…", action: #selector(openChat), keyEquivalent: "")
         openChatItem.target = self
         menu.addItem(openChatItem)
         menu.addItem(.separator())
@@ -68,6 +74,10 @@ final class StatusItemController: NSObject {
             submenu.addItem(item)
         }
         return submenu
+    }
+
+    @objc private func talkToBill() {
+        characterWindowController.talkToBill()
     }
 
     @objc private func openChat() {

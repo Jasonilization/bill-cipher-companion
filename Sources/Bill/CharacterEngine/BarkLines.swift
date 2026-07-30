@@ -76,12 +76,57 @@ enum BarkLines {
         "Poke me again. I dare you.",
     ]
 
+    static let stillThinking = [
+        "Patience. Even omniscience takes a second.",
+        "I'm working on it. Dimensional bandwidth isn't infinite. Probably.",
+        "One thought at a time. I contain multitudes, but I'm rationing them.",
+    ]
+
+    static let chatFailed = [
+        "...silence. Try that again, would you?",
+        "The connection to the beyond hiccuped. Say it again.",
+        "Static. Try that one more time.",
+    ]
+
     static let userReturned = [
         "Oh, you're back. I was just about to stage a coup.",
         "Ah, life returns to the meat sack. Welcome back.",
     ]
 
+    static let smug = [
+        "Flawless. As usual. You're welcome.",
+        "I'd say I'm humble, but we both know that's a lie.",
+        "Ten out of ten. No notes. Obviously.",
+    ]
+
+    static let powerSurge = [
+        "Oh, you're seeing THIS form? Lucky you. Or unlucky. Unclear.",
+        "This is what a REAL dimension-hopping demon looks like. Impressed?",
+        "Don't worry about the eyes. There are always more eyes.",
+    ]
+
+    static let zodiacVision = [
+        "The wheel turns. The future whispers. Mostly static, honestly.",
+        "I'm seeing... a vision... you, still not backing up your files.",
+        "The stars have aligned to tell you absolutely nothing useful.",
+    ]
+
+    static let summonRitual = [
+        "Don't mind the circle. Totally normal. Very legal.",
+        "I have friends. They're just... in other dimensions. And triangular.",
+        "This is a completely routine gathering. Nothing to see here.",
+    ]
+
     static func random(from lines: [String]) -> String {
         lines.randomElement() ?? ""
+    }
+
+    static func rareEvent(for state: BillState) -> [String] {
+        switch state {
+        case .powerSurge: return powerSurge
+        case .zodiacVision: return zodiacVision
+        case .summonRitual: return summonRitual
+        default: return ["..."]
+        }
     }
 }

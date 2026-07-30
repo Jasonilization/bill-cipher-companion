@@ -29,7 +29,7 @@ final class BillStateMachine {
 
     init(rig: BillRigNode) {
         self.rig = rig
-        equipProp(.cane)
+        equipProp(.none)
     }
 
     /// Request a state change. Continuous states (walking, talking, sleeping,
@@ -124,7 +124,7 @@ final class BillStateMachine {
     private func settleToIdle() {
         pendingWork?.cancel()
         currentState = .idle
-        equipProp(.cane)
+        equipProp(.none)
         applyFX(nil)
 
         for (part, node) in rig.parts {
@@ -136,7 +136,15 @@ final class BillStateMachine {
             move.timingMode = .easeOut
             rotate.timingMode = .easeOut
             scale.timingMode = .easeOut
-            node.run(SKAction.group([move, rotate, scale]), withKey: Self.actionKey)
+            var resetActions = [move, rotate, scale]
+            // Whatever clip was playing may have left the body on a
+            // non-idle texture (annoyed's frown, a mid-walk-cycle frame,
+            // ...) — settling back to idle has to restore the rest frame,
+            // not just the transform.
+            if part == .body {
+                resetActions.append(SKAction.setTexture(BillSpriteCatalog.restTexture, resize: true))
+            }
+            node.run(SKAction.group(resetActions), withKey: Self.actionKey)
         }
 
         setClipActive(true)

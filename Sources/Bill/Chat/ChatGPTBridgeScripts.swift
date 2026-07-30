@@ -61,4 +61,54 @@ enum ChatGPTBridgeScripts {
         }
     })();
     """
+
+    /// Defines `window.billSendMessage`/`window.billGetLastResponse` once,
+    /// so later calls from Swift (via `WebPage.callJavaScript`, in the same
+    /// isolated content world these were defined in) can just invoke them.
+    /// Best-effort, same as everything else here: chatgpt.com's composer
+    /// and message markup can change, so both functions try a couple of
+    /// reasonable selectors and fail soft (return false/null) rather than
+    /// throw — a failed injection means the message just doesn't send
+    /// rather than crashing anything.
+    static let chatActionsJS = """
+    (function() {
+        if (window.billSendMessage) { return; }
+
+        window.billSendMessage = function(text) {
+            try {
+                const composer = document.querySelector('#prompt-textarea')
+                    || document.querySelector('[contenteditable="true"]');
+                if (!composer) { return false; }
+                composer.focus();
+                composer.innerText = text;
+                composer.dispatchEvent(new InputEvent('input', { bubbles: true }));
+                setTimeout(function() {
+                    const sendButton = document.querySelector('[data-testid="send-button"]')
+                        || document.querySelector('button[aria-label="Send prompt"]');
+                    if (sendButton && !sendButton.disabled) {
+                        sendButton.click();
+                    } else {
+                        composer.dispatchEvent(new KeyboardEvent('keydown', {
+                            key: 'Enter', code: 'Enter', bubbles: true, cancelable: true
+                        }));
+                    }
+                }, 80);
+                return true;
+            } catch (e) {
+                return false;
+            }
+        };
+
+        window.billGetLastResponse = function() {
+            try {
+                const turns = document.querySelectorAll('[data-message-author-role="assistant"]');
+                if (turns.length === 0) { return null; }
+                const last = turns[turns.length - 1];
+                return last.innerText || last.textContent || null;
+            } catch (e) {
+                return null;
+            }
+        };
+    })();
+    """
 }

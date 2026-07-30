@@ -11,6 +11,7 @@ final class BillHitTestView: SKView {
     var onClick: (() -> Void)?
     var onDragStarted: (() -> Void)?
     var onDragEnded: (() -> Void)?
+    var onRightClick: (() -> Void)?
 
     /// Bill's approximate on-screen silhouette (body + limbs + hat), in this
     /// view's local coordinates. A fixed rect rather than a precise
@@ -64,5 +65,11 @@ final class BillHitTestView: SKView {
         } else {
             onClick?()
         }
+    }
+
+    /// Right-click is Bill's talk trigger — summons the pixel chat input
+    /// right next to him instead of a context menu.
+    override func rightMouseDown(with event: NSEvent) {
+        onRightClick?()
     }
 }

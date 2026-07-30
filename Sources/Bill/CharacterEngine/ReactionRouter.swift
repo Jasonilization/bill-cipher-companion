@@ -40,7 +40,10 @@ final class ReactionRouter {
             characterEngine.request(.idle)
 
         case .networkLost:
-            characterEngine.request(.surprised)
+            // Spec: "notices, acts confused, complains" — confused is a
+            // closer match than reusing surprised now that a dedicated
+            // confused animation exists.
+            characterEngine.request(.confused)
             characterEngine.bark(BarkLines.random(from: BarkLines.networkLost))
 
         case .networkRestored:

@@ -1,10 +1,14 @@
 import AppKit
 import SwiftUI
 
-/// Owns the floating chat popup — a borderless, non-activating panel (so
-/// summoning it never steals focus from whatever app the user was in,
-/// matching the ChatGPT-classic/Spotlight popup feel), shown/hidden by the
-/// global hotkey or the menu bar item, and dismissed on an outside click.
+/// Owns the *secondary* full-view chat popup — a borderless, non-activating
+/// panel (so summoning it never steals focus from whatever app the user was
+/// in) showing the raw embedded ChatGPT page. The primary way to talk to
+/// Bill is now `PixelChatInputPanel` (right-click Bill, the global hotkey,
+/// or "Talk to Bill" in the menu bar) with replies in his own speech
+/// bubble; this full view stays reachable from "Open Full Chat View…" in
+/// the menu bar for anyone who wants the real ChatGPT UI, and is still
+/// dismissed on an outside click.
 @MainActor
 final class ChatPanelController: NSObject {
     private let panel: NSPanel

@@ -2,8 +2,9 @@ import Foundation
 
 /// Bill's behavior brain — separate from both the renderer (`Animation/`)
 /// and the AI chat system. Decides *when* Bill should be in a given state:
-/// right now that's just idle-variety boredom beats; the system monitor
-/// (M3) and chat bridge (M2) will call `request(_:)` the same way.
+/// idle-variety boredom beats, occasional personality flourishes, and rare
+/// Easter eggs while genuinely idle; the system monitor and chat bridge
+/// call `request(_:)` the same way for everything else.
 @MainActor
 final class CharacterEngine {
     let rig: BillRigNode
@@ -11,6 +12,15 @@ final class CharacterEngine {
 
     private var idleBeatTimer: Timer?
     private var isRunning = false
+    private var lastRareEventDate: Date?
+
+    /// Rare Easter eggs (power surge / zodiac vision / summon ritual) are
+    /// deliberately dramatic — see `BillState.rareEasterEggs` — so they're
+    /// gated to a small chance per idle beat *and* a cooldown, rather than
+    /// ever showing up back-to-back.
+    private static let rareEventChance = 0.03
+    private static let smugChance = 0.12
+    private static let rareEventCooldown: TimeInterval = 10 * 60
 
     init() {
         rig = BillRigNode.build()
@@ -52,10 +62,34 @@ final class CharacterEngine {
 
     private func fireIdleBeat() {
         guard isRunning else { return }
-        if stateMachine.currentState == .idle {
-            let variant = AnimationClipLibrary.IdleVariant.allCases.randomElement()!
-            stateMachine.playIdleVariant(variant)
+        defer { scheduleNextIdleBeat() }
+        guard stateMachine.currentState == .idle else { return }
+
+        if rollRareEvent() {
+            return
         }
-        scheduleNextIdleBeat()
+
+        if Double.random(in: 0..<1) < Self.smugChance {
+            stateMachine.request(.smug)
+            return
+        }
+
+        let variant = AnimationClipLibrary.IdleVariant.allCases.randomElement()!
+        stateMachine.playIdleVariant(variant)
+    }
+
+    /// Returns `true` if a rare Easter egg fired (caller should skip the
+    /// normal idle-variant roll for this beat).
+    private func rollRareEvent() -> Bool {
+        if let last = lastRareEventDate, Date().timeIntervalSince(last) < Self.rareEventCooldown {
+            return false
+        }
+        guard Double.random(in: 0..<1) < Self.rareEventChance else { return false }
+
+        lastRareEventDate = Date()
+        let event = BillState.rareEasterEggs.randomElement()!
+        stateMachine.request(event, force: true)
+        stateMachine.showBark(BarkLines.random(from: BarkLines.rareEvent(for: event)))
+        return true
     }
 }

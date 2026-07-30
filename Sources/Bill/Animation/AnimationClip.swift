@@ -6,23 +6,15 @@ enum ClipLoopMode: Sendable {
     case pingpong
 }
 
-/// A part's rest transform in its parent's coordinate space. Clip keyframes
-/// are expressed relative to this, so a clip only ever needs to describe
-/// "how far from home", never worry about each part's particular resting
-/// angle (arms/legs rest at a splayed angle, not zero).
+/// A part's rest transform in its parent's coordinate space.
 struct PartHome: Sendable {
     var offset: CGVector = .zero
     var rotation: CGFloat = 0
 }
 
-/// One target pose for a part, relative to its home transform, held for
-/// `duration` seconds after interpolating from wherever the part currently is.
-///
-/// `duration` is declared first (and is the only required field) so every
-/// call site below can consistently write arguments as
-/// `(duration:, offset:, rotation:, scale:, timing:)` — Swift requires
-/// labeled arguments to appear in declaration order, so keeping one fixed
-/// order here avoids call-site ordering mistakes across dozens of clips.
+/// One target transform, relative to a part's home, held for `duration`
+/// seconds. Used for the *procedural* half of a clip (bob/tilt/scale) —
+/// the pixel-art half is `AnimationClip.textures`.
 struct PoseKeyframe: Sendable {
     var duration: TimeInterval
     var offset: CGVector = .zero
@@ -35,20 +27,32 @@ struct PoseKeyframe: Sendable {
     }
 }
 
-/// A declarative, data-only animation: for each part that moves, an ordered
-/// list of keyframes relative to that part's home transform. Parts not
-/// mentioned simply stay wherever they last were (typically home, since
-/// clips return parts home before they end). Turning this into real
-/// `SKAction`s happens in `buildActions`.
-struct AnimationClip: Sendable {
-    var tracks: [BillPart: [PoseKeyframe]]
+/// A declarative, data-only animation with two independent tracks that can
+/// run together on the body node:
+///
+/// - `textures`: the pixel-art frame sequence itself (e.g. the 4-frame walk
+///   cycle). Empty when a state has no dedicated sprite sequence.
+/// - `transform`: a procedural bob/tilt/scale layered on top (e.g. "talking"
+///   has no dedicated frames at all — it's pure transform on the idle
+///   texture; "walking" is pure texture sequence; nothing stops a future
+///   clip from using both at once).
+///
+/// This is the same clip/keyframe shape the earlier procedural rig used,
+/// extended with a texture track — `BillStateMachine` and everything above
+/// it never needed to know the difference.
+struct AnimationClip {
+    var textures: [SKTexture] = []
+    var frameDuration: TimeInterval = 0.12
+    var transform: [BillPart: [PoseKeyframe]] = [:]
     var loop: ClipLoopMode = .once
 
     var singlePassDuration: TimeInterval {
-        tracks.values.map { $0.reduce(0) { $0 + $1.duration } }.max() ?? 0
+        let textureDuration = textures.isEmpty ? 0 : Double(textures.count) * frameDuration
+        let transformDuration = transform.values.map { $0.reduce(0) { $0 + $1.duration } }.max() ?? 0
+        return max(textureDuration, transformDuration)
     }
 
-    private func action(for keyframes: [PoseKeyframe], home: PartHome) -> SKAction {
+    private func transformAction(for keyframes: [PoseKeyframe], home: PartHome) -> SKAction {
         let steps = keyframes.map { kf -> SKAction in
             let point = CGPoint(x: home.offset.dx + kf.offset.dx, y: home.offset.dy + kf.offset.dy)
             let move = SKAction.move(to: point, duration: kf.duration)
@@ -62,26 +66,58 @@ struct AnimationClip: Sendable {
         return SKAction.sequence(steps)
     }
 
-    /// Builds the full set of per-node actions for this clip, keyed by part,
-    /// already wrapped for this clip's loop mode.
+    private func textureAction() -> SKAction? {
+        guard !textures.isEmpty else { return nil }
+        if textures.count == 1 {
+            return SKAction.setTexture(textures[0], resize: true)
+        }
+        return SKAction.animate(with: textures, timePerFrame: frameDuration, resize: true, restore: false)
+    }
+
+    /// Builds the full set of per-part actions for this clip, keyed by part.
     func buildActions(homes: [BillPart: PartHome]) -> [BillPart: SKAction] {
         var result: [BillPart: SKAction] = [:]
-        for (part, keyframes) in tracks {
-            guard !keyframes.isEmpty else { continue }
-            let home = homes[part] ?? PartHome()
-            let forward = action(for: keyframes, home: home)
+        var bodyActions: [SKAction] = []
+
+        if let texAction = textureAction() {
             switch loop {
             case .once:
-                result[part] = forward
+                bodyActions.append(texAction)
             case .loop:
-                result[part] = SKAction.repeatForever(forward)
+                bodyActions.append(SKAction.repeatForever(texAction))
+            case .pingpong:
+                let reversed = SKAction.animate(with: Array(textures.reversed()), timePerFrame: frameDuration, resize: true, restore: false)
+                bodyActions.append(SKAction.repeatForever(SKAction.sequence([texAction, reversed])))
+            }
+        }
+
+        for (part, keyframes) in transform {
+            guard !keyframes.isEmpty else { continue }
+            let home = homes[part] ?? PartHome()
+            let forward = transformAction(for: keyframes, home: home)
+            let wrapped: SKAction
+            switch loop {
+            case .once:
+                wrapped = forward
+            case .loop:
+                wrapped = SKAction.repeatForever(forward)
             case .pingpong:
                 var backKeyframes = Array(keyframes.dropLast().reversed())
                 backKeyframes.append(PoseKeyframe(duration: keyframes.last?.duration ?? 0.3, timing: keyframes.last?.timing ?? .easeInEaseOut))
-                let backward = action(for: backKeyframes, home: home)
-                result[part] = SKAction.repeatForever(SKAction.sequence([forward, backward]))
+                let backward = transformAction(for: backKeyframes, home: home)
+                wrapped = SKAction.repeatForever(SKAction.sequence([forward, backward]))
+            }
+            if part == .body {
+                bodyActions.append(wrapped)
+            } else {
+                result[part] = wrapped
             }
         }
+
+        if !bodyActions.isEmpty {
+            result[.body] = bodyActions.count == 1 ? bodyActions[0] : SKAction.group(bodyActions)
+        }
+
         return result
     }
 }
