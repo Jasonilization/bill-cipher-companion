@@ -56,6 +56,10 @@ final class StatusItemController: NSObject {
         let barkItem = NSMenuItem(title: "Debug: Test Bark", action: #selector(testBark), keyEquivalent: "")
         barkItem.target = self
         menu.addItem(barkItem)
+
+        let wanderItem = NSMenuItem(title: "Debug: Trigger Wander Now", action: #selector(triggerWander), keyEquivalent: "")
+        wanderItem.target = self
+        menu.addItem(wanderItem)
         menu.addItem(.separator())
 
         let quitItem = NSMenuItem(title: "Quit Bill", action: #selector(AppDelegate.quit), keyEquivalent: "q")
@@ -99,5 +103,9 @@ final class StatusItemController: NSObject {
 
     @objc private func testBark() {
         characterEngine.bark(BarkLines.random(from: BarkLines.coding))
+    }
+
+    @objc private func triggerWander() {
+        characterWindowController.debugTriggerWander()
     }
 }

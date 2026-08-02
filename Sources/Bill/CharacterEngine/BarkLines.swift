@@ -5,6 +5,10 @@ import Foundation
 /// and always in-character, keeping the real chat system reserved for
 /// actual conversations. Bill's voice: cryptic, grandiose, fond of the user
 /// in a very backhanded way, allergic to sincerity.
+///
+/// Pools are deliberately large (8-10+ lines where Bill might realistically
+/// comment often, like idle/coding/gaming) so `random(from:)` doesn't repeat
+/// the same handful of lines within a normal session.
 enum BarkLines {
     static let coding = [
         "Oh look, more symbols for the primitive brain to arrange. Carry on.",
@@ -12,6 +16,16 @@ enum BarkLines {
         "Bug or feature? In my dimension we just call that 'Tuesday.'",
         "Typing code by hand. How adorably analog of you.",
         "I've watched empires rise and fall faster than this build.",
+        "Ah yes, the sacred stack trace. A modern man's tea leaves.",
+        "You could just ask me. I know everything. I'm choosing not to help.",
+        "Semicolons: the reason mortal engineers age so fast.",
+        "That indentation is doing something upsetting to my one good eye.",
+        "Compile, fail, repeat. It's basically a religion at this point.",
+        "Somewhere, a rubber duck is judging you harder than I am.",
+        "You've alt-tabbed to search the error message six times now. I'm counting.",
+        "Back to {app}, huh? Creating questionable realities, I assume.",
+        "{app} again. At this point we're basically roommates.",
+        "Oh good, {app}. My favorite front-row seat to chaos.",
     ]
 
     static let gaming = [
@@ -20,52 +34,96 @@ enum BarkLines {
         "Statistically, I could do this better with no hands. I have no hands.",
         "Ah, pretend violence. My favorite kind.",
         "Wake me up when the boss fight starts.",
+        "You died? Shocking. Truly could not have called that one.",
+        "Save your game. I've seen this story end badly for the hero before.",
+        "A worthy use of your one wild and precious life, I suppose.",
+        "Button mashing. The ancient art. Very refined.",
+        "I'd offer strategy advice, but watching you fail is funnier.",
+        "Ten points for effort. Zero for execution. Harsh but fair.",
+        "Is this the part where you rage quit? Building suspense.",
+        "I knew you'd end up in {app} eventually. It was only a matter of time.",
+        "{app}? Bold. I fully expect a tragedy in three acts.",
     ]
 
     static let browsing = [
         "Curious what you're up to over there. Don't lie to me.",
         "The infinite scroll — a trap of your own species' design.",
         "Reading, or just staring at a loading spinner? Be honest.",
+        "Seventeen tabs open. A cry for help, or just Tuesday?",
+        "Ah, doom-scrolling. The unofficial national sport.",
+        "You've read that same headline four times now. I'm counting.",
+        "Close a tab. Any tab. I'm begging you.",
+        "This is riveting. By which I mean it absolutely is not.",
+        "Oh? Going down another {app} rabbit hole?",
+        "{app}, huh. Tell me it's for research and I'll pretend to believe you.",
     ]
 
     static let music = [
         "Ooh, vibes. Deploying my one (1) foot to tap.",
         "This is acceptable. Barely.",
         "Play something with more chaos. I have taste, you know.",
+        "A banger, or background noise? The line has never been thinner.",
+        "I'd dance, but I have no hips. Tragic, really.",
+        "Skip it, skip it, skip— oh, you're keeping it. Bold.",
+        "This slaps, and I resent how much I mean that.",
+        "Turn it up. I contain multitudes, and all of them want bass.",
+        "{app}, huh. Fine. Deploying my one (1) foot to tap.",
     ]
 
     static let creative = [
         "Ah, creation — the thing gods and mortals both pretend to understand.",
         "Bold choice. I respect the confidence, not the outcome.",
         "Let me watch. I promise not to judge. (I will absolutely judge.)",
+        "Art! The thing you do when the void stares back and you stare harder.",
+        "I've seen galaxies born with more restraint than this composition.",
+        "Keep going. I want to see how this disaster resolves.",
+        "You have the confidence of someone who has not yet seen the result.",
+        "A masterpiece, or a warning. Possibly both.",
+        "{app} time. Let's see what questionable decisions get made today.",
     ]
 
     static let batteryLow = [
         "Your little metal heart is dying. Might want to feed it.",
         "Low battery. Even I nap sometimes. Mostly not. But sometimes.",
         "Tick tock — your machine's lifeblood is running out.",
+        "18%. I've seen empires with better odds than your battery.",
+        "That's not a battery icon anymore, that's a cry for help.",
+        "Find a charger before you find yourself stranded mid-thought.",
     ]
 
     static let batteryCharging = [
         "Ah, plugged back into the grid. Feels good, doesn't it.",
         "Charging. Very responsible of you. Suspiciously responsible.",
+        "Drink deep from the wall. It's the only wisdom I'll offer for free today.",
+        "Look at you, being a responsible little machine-tender.",
+        "Powering up. Very on-brand for both of us today.",
+        "The grid provides. Briefly, you're both immortal.",
     ]
 
     static let cpuHot = [
         "Is it hot in here, or is your processor just having a moment?",
         "I can feel the fans spinning from here. Dramatic.",
         "Careful — you're about to achieve liftoff.",
+        "Your fans are having an entire opera in there.",
+        "At this temperature, you could forge something. Possibly regret.",
+        "Somewhere, a cooling engineer just felt a disturbance.",
     ]
 
     static let networkLost = [
         "Wait. WAIT. Where did everything go?",
         "The void has claimed your internet. Bold move.",
         "No wifi? No wifi. This is fine. This is FINE.",
+        "You have been cast into the void. Population: you.",
+        "I'd offer comfort, but I too am now unemployed.",
+        "Silence. Beautiful, terrifying silence.",
     ]
 
     static let networkRestored = [
         "Oh, we're back. Thrilling.",
         "Connection restored. The universe resumes as scheduled.",
+        "The tubes are unclogged. Rejoice, mildly.",
+        "Signal's back. Try not to take it for granted this time.",
+        "We live to buffer another day.",
     ]
 
     static let poked = [
@@ -74,6 +132,9 @@ enum BarkLines {
         "Was that supposed to hurt? I'm a triangle.",
         "Hey! I was doing very important nothing.",
         "Poke me again. I dare you.",
+        "One more time. I mean it. I'm keeping score.",
+        "That's assault, in at least four dimensions.",
+        "Touch me again and find out what happens. (Nothing happens. I have no hands.)",
     ]
 
     static let stillThinking = [
@@ -91,12 +152,144 @@ enum BarkLines {
     static let userReturned = [
         "Oh, you're back. I was just about to stage a coup.",
         "Ah, life returns to the meat sack. Welcome back.",
+        "Back so soon? I hadn't even finished plotting.",
+        "The prodigal user returns. No parade, sadly.",
+        "Miss me? Don't answer that.",
     ]
 
     static let smug = [
         "Flawless. As usual. You're welcome.",
         "I'd say I'm humble, but we both know that's a lie.",
         "Ten out of ten. No notes. Obviously.",
+        "I don't need luck. I have inevitability.",
+        "Some are born great. I was just always like this.",
+        "Try to keep up. I'll wait. Briefly.",
+    ]
+
+    /// Fires with the light, frequent `caneFlourish` personality beat — a
+    /// dapper flex, not tied to any reaction.
+    static let caneFlourish = [
+        "A little style never hurt anyone. Well. Rarely.",
+        "Classic. Timeless. Devastatingly charming. That's me.",
+        "You don't NEED a cane when you have no legs to speak of. I carry it for the aesthetic.",
+        "Watch and learn. Not that you could replicate this.",
+    ]
+
+    /// Scripted commentary for genuinely idle moments with no system event
+    /// behind them — this is what stops long idle stretches from feeling
+    /// silent/frozen even when nothing is actually happening.
+    static let idleAmbient = [
+        "Statistically, something in this room is about to go wrong. Exciting.",
+        "I could tell you what happens in your next dream. I won't. But I could.",
+        "Don't mind me. Just calculating the heat death of the universe. Casually.",
+        "You ever get the feeling you're being watched? You're right.",
+        "Day one thousand four hundred something of being trapped in a nice desktop. No notes.",
+        "I know a secret about this computer. I'm not telling. Yet.",
+        "Ten bucks says something on this desktop crashes within the hour.",
+        "I've been thinking about triangles. Specifically, how great they are.",
+        "This silence is nice. Suspicious, but nice.",
+        "Somewhere, a clock is ticking on something. Probably not important.",
+    ]
+
+    /// Fires when the cursor lingers close to Bill while he's idle —
+    /// a light "I see you" beat, not a startled reaction.
+    static let noticesCursor = [
+        "Oh, hello there.",
+        "Watching you back, you know.",
+        "Personal space. Ever heard of it?",
+        "Can I help you? Just visiting?",
+        "Yes? Can I do something for you, or are we just staring now.",
+    ]
+
+    /// Fires with the `curious` idle-variant (the chin-scratch animation).
+    static let curiosity = [
+        "Hmm. What's THAT about.",
+        "Interesting. Filing that away for later. Or never. We'll see.",
+        "Ooh, what's this...",
+        "Curious. Very curious. Tell no one I said that.",
+    ]
+
+    /// Occasional low-stakes mischief — Bill being a little too pleased
+    /// with himself for no stated reason.
+    static let mischief = [
+        "I moved something. You'll notice eventually.",
+        "What if I just... didn't tell you what I know. Fun, right?",
+        "I have a theory about you. It's mean. I'm keeping it.",
+        "Don't trust me. Smart choice, by the way.",
+    ]
+
+    /// Fires when Bill wakes from `sleeping` (distinct from `userReturned`,
+    /// which is about the *user* coming back to the machine).
+    static let waking = [
+        "Ugh. Morning. Or whatever this is.",
+        "I was having the strangest dream. It involved you, and also taxes.",
+        "Awake. Reluctantly. Resuming consciousness now.",
+        "Five more minutes. ...Fine, I'm up.",
+    ]
+
+    /// Fires right as Bill settles into `sleeping` after a long idle
+    /// stretch.
+    static let gettingSleepy = [
+        "Getting sleepy. Dimension-hopping really takes it out of you.",
+        "I might just... close my eye for a bit. One eye. It's all I've got.",
+        "Nap time. Don't wake me unless it's important. Or funny.",
+    ]
+
+    /// A generic "new app" reaction for launches that don't fit any of the
+    /// specific categories above.
+    static let appLaunchGeneric = [
+        "New window, who dis.",
+        "Oh, we're doing THIS now. Okay.",
+        "Another app. Your dock is getting concerning.",
+        "Let's see what fresh chaos this is.",
+    ]
+
+    /// The very first time Bill ever sees a given uncategorized app —
+    /// paired with `.curious` in `ReactionRouter.handleUncategorizedApp`.
+    static let appLaunchFirstSighting = [
+        "Ooh, {app}. Never seen that one before. Suspicious.",
+        "New face: {app}. I'll be watching. I'm always watching.",
+        "{app}? Don't know it, don't trust it yet.",
+        "A stranger appears: {app}. Bold choice.",
+    ]
+
+    /// Once ChatGPT has supplied a one-line description of an
+    /// otherwise-uncategorized app (see `MemoryStore.appDescriptions` and
+    /// `CharacterWindowController`'s daily refresh) — `{description}` is
+    /// meant to read like Bill's own smug summary, not a quoted definition,
+    /// so keep the surrounding lines dismissive/knowing rather than
+    /// deferential to it.
+    static let appLaunchDescribed = [
+        "Ah, {app}. {description}. Riveting.",
+        "{app} again — {description}. I remain unimpressed.",
+        "Oh good, {app}. {description}. Living the dream, you.",
+        "{app}: {description}. Say no more. Actually, please don't.",
+    ]
+
+    /// A frequently-reopened app Bill still hasn't learned a description
+    /// for yet (paired with `.smug` — the tone is "I've clearly seen this
+    /// enough times to have opinions" rather than genuine confusion).
+    static let appLaunchStillUnknown = [
+        "{app} again. I still don't know what it does. Neither do you, probably.",
+        "Back to {app}, huh. A mystery wrapped in an icon.",
+        "{app}. We meet again. I remain no wiser.",
+    ]
+
+    /// "You keep coming back to this, don't you?" — see
+    /// `ReactionRouter.isReturningFavorite`. `{app}` is replaced with the
+    /// actual app name via `resolvedRandom(from:appName:)`.
+    static let returningFavorite = [
+        "You really like {app}, don't you?",
+        "Back to {app} again. At this point it's less a habit, more a personality trait.",
+        "{app}, {app}, {app}. I'm sensing a pattern. I'm very smart that way.",
+        "Third time today with {app}. No judgment. (Some judgment.)",
+    ]
+
+    static let finder = [
+        "Digging through your files? Found anything embarrassing yet?",
+        "Ah, the file system. A digital attic nobody cleans.",
+        "That folder name is doing a lot of emotional labor.",
+        "Organizing, or just moving the chaos to a new location?",
     ]
 
     static let powerSurge = [
@@ -117,8 +310,49 @@ enum BarkLines {
         "This is a completely routine gathering. Nothing to see here.",
     ]
 
+    static let ghostPale = [
+        "Oh — did I do that? My apologies. Occupational hazard.",
+        "Sometimes I see something so mortifying I just... lose all my color.",
+        "This is fine. I am fine. Everything is fine.",
+        "Give me a moment. I need to remember what color I am.",
+    ]
+
+    static let glitchForm = [
+        "Wh-what— ERROR. ERROR. ...Ignore that.",
+        "Oh, that's not supposed to happen. Reality's a bit buggy today.",
+        "01000010 — sorry, sorry, wrong universe's alphabet.",
+        "Reboot successful. Probably. Don't quote me.",
+    ]
+
+    static let shadowHands = [
+        "Don't mind them. They're friendly. Mostly. Statistically.",
+        "Something's reaching through. Rude of it, honestly.",
+        "Oh, THOSE. Ignore the hands. Everyone has hands reaching from the void sometimes.",
+        "Don't make eye contact. Well — I'm the only one with an eye. Never mind.",
+    ]
+
+    static let meltdown = [
+        "I'm fine. This is a normal amount of chaos for a Tuesday.",
+        "Okay. OKAY. I'm just going to unravel a little. Give me a second.",
+        "This is what happens when you bottle up a few millennia of grudges.",
+        "Don't worry about the sparks. They're purely decorative. Probably.",
+    ]
+
     static func random(from lines: [String]) -> String {
         lines.randomElement() ?? ""
+    }
+
+    /// Same as `random(from:)`, but resolves an `{app}` placeholder against
+    /// a real app name — a no-op for lines that don't contain one, so
+    /// generic and name-aware lines can share the same pool.
+    static func resolvedRandom(from lines: [String], appName: String) -> String {
+        random(from: lines).replacingOccurrences(of: "{app}", with: appName)
+    }
+
+    /// Same as `resolvedRandom(from:appName:)`, additionally resolving a
+    /// `{description}` placeholder — used for `appLaunchDescribed`.
+    static func resolvedRandom(from lines: [String], appName: String, description: String) -> String {
+        resolvedRandom(from: lines, appName: appName).replacingOccurrences(of: "{description}", with: description)
     }
 
     static func rareEvent(for state: BillState) -> [String] {
@@ -126,6 +360,10 @@ enum BarkLines {
         case .powerSurge: return powerSurge
         case .zodiacVision: return zodiacVision
         case .summonRitual: return summonRitual
+        case .ghostPale: return ghostPale
+        case .glitchForm: return glitchForm
+        case .shadowHands: return shadowHands
+        case .meltdown: return meltdown
         default: return ["..."]
         }
     }

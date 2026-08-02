@@ -14,6 +14,110 @@ procedural-transform-only or vector-prop-only state with real sprite frames, fix
 a body-clipping/snapping bug, and added a set of rare, low-frequency Easter-egg
 animations. See "Second pass" below for what changed and why.
 
+## Third pass — independent verification audit
+
+The first two passes' claims were **not** taken on faith. This pass re-opened the
+source sheet, re-viewed every white-boxed region tile-by-tile at full resolution,
+and separately opened the actual committed PNGs under
+`Sources/Bill/Resources/Sprites/` to check them against both the sheet and each
+other — plus grepped the codebase for every `BillState` case to confirm each one
+actually has a live caller, not just a definition. Concretely verified:
+
+- **Canvas uniformity**: every spot-checked frame (idle, thinking, talking,
+  sleeping, coding, ghost, zodiac, meltdown, glitch) is exactly 118×111 — the
+  shared-canvas anti-clipping fix from the second pass holds.
+- **Bottom-alignment**: checked via alpha bounding box, not eyeballing — e.g.
+  `bill_ghost_01` through `_05` have content bboxes bottom-anchored at y=111 in
+  every frame, growing from a small early-stage silhouette (y:85-111) to a full
+  pale form (y:51-111). This *looked* like a top-anchored crop bug at a glance in
+  a small contact sheet; it isn't one.
+- **Pose content**: `bill_sleeping_01` is genuinely a flat horizontal silhouette
+  (confirmed, not just described). `bill_thinking_01/04` show a real hand-to-chin
+  gesture. `bill_talking_01/03` show a real raised-arm wave. `bill_glitch_02` is
+  genuinely monochrome with a red eye. `bill_celebrating`'s leap frame plus
+  confetti/sparkle FX renders as an actual celebratory beat, not a static pose.
+- **State reachability** (grepped every `.stateName` request site, excluding the
+  enum/clip-table definitions themselves): **`celebrating` and `dazed` had zero
+  callers anywhere in the app** — both were fully-built, previously-verified-
+  looking states that a user could never actually trigger outside the debug
+  menu, despite the first-pass doc's "cross-checked against the required state
+  list" table marking both ✓. This is exactly the "claiming success without
+  checking" failure mode this audit is meant to catch. Fixed by wiring them to
+  hooks that already existed for other reasons rather than inventing new
+  triggers: `dazed` now fires on drag-release (`CharacterWindowController.
+  handleDragEnded`) — it's documented as "a brief post-surprise recovery beat,"
+  and being picked up and dropped is exactly that moment; `celebrating` now
+  fires alongside the existing "you keep coming back to this app" bark
+  (`ReactionRouter.isReturningFavorite`). Both visually confirmed afterward
+  (drag-and-drop → correct crossed-eyes/tilt dazed pose; forced celebrating →
+  leap pose with confetti).
+- **Weak-communication findings** (not broken, but worth flagging honestly
+  rather than silently accepting): `coding`'s two frames are a real, distinct
+  pose (hands out front vs. idle's arms-down), not a duplicate of idle as they
+  first appeared in a small side-by-side — but the difference is subtle at
+  Bill's on-screen size and doesn't unambiguously read as "at a keyboard."
+  `gaming` reuses a cane-holding frame (`bill_cane_06`); it reads as "holding
+  something up," not specifically "playing a game." No stronger candidate for
+  either exists elsewhere on the sheet (no controller/keyboard shape appears
+  anywhere in the full tile-by-tile survey) — these are the closest available
+  matches, not arbitrary picks, but they're genuinely weaker than the rest of
+  the catalog and a future pass with new art would target these two first.
+- **The empty `idle` clip** (see `AnimationClipLibrary.idle`'s doc comment) was
+  the root cause of "Bill feels like a static sprite" — it had no texture and
+  no transform at all, and the host view fully paused its render loop whenever
+  nothing else was playing. Fixed with a continuous breathing-bob transform and
+  a corrected activity-signal ordering so the view no longer pauses during
+  ordinary idle; verified by diffing Bill's on-screen vertical position across
+  a burst of screenshots taken ~0.7-1.2s apart (not just reading the code) —
+  confirmed measurably shifting frame to frame rather than pixel-identical.
+
+### Full state reference
+
+Every entry below is confirmed reachable by a real, live trigger (not just the
+debug menu) as of this pass. Loop key: **once** = plays through and settles back
+to idle on its own; **loop**/**pingpong** = continuous until something else
+interrupts it.
+
+| Animation | Frames | Loop | Purpose | Trigger |
+|---|---|---|---|---|
+| `idle` | 0 (transform-only breathing bob) | pingpong | Default resting state | Nothing else active |
+| `walking` | 6 | loop | Locomotion | Ambient wander beat |
+| `talking` | 3 | pingpong | Explaining/speaking | Chat reply delivery; `ChatBridge.isGenerating` |
+| `thinking` | 4 | pingpong | Pondering | Chat message submitted, awaiting reply |
+| `happy` | 2 | once | Positive beat | Music app activated; chat reply arrives |
+| `annoyed` | 6 (+1 held) | once | Irritated/ranting | Low battery |
+| `sleeping` | 1 (+ bob) | pingpong | Powered down | System detects user idle |
+| `gaming` | 1 (+ rock) | pingpong | Playing a game | Gaming app activated |
+| `coding` | 2 | loop | Working at a keyboard | Coding or creative app activated |
+| `heatingUp` | 7 (pingponged) | loop | Overheating/stressed | CPU sustained hot |
+| `charging` | 1 (+ pulse) | pingpong | Plugged in, relaxed | Battery charging |
+| `surprised` | 3 (+4 held) | once | Startled | Bill picked up (drag start) |
+| `celebrating` | 5 (+2 held) | once | Celebration | Returning to a favorite app 3+ times/hour |
+| `confused` | 4 | once | Confused/complaining | Network connection lost |
+| `dazed` | 2 (pingponged) | once | Post-surprise recovery | Bill dropped (drag end) |
+| `poked` | 4 | once | Click reaction | Bill clicked |
+| `smug` | 3 snap + 2 (+2 held) | once | Personality flourish | Idle beat, 12% roll |
+| `caneFlourish` | 8 (pingponged) | once | Personality flourish | Idle beat, 8% roll |
+| `powerSurge` | 8+4+1 (+6 held) | once | Rare Easter egg | Idle beat, 3% roll, 10min cooldown |
+| `zodiacVision` | 8 (+3 held) | once | Rare Easter egg | Idle beat, 3% roll, 10min cooldown |
+| `summonRitual` | 3+1 (+8 held) | once | Rare Easter egg | Idle beat, 3% roll, 10min cooldown |
+| `ghostPale` | 5 (+5 held) | once | Rare Easter egg | Idle beat, 3% roll, 10min cooldown |
+| `glitchForm` | 4 (pingponged) | once | Rare Easter egg | Idle beat, 3% roll, 10min cooldown |
+| `shadowHands` | 4 curated | once | Rare Easter egg | Idle beat, 3% roll, 10min cooldown |
+| `meltdown` | 8 (+4 held) | once | Rare Easter egg | Idle beat, 3% roll, 10min cooldown |
+| idle: shiftWeight | 1 held | once | Idle micro-variety | Idle beat |
+| idle: stretch | 0 (transform) | once | Idle micro-variety | Idle beat |
+| idle: tiltCheck | 0 (transform) | once | Idle micro-variety / look-around | Idle beat, cursor-proximity |
+| idle: curious | 4 | once | Idle micro-variety / look-around | Idle beat |
+
+Not backed by dedicated states — reused deliberately rather than left silent:
+uncategorized app launches, network-restored, and browsing all bark only (no
+pose change, since there's nothing distinct to react *as*); `creative` apps
+reuse `coding`'s pose; low battery and unplugged both reuse `annoyed`/`idle`
+respectively with battery-specific bark text carrying the distinction.
+
+## What's actually on this sheet
+
 ## What's actually on this sheet
 
 This is not simple promotional art — it's a dense rip from what is clearly a

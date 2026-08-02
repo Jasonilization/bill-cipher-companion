@@ -19,7 +19,15 @@ struct PoseKeyframe: Sendable {
     var duration: TimeInterval
     var offset: CGVector = .zero
     var rotation: CGFloat = 0
-    var scale: CGFloat = 1
+    /// `nil` (the default) means "don't touch scale" — distinct from `1`,
+    /// which would explicitly force it. Every clip used to implicitly force
+    /// `1` on every keyframe (the old non-optional default), which silently
+    /// undid any horizontal-flip `xScale` set externally (wander's
+    /// walking-direction mirror) every single frame of any clip with a
+    /// transform track — walking's own bob included, since it fired every
+    /// 0.22s. `nil` lets a clip that doesn't care about scale leave
+    /// whatever's already there alone.
+    var scale: CGFloat?
     var timing: SKActionTimingMode = .easeInEaseOut
 
     static func hold(_ duration: TimeInterval) -> PoseKeyframe {
@@ -57,21 +65,36 @@ struct AnimationClip {
             let point = CGPoint(x: home.offset.dx + kf.offset.dx, y: home.offset.dy + kf.offset.dy)
             let move = SKAction.move(to: point, duration: kf.duration)
             let rotate = SKAction.rotate(toAngle: home.rotation + kf.rotation, duration: kf.duration, shortestUnitArc: true)
-            let scale = SKAction.scale(to: kf.scale, duration: kf.duration)
             move.timingMode = kf.timing
             rotate.timingMode = kf.timing
-            scale.timingMode = kf.timing
-            return SKAction.group([move, rotate, scale])
+            var actions: [SKAction] = [move, rotate]
+            if let targetScale = kf.scale {
+                let scale = SKAction.scale(to: targetScale, duration: kf.duration)
+                scale.timingMode = kf.timing
+                actions.append(scale)
+            }
+            return SKAction.group(actions)
         }
         return SKAction.sequence(steps)
     }
 
     private func textureAction() -> SKAction? {
         guard !textures.isEmpty else { return nil }
+        // `resize: false` deliberately, not `true` — every frame across
+        // every group shares one identical baked canvas size (that's the
+        // whole point of the shared-canvas anti-clipping fix), so resizing
+        // per-frame was never actually necessary. It was also actively
+        // harmful: `resize: true` re-derives the node's rendered size from
+        // each incoming texture on every single frame swap, which stomps
+        // any externally-set `xScale` sign back to positive — silently
+        // undoing wander's horizontal direction-flip within one frame of
+        // the walk cycle starting (confirmed by comparing screenshots of a
+        // leftward vs. a rightward wander leg: identical silhouette in
+        // both, which a working flip would never produce).
         if textures.count == 1 {
-            return SKAction.setTexture(textures[0], resize: true)
+            return SKAction.setTexture(textures[0], resize: false)
         }
-        return SKAction.animate(with: textures, timePerFrame: frameDuration, resize: true, restore: false)
+        return SKAction.animate(with: textures, timePerFrame: frameDuration, resize: false, restore: false)
     }
 
     /// Builds the full set of per-part actions for this clip, keyed by part.
@@ -86,7 +109,7 @@ struct AnimationClip {
             case .loop:
                 bodyActions.append(SKAction.repeatForever(texAction))
             case .pingpong:
-                let reversed = SKAction.animate(with: Array(textures.reversed()), timePerFrame: frameDuration, resize: true, restore: false)
+                let reversed = SKAction.animate(with: Array(textures.reversed()), timePerFrame: frameDuration, resize: false, restore: false)
                 bodyActions.append(SKAction.repeatForever(SKAction.sequence([texAction, reversed])))
             }
         }

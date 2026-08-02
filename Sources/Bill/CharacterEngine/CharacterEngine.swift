@@ -14,12 +14,14 @@ final class CharacterEngine {
     private var isRunning = false
     private var lastRareEventDate: Date?
 
-    /// Rare Easter eggs (power surge / zodiac vision / summon ritual) are
-    /// deliberately dramatic — see `BillState.rareEasterEggs` — so they're
-    /// gated to a small chance per idle beat *and* a cooldown, rather than
-    /// ever showing up back-to-back.
+    /// Rare Easter eggs (power surge / zodiac vision / summon ritual / …)
+    /// are deliberately dramatic — see `BillState.rareEasterEggs` — so
+    /// they're gated to a small chance per idle beat *and* a cooldown,
+    /// rather than ever showing up back-to-back.
     private static let rareEventChance = 0.03
+    private static let caneFlourishChance = 0.08
     private static let smugChance = 0.12
+    private static let ambientBarkChance = 0.18
     private static let rareEventCooldown: TimeInterval = 10 * 60
 
     init() {
@@ -30,6 +32,11 @@ final class CharacterEngine {
     func start() {
         guard !isRunning else { return }
         isRunning = true
+        // Kicks off the continuous idle bob (see `BillStateMachine.init`'s
+        // doc comment for why this can't happen at construction time) so
+        // Bill is already gently moving before the very first idle beat,
+        // rather than sitting frozen for the first 4-9s.
+        stateMachine.request(.idle)
         scheduleNextIdleBeat()
     }
 
@@ -69,13 +76,33 @@ final class CharacterEngine {
             return
         }
 
-        if Double.random(in: 0..<1) < Self.smugChance {
+        var roll = Double.random(in: 0..<1)
+
+        if roll < Self.caneFlourishChance {
+            stateMachine.request(.caneFlourish)
+            if Bool.random() {
+                stateMachine.showBark(BarkLines.random(from: BarkLines.caneFlourish))
+            }
+            return
+        }
+        roll -= Self.caneFlourishChance
+
+        if roll < Self.smugChance {
             stateMachine.request(.smug)
+            return
+        }
+        roll -= Self.smugChance
+
+        if roll < Self.ambientBarkChance {
+            stateMachine.showBark(BarkLines.random(from: BarkLines.idleAmbient + BarkLines.mischief))
             return
         }
 
         let variant = AnimationClipLibrary.IdleVariant.allCases.randomElement()!
         stateMachine.playIdleVariant(variant)
+        if variant == .curious, Bool.random() {
+            stateMachine.showBark(BarkLines.random(from: BarkLines.curiosity))
+        }
     }
 
     /// Returns `true` if a rare Easter egg fired (caller should skip the

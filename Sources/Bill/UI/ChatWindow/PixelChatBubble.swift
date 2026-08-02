@@ -1,0 +1,567 @@
+import AppKit
+
+/// AppKit's default `canBecomeKey` for a *borderless* window is `false` —
+/// a well-known gotcha that silently breaks keyboard focus for anything
+/// inside: `makeFirstResponder` "succeeds" but the window never actually
+/// takes key status, so typed keys go nowhere. This is almost certainly why
+/// the previous input box couldn't be typed into. Overriding it is the
+/// standard fix for a borderless-but-needs-keyboard-input panel.
+private final class KeyableBorderlessPanel: NSPanel {
+    override var canBecomeKey: Bool { true }
+    override var canBecomeMain: Bool { false }
+}
+
+/// A small, explicit close affordance. Before this, the only way to dismiss
+/// the bubble was clicking outside it or pressing Escape while composing —
+/// neither is a visible "this is how you close this" cue, which the
+/// exit/close requirement calls for directly. Drawn the same non-antialiased
+/// way as the rest of the chrome so it reads as part of the same pixel-art
+/// object, not a bolted-on system control. Internal (not private):
+/// `PixelMessageBubbleView` reuses this exact control for each per-message
+/// dismiss button rather than duplicating it.
+final class PixelCloseButton: NSView {
+    var onClick: (() -> Void)?
+    private var isHovering = false
+
+    override func draw(_ dirtyRect: NSRect) {
+        guard let ctx = NSGraphicsContext.current?.cgContext else { return }
+        ctx.setShouldAntialias(false)
+
+        ctx.setFillColor(NSColor.black.cgColor)
+        ctx.fill(bounds)
+        let inner = bounds.insetBy(dx: 2, dy: 2)
+        ctx.setFillColor((isHovering ? NSColor(calibratedRed: 0.85, green: 0.25, blue: 0.2, alpha: 1) : NSColor(calibratedWhite: 0.98, alpha: 1)).cgColor)
+        ctx.fill(inner)
+
+        ctx.setFillColor(isHovering ? NSColor.white.cgColor : NSColor.black.cgColor)
+        let step: CGFloat = max(1, inner.width / 6)
+        var rects: [CGRect] = []
+        let count = 4
+        for i in 0..<count {
+            let f = CGFloat(i)
+            rects.append(CGRect(x: inner.minX + step * (f + 1), y: inner.minY + step * (f + 1), width: step, height: step))
+            rects.append(CGRect(x: inner.maxX - step * (f + 2), y: inner.minY + step * (f + 1), width: step, height: step))
+        }
+        ctx.fill(rects)
+    }
+
+    override func mouseDown(with event: NSEvent) {
+        onClick?()
+    }
+
+    override func mouseEntered(with event: NSEvent) {
+        isHovering = true
+        needsDisplay = true
+    }
+
+    override func mouseExited(with event: NSEvent) {
+        isHovering = false
+        needsDisplay = true
+    }
+
+    override func updateTrackingAreas() {
+        super.updateTrackingAreas()
+        trackingAreas.forEach(removeTrackingArea)
+        addTrackingArea(NSTrackingArea(rect: bounds, options: [.mouseEnteredAndExited, .activeAlways], owner: self))
+    }
+
+    override func resetCursorRects() {
+        addCursorRect(bounds, cursor: .pointingHand)
+    }
+}
+
+/// Plain container for the stacked `PixelMessageBubbleView`s. Flipped so
+/// y=0 is the top: the oldest message sits at y=0 and each newer one is
+/// placed further down, which puts the newest message at the highest y —
+/// i.e. right above the input row, matching "new messages push the older
+/// ones upward." Never clipped/scrolled — sized to its full natural height
+/// so every message stays visible without needing to scroll to find it.
+private final class MessageStackView: NSView {
+    override var isFlipped: Bool { true }
+}
+
+/// The persistent "compose" bubble — Bill's own pixel speech-bubble style
+/// (the same layered border every other bubble in the app uses), but hosting
+/// a live `NSTextView` instead of static rendered text. Carries the tail
+/// (pointing toward Bill) and the panel-level close button, since it's the
+/// one element that's always present regardless of how many messages are
+/// stacked above it — there's no separate big background panel anymore for
+/// those to live on.
+private final class PixelInputBubbleView: NSView {
+    enum TailSide { case left, right }
+    var tailSide: TailSide = .left { didSet { needsDisplay = true } }
+
+    private let bodyWidthUnits: CGFloat
+    private let bodyHeightUnits: CGFloat
+    let closeButton = PixelCloseButton()
+
+    private static let pixelScale: CGFloat = PixelMessageBubbleView.pixelScale
+    private static let cornerRadius = 3
+    private static let borderThickness = 1
+    private static let accentThickness = 1
+    private static let closeButtonSize: CGFloat = 14
+    private static let closeGap: CGFloat = 5
+
+    init(bodyWidth: CGFloat, bodyHeight: CGFloat) {
+        bodyWidthUnits = bodyWidth / Self.pixelScale
+        bodyHeightUnits = bodyHeight / Self.pixelScale
+        let topStrip = Self.closeButtonSize + Self.closeGap * 2
+        let totalSize = NSSize(width: bodyWidth, height: bodyHeight + topStrip)
+        super.init(frame: NSRect(origin: .zero, size: totalSize))
+
+        closeButton.frame = NSRect(
+            x: totalSize.width - Self.closeGap - Self.closeButtonSize,
+            y: totalSize.height - Self.closeGap - Self.closeButtonSize,
+            width: Self.closeButtonSize,
+            height: Self.closeButtonSize
+        )
+        addSubview(closeButton)
+    }
+
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    override var isFlipped: Bool { false }
+
+    /// The rect (in this view's own point space) the caller should place
+    /// its input text view within — inset from `bounds` to land inside the
+    /// drawn border rather than under it.
+    var contentRect: NSRect {
+        let inset = CGFloat(Self.borderThickness + Self.accentThickness) * Self.pixelScale + 2
+        return NSRect(x: inset, y: inset, width: bodyWidthUnits * Self.pixelScale - inset * 2, height: bodyHeightUnits * Self.pixelScale - inset * 2)
+    }
+
+    override func draw(_ dirtyRect: NSRect) {
+        guard let ctx = NSGraphicsContext.current?.cgContext else { return }
+        ctx.saveGState()
+        ctx.setShouldAntialias(false)
+        ctx.setAllowsAntialiasing(false)
+        ctx.interpolationQuality = .none
+        ctx.scaleBy(x: Self.pixelScale, y: Self.pixelScale)
+
+        let bodyRect = CGRect(x: 0, y: 0, width: bodyWidthUnits, height: bodyHeightUnits)
+        BarkBubble.drawLayeredBorder(ctx, bodyRect: bodyRect, cornerRadius: Self.cornerRadius, borderThickness: Self.borderThickness, accentThickness: Self.accentThickness, accentColor: BillPalette.bodyYellow)
+
+        // Blocky tail on whichever edge faces Bill, same unit space as the
+        // border above so it reads as one continuous piece of chrome.
+        let midY = bodyRect.midY
+        ctx.setFillColor(BillPalette.black.cgColor)
+        switch tailSide {
+        case .left:
+            ctx.fill([CGRect(x: -3, y: midY - 3.5, width: 4, height: 7)])
+            ctx.setFillColor(NSColor(calibratedWhite: 0.98, alpha: 1).cgColor)
+            ctx.fill([CGRect(x: -1, y: midY - 2, width: 2, height: 4)])
+        case .right:
+            ctx.fill([CGRect(x: bodyRect.width - 1, y: midY - 3.5, width: 4, height: 7)])
+            ctx.setFillColor(NSColor(calibratedWhite: 0.98, alpha: 1).cgColor)
+            ctx.fill([CGRect(x: bodyRect.width - 1, y: midY - 2, width: 2, height: 4)])
+        }
+        ctx.restoreGState()
+    }
+}
+
+/// The primary way to talk to Bill: right-click him, choose "Talk", and this
+/// small pixel-styled bubble opens beside him — on whichever side of his
+/// window has room on screen — instead of the full ChatGPT web UI.
+///
+/// Holds the conversation as a stack of individual `PixelMessageBubbleView`s
+/// (own border, own accent color, own dismiss button) above a persistent
+/// input bubble — a loose group of Bill's own speech bubbles floating
+/// beside him, not one big panel with a text box glued to it. User and Bill
+/// messages are distinguished by accent color and side (Bill left, user
+/// right), the same convention as most chat UIs. Every message stays
+/// visible — the stack grows upward as new ones arrive (each popping in)
+/// rather than scrolling older ones out of view.
+@MainActor
+final class PixelChatBubble: NSObject, NSTextViewDelegate {
+    private let panel: KeyableBorderlessPanel
+    private let container: NSView
+    private let stackView: MessageStackView
+    private let inputBubble: PixelInputBubbleView
+    private let textView: NSTextView
+
+    private var outsideClickMonitor: Any?
+
+    var onSubmit: ((String) -> Void)?
+    var onDismiss: (() -> Void)?
+
+    /// Wide — the explicit ask was for a message to spread across most of
+    /// the screen rather than staying cramped in a narrow column. Kept
+    /// several points larger than `PixelMessageBubbleView.maxTextWidth`'s
+    /// own worst-case footprint (520 + its padding/border ≈ 548) rather
+    /// than an exact match: an exact fit leaves zero slack for any rounding
+    /// difference between the two, which was clipping bubbles against the
+    /// panel's own edge.
+    private static let maxWidth: CGFloat = 600
+    private static let minWidth: CGFloat = 260
+    private static let panelPadding: CGFloat = 8
+    private static let inputBodyHeight: CGFloat = 30
+    private static let bubbleSpacing: CGFloat = 8
+    private static let thinkingFrames = ["THINKING.", "THINKING..", "THINKING..."]
+    private static let resizeAnimationDuration: TimeInterval = 0.22
+
+    private var messages: [ChatMessage] = []
+    private var isComposing = true
+    private var thinkingTimer: Timer?
+    private var thinkingFrameIndex = 0
+    private var thinkingBubbleView: PixelMessageBubbleView?
+    private var bubbleViewsByID: [UUID: PixelMessageBubbleView] = [:]
+    private var lastAnchorFrame: NSRect?
+    private var lastScreen: NSScreen?
+    /// The panel's bottom edge, fixed once per open session so the stack
+    /// visibly grows *upward* from a stable base near Bill as messages
+    /// arrive, rather than re-centering (and drifting both up and down)
+    /// around Bill's frame on every single resize.
+    private var anchoredBottomY: CGFloat?
+
+    override init() {
+        panel = KeyableBorderlessPanel(
+            contentRect: NSRect(origin: .zero, size: NSSize(width: Self.minWidth, height: 100)),
+            styleMask: [.borderless, .nonactivatingPanel],
+            backing: .buffered,
+            defer: false
+        )
+        container = NSView(frame: NSRect(origin: .zero, size: panel.frame.size))
+        stackView = MessageStackView()
+        textView = NSTextView()
+        inputBubble = PixelInputBubbleView(bodyWidth: Self.maxWidth - Self.panelPadding * 2, bodyHeight: Self.inputBodyHeight)
+        super.init()
+        configure()
+    }
+
+    private func configure() {
+        panel.isOpaque = false
+        panel.backgroundColor = .clear
+        panel.hasShadow = false
+        panel.level = .floating
+        panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
+        panel.isReleasedWhenClosed = false
+
+        textView.font = NSFont.monospacedSystemFont(ofSize: 13, weight: .medium)
+        textView.textColor = .black
+        textView.backgroundColor = .clear
+        textView.drawsBackground = false
+        textView.isRichText = false
+        textView.delegate = self
+        textView.textContainerInset = NSSize(width: 0, height: 2)
+        textView.isVerticallyResizable = false
+        textView.isHorizontallyResizable = false
+        textView.autoresizingMask = [.width]
+        textView.textContainer?.widthTracksTextView = true
+        textView.textContainer?.heightTracksTextView = true
+
+        inputBubble.closeButton.onClick = { [weak self] in self?.hide() }
+        inputBubble.addSubview(textView)
+
+        container.addSubview(stackView)
+        container.addSubview(inputBubble)
+        panel.contentView = container
+    }
+
+    var isVisible: Bool { panel.isVisible }
+
+    /// Opens the bubble beside `anchorFrame` (Bill's character-window frame,
+    /// in screen coordinates) on whichever side of `screen` has room, ready
+    /// to compose the next message. Whatever conversation is already
+    /// stacked from earlier in this app session stays exactly as it was —
+    /// closing and reopening the bubble doesn't lose history.
+    func showCompose(near anchorFrame: NSRect, on screen: NSScreen) {
+        thinkingTimer?.invalidate()
+        beginComposing()
+        anchoredBottomY = nil
+        relayout(near: anchorFrame, on: screen, animated: false)
+        panel.makeKeyAndOrderFront(nil)
+        panel.makeFirstResponder(textView)
+        installOutsideClickMonitor()
+    }
+
+    private func beginComposing() {
+        isComposing = true
+        textView.isEditable = true
+        textView.isSelectable = true
+        textView.textColor = .black
+    }
+
+    /// Appends an animated "Thinking…" placeholder bubble from Bill — called
+    /// right after submit so the conversation never looks frozen/dead while
+    /// waiting, and a slow reply reads as Bill actively working rather than
+    /// nothing happening.
+    func showWaiting(near anchorFrame: NSRect, on screen: NSScreen) {
+        isComposing = false
+        textView.isEditable = false
+        textView.isSelectable = false
+
+        thinkingTimer?.invalidate()
+        thinkingFrameIndex = 0
+        setThinkingBubble(text: Self.thinkingFrames[0])
+        relayout(near: anchorFrame, on: screen, animated: true)
+        thinkingTimer = Timer.scheduledTimer(withTimeInterval: 0.45, repeats: true) { [weak self] _ in
+            Task { @MainActor in self?.advanceThinkingAnimation() }
+        }
+    }
+
+    private func advanceThinkingAnimation() {
+        thinkingFrameIndex += 1
+        let text = Self.thinkingFrames[thinkingFrameIndex % Self.thinkingFrames.count]
+        if thinkingBubbleView?.update(text: text) == true {
+            relayoutStack(animated: false)
+        }
+    }
+
+    /// Creates the "Thinking…" bubble once per exchange — later ticks update
+    /// its text in place (see `advanceThinkingAnimation`) rather than
+    /// recreating it, so it doesn't re-play its pop-in entrance every 0.45s.
+    private func setThinkingBubble(text: String) {
+        let bubble = PixelMessageBubbleView(message: ChatMessage(text: text, isFromUser: false), showCloseButton: false)
+        stackView.addSubview(bubble)
+        thinkingBubbleView = bubble
+        Self.popIn(bubble)
+    }
+
+    /// Appends Bill's real reply as a permanent message in the stack,
+    /// replacing the transient "Thinking…" placeholder, and immediately
+    /// re-opens the input for a follow-up — without this, the bubble went
+    /// permanently read-only after the first reply, with no way to keep
+    /// the conversation going short of closing and reopening it.
+    func showResponse(_ text: String, near anchorFrame: NSRect, on screen: NSScreen) {
+        thinkingTimer?.invalidate()
+        thinkingBubbleView?.removeFromSuperview()
+        thinkingBubbleView = nil
+        appendMessage(ChatMessage(text: text, isFromUser: false), near: anchorFrame, on: screen)
+        beginComposing()
+        panel.makeKeyAndOrderFront(nil)
+        panel.makeFirstResponder(textView)
+    }
+
+    func hide() {
+        thinkingTimer?.invalidate()
+        thinkingBubbleView?.removeFromSuperview()
+        thinkingBubbleView = nil
+        removeOutsideClickMonitor()
+        guard panel.isVisible else { return }
+        panel.orderOut(nil)
+        onDismiss?()
+    }
+
+    // MARK: - Message stack
+
+    private func appendMessage(_ message: ChatMessage, near anchorFrame: NSRect, on screen: NSScreen) {
+        messages.append(message)
+        relayout(near: anchorFrame, on: screen, animated: true)
+    }
+
+    private func removeMessage(id: UUID) {
+        messages.removeAll { $0.id == id }
+        bubbleViewsByID.removeValue(forKey: id)?.removeFromSuperview()
+        relayoutStack(animated: true)
+    }
+
+    /// Positions every bubble from `messages`, creating (and popping in)
+    /// only ones that don't already have a view, and smoothly sliding
+    /// existing ones to their new spot — so appending one new message
+    /// doesn't make the whole conversation flicker or re-animate.
+    private func rebuildMessageStack(contentWidth: CGFloat, animated: Bool) -> CGFloat {
+        var stillNeeded = Set<UUID>()
+        var y: CGFloat = 0
+        for message in messages {
+            stillNeeded.insert(message.id)
+            let bubbleView: PixelMessageBubbleView
+            let isNew: Bool
+            if let existing = bubbleViewsByID[message.id] {
+                bubbleView = existing
+                isNew = false
+            } else {
+                bubbleView = PixelMessageBubbleView(message: message)
+                bubbleView.onClose = { [weak self] in self?.removeMessage(id: message.id) }
+                bubbleViewsByID[message.id] = bubbleView
+                stackView.addSubview(bubbleView)
+                isNew = true
+            }
+            let x = message.isFromUser ? contentWidth - bubbleView.frame.width : 0
+            let target = CGPoint(x: x, y: y)
+            if isNew {
+                bubbleView.frame.origin = target
+                Self.popIn(bubbleView)
+            } else if animated, bubbleView.frame.origin != target {
+                NSAnimationContext.runAnimationGroup { ctx in
+                    ctx.duration = Self.resizeAnimationDuration
+                    ctx.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+                    bubbleView.animator().setFrameOrigin(target)
+                }
+            } else {
+                bubbleView.frame.origin = target
+            }
+            y += bubbleView.frame.height + Self.bubbleSpacing
+        }
+        for (id, view) in bubbleViewsByID where !stillNeeded.contains(id) {
+            view.removeFromSuperview()
+            bubbleViewsByID.removeValue(forKey: id)
+        }
+        if let thinkingBubbleView {
+            let x = contentWidth - thinkingBubbleView.frame.width
+            thinkingBubbleView.frame.origin = CGPoint(x: x, y: y)
+            y += thinkingBubbleView.frame.height + Self.bubbleSpacing
+        }
+        return max(0, y - Self.bubbleSpacing)
+    }
+
+    /// A quick scale-and-fade entrance for a newly-appeared bubble — the
+    /// concrete ask was that new messages should visibly "pop" in as the
+    /// stack grows, not just silently appear.
+    private static func popIn(_ view: NSView) {
+        view.wantsLayer = true
+        guard let layer = view.layer else { return }
+        let frame = view.frame
+        layer.anchorPoint = CGPoint(x: 0.5, y: 0.5)
+        view.frame = frame // re-derive layer.position for the new anchor point
+
+        let scale = CABasicAnimation(keyPath: "transform.scale")
+        scale.fromValue = 0.6
+        scale.toValue = 1.0
+        let fade = CABasicAnimation(keyPath: "opacity")
+        fade.fromValue = 0.0
+        fade.toValue = 1.0
+        let group = CAAnimationGroup()
+        group.animations = [scale, fade]
+        group.duration = 0.24
+        group.timingFunction = CAMediaTimingFunction(controlPoints: 0.3, 1.4, 0.6, 1)
+        layer.add(group, forKey: "popIn")
+    }
+
+    // MARK: - Layout
+
+    /// Re-measures and repositions everything using freshly-supplied anchor
+    /// info, remembering it so later internal-only updates (a message
+    /// dismissed via its own close button, a thinking-dots animation tick)
+    /// can relayout without needing a fresh anchor from the caller.
+    private func relayout(near anchorFrame: NSRect, on screen: NSScreen, animated: Bool) {
+        lastAnchorFrame = anchorFrame
+        lastScreen = screen
+        relayoutStack(animated: animated)
+    }
+
+    private func relayoutStack(animated: Bool) {
+        let contentWidth = Self.maxWidth - Self.panelPadding * 2
+        let naturalStackHeight = rebuildMessageStack(contentWidth: contentWidth, animated: animated)
+        let hasStackContent = naturalStackHeight > 0
+
+        let totalHeight = inputBubble.frame.height
+            + (hasStackContent ? Self.bubbleSpacing : 0)
+            + naturalStackHeight
+            + Self.panelPadding
+        let size = NSSize(width: Self.maxWidth, height: totalHeight)
+
+        inputBubble.frame.origin = CGPoint(x: Self.panelPadding, y: 0)
+        let scrollY = inputBubble.frame.height + (hasStackContent ? Self.bubbleSpacing : 0)
+        stackView.frame = NSRect(x: Self.panelPadding, y: scrollY, width: contentWidth, height: naturalStackHeight)
+
+        guard let anchorFrame = lastAnchorFrame, let screen = lastScreen else {
+            panel.setContentSize(size)
+            container.frame = NSRect(origin: .zero, size: size)
+            return
+        }
+        let targetFrame = frame(for: size, near: anchorFrame, on: screen)
+        let containerFrame = NSRect(origin: .zero, size: size)
+
+        if animated {
+            NSAnimationContext.runAnimationGroup { ctx in
+                ctx.duration = Self.resizeAnimationDuration
+                ctx.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+                panel.animator().setFrame(targetFrame, display: true)
+                container.animator().frame = containerFrame
+            }
+        } else {
+            panel.setFrame(targetFrame, display: true)
+            container.frame = containerFrame
+        }
+
+        let content = inputBubble.contentRect
+        textView.frame = content
+        textView.textContainer?.containerSize = NSSize(width: content.width, height: .greatestFiniteMagnitude)
+    }
+
+    /// Computes the panel's target frame and which side the input bubble's
+    /// tail should point. The *bottom* edge is anchored once (see
+    /// `anchoredBottomY`) so the panel grows upward from a stable base
+    /// near Bill instead of re-centering — and hence drifting both up and
+    /// down — around his frame on every single message.
+    private func frame(for size: NSSize, near anchorFrame: NSRect, on screen: NSScreen) -> NSRect {
+        let gap: CGFloat = 14
+        let spaceRight = screen.visibleFrame.maxX - anchorFrame.maxX
+        let spaceLeft = anchorFrame.minX - screen.visibleFrame.minX
+
+        let x: CGFloat
+        let tailSide: PixelInputBubbleView.TailSide
+        if spaceRight >= size.width + gap || spaceRight >= spaceLeft {
+            x = anchorFrame.maxX + gap
+            tailSide = .left
+        } else {
+            x = anchorFrame.minX - gap - size.width
+            tailSide = .right
+        }
+        inputBubble.tailSide = tailSide
+
+        let baseBottomY: CGFloat
+        if let anchoredBottomY {
+            baseBottomY = anchoredBottomY
+        } else {
+            // First layout of this session: start low enough that a
+            // modest conversation can grow upward without immediately
+            // hitting the screen's top edge, but still roughly level
+            // with Bill rather than pinned to the very bottom.
+            baseBottomY = min(anchorFrame.minY, screen.visibleFrame.minY + screen.visibleFrame.height * 0.35)
+            anchoredBottomY = baseBottomY
+        }
+
+        // Keep the *top* on screen even if the stack has grown tall — only
+        // ever shifts the bottom edge down from its anchor to make room,
+        // never up, so it doesn't undo the "grows upward" feel.
+        let y = min(baseBottomY, screen.visibleFrame.maxY - size.height - 8)
+        return NSRect(x: x, y: max(y, screen.visibleFrame.minY + 8), width: size.width, height: size.height)
+    }
+
+    // MARK: - NSTextViewDelegate
+
+    func textView(_ textView: NSTextView, doCommandBy commandSelector: Selector) -> Bool {
+        guard isComposing else { return false }
+        if commandSelector == #selector(NSResponder.insertNewline(_:)) {
+            submit()
+            return true
+        }
+        if commandSelector == #selector(NSResponder.cancelOperation(_:)) {
+            hide()
+            return true
+        }
+        return false
+    }
+
+    private func submit() {
+        let text = textView.string.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !text.isEmpty else { return }
+        textView.string = ""
+        if let anchorFrame = lastAnchorFrame, let screen = lastScreen {
+            appendMessage(ChatMessage(text: text, isFromUser: true), near: anchorFrame, on: screen)
+        }
+        onSubmit?(text)
+    }
+
+    // MARK: - Dismiss on outside click
+
+    private func installOutsideClickMonitor() {
+        removeOutsideClickMonitor()
+        outsideClickMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] _ in
+            Task { @MainActor in
+                guard let self, self.isComposing else { return }
+                self.hide()
+            }
+        }
+    }
+
+    private func removeOutsideClickMonitor() {
+        if let outsideClickMonitor {
+            NSEvent.removeMonitor(outsideClickMonitor)
+            self.outsideClickMonitor = nil
+        }
+    }
+}

@@ -5,13 +5,13 @@ import Foundation
 /// decide *when* to request them.
 ///
 /// `confused`, `dazed`, `poked`, `smug` are ordinary personality beats added
-/// during the sprite-sheet pass — each has a clean, dedicated frame sequence
-/// that didn't map to any of the original 13. `powerSurge`, `zodiacVision`,
-/// and `summonRitual` are deliberately dramatic/strange sequences from the
-/// sheet (a many-eyed energy surge, the zodiac-wheel prophecy vision, a
-/// ritual summoning circle) that don't belong in ordinary use — they're
-/// wired as rare, low-probability Easter eggs (see `CharacterEngine`'s idle
-/// beat scheduling) rather than discarded. See `Docs/SpriteAnimationCatalog.md`.
+/// during the first sprite-sheet pass. `powerSurge`, `zodiacVision`, and
+/// `summonRitual` were the first rare Easter eggs. The second, annotation-
+/// driven pass (see `Docs/SpriteAnimationCatalog.md`) added `caneFlourish`
+/// (a lighter, more frequent personality flourish) and four more rare
+/// Easter eggs — `ghostPale`, `glitchForm`, `shadowHands`, `meltdown` — all
+/// backed by real, complete sequences from the annotated sheet rather than
+/// discarded as "too strange for a companion."
 enum BillState: String, CaseIterable, Sendable {
     case idle
     case walking
@@ -30,22 +30,32 @@ enum BillState: String, CaseIterable, Sendable {
     case dazed
     case poked
     case smug
+    case caneFlourish
     case powerSurge
     case zodiacVision
     case summonRitual
+    case ghostPale
+    case glitchForm
+    case shadowHands
+    case meltdown
 
     /// Higher priority states can interrupt lower ones mid-beat.
-    /// Reactive/emotional spikes outrank ambient/idle behavior. The three
-    /// rare Easter eggs sit deliberately high — once one rolls, it should
-    /// play out rather than get immediately stomped by an ambient reaction.
+    /// Reactive/emotional spikes outrank ambient/idle behavior. Rare
+    /// Easter eggs sit deliberately high — once one rolls, it should play
+    /// out rather than get immediately stomped by an ambient reaction.
     var priority: Int {
         switch self {
-        case .powerSurge: return 98
-        case .poked: return 95
         case .surprised: return 100
+        case .poked: return 95
+        case .meltdown: return 99
+        case .powerSurge: return 98
+        case .glitchForm: return 97
+        case .ghostPale: return 94
         case .zodiacVision: return 92
-        case .summonRitual: return 91
-        case .celebrating: return 90
+        case .shadowHands: return 91
+        case .summonRitual: return 90
+        case .celebrating: return 89
+        case .caneFlourish: return 82
         case .heatingUp: return 80
         case .dazed: return 72
         case .annoyed: return 70
@@ -68,12 +78,15 @@ enum BillState: String, CaseIterable, Sendable {
         case .talking, .thinking, .sleeping, .gaming, .coding, .heatingUp, .charging, .walking:
             return true
         case .idle, .happy, .annoyed, .surprised, .celebrating, .confused, .dazed, .poked,
-             .smug, .powerSurge, .zodiacVision, .summonRitual:
+             .smug, .caneFlourish, .powerSurge, .zodiacVision, .summonRitual,
+             .ghostPale, .glitchForm, .shadowHands, .meltdown:
             return false
         }
     }
 
     /// Rare, dramatic beats reserved for `CharacterEngine`'s low-probability
     /// idle roll rather than any normal reaction path.
-    static let rareEasterEggs: [BillState] = [.powerSurge, .zodiacVision, .summonRitual]
+    static let rareEasterEggs: [BillState] = [
+        .powerSurge, .zodiacVision, .summonRitual, .ghostPale, .glitchForm, .shadowHands, .meltdown,
+    ]
 }

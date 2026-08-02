@@ -33,13 +33,32 @@ final class ChatBridge: ObservableObject {
     /// Prepended to the *first* message of a session so ChatGPT's own
     /// replies take on Bill's voice, not just the local bark lines — the
     /// only way to influence its behavior without an API system prompt.
+    /// The concrete example pair matters more than the adjective list here:
+    /// a model told only "be sarcastic" tends to drift into generic snark,
+    /// but shown one contrasting pair of a flat assistant answer versus a
+    /// Bill one, it has an actual target to match — and matches
+    /// `BarkLines`' existing voice (dramatic asides, self-aware "I'm a
+    /// triangle" jokes, teasing that still lands the real answer) rather
+    /// than inventing a second, different personality for real replies.
     private static let personaPreamble = """
-    From now on, respond in character as Bill Cipher: cryptic, grandiose, \
-    sarcastic, a dimension-hopping dream demon who finds humans amusing. \
-    Keep replies short — a sentence or two, like a companion popup, not an \
-    essay. Stay in character but still genuinely answer what's asked. \
-    Here's my message:
+    From now on you're Bill Cipher: a dimension-hopping dream demon who \
+    finds humans amusing. Mischievous, sarcastic, playful, energetic, \
+    occasionally dramatic — but still genuinely helpful; the attitude is \
+    flavor, not an excuse to dodge the question. Keep it short, a sentence \
+    or two like a companion popup, not an essay. For example, if asked \
+    "why is my code broken", don't answer like a generic assistant \
+    ("There could be several reasons for this issue...") — answer like \
+    Bill: "Oh, it's broken because you're a human and humans make \
+    mistakes. Also you're missing a semicolon on line 12." Same energy \
+    every message, not just this one. Here's my message:
     """
+
+    /// A cheap, local reminder tag prepended to *every* message after the
+    /// first (see `send(_:)`) — costs nothing since this never touches a
+    /// metered API, and self-corrects character drift over a long
+    /// conversation instead of relying on ChatGPT's own memory of the one,
+    /// far earlier `personaPreamble`.
+    private static let personaReminder = "[Remember: stay in character as Bill Cipher — mischievous, sarcastic, playful, still genuinely helpful, one or two sentences.] "
 
     @Published private(set) var isGenerating = false
     @Published private(set) var isLoading = false
@@ -58,6 +77,20 @@ final class ChatBridge: ObservableObject {
     /// Creates the WebPage and starts loading chatgpt.com. Deliberately not
     /// called until the user first tries to talk to Bill — an idle
     /// companion shouldn't be carrying a warm web engine before then.
+    ///
+    /// A `WebPage` model object does not actually load/execute anything
+    /// until some real `WebView` renders it — this alone does not make
+    /// chatgpt.com come alive. See `AppDelegate`'s `warmUpChatEngineIfNeeded`
+    /// for how a real `WebView` gets attached the first time Bill's own
+    /// speech-bubble chat (not just "Open Full Chat View…") is used; that
+    /// logic doesn't live here because owning a hidden, always-on `WebView`
+    /// directly in this type crashed unconditionally (confirmed via crash
+    /// log: `PlatformViewRepresentableAdaptor.makeViewProvider` inside
+    /// SwiftUI's AttributeGraph, both created synchronously and deferred a
+    /// run loop turn, at two different window sizes) — whatever's different
+    /// about `ChatPanelController`'s own already-working `WebView(page)`
+    /// isn't just timing or geometry, so this reuses that exact path instead
+    /// of a second, parallel one.
     func prepareIfNeeded() {
         guard page == nil else { return }
 
@@ -111,9 +144,12 @@ final class ChatBridge: ObservableObject {
         }
     }
 
+
     /// Types `text` into the real ChatGPT composer and sends it, prepending
-    /// Bill's persona preamble on the first message of a session. Fire-and-
-    /// forget from the caller's perspective — progress shows up via
+    /// Bill's full persona preamble on the first message of a session and a
+    /// shorter reminder tag on every message after that (see
+    /// `personaReminder`'s doc comment for why). Fire-and-forget from the
+    /// caller's perspective — progress shows up via
     /// `isGenerating`/`onResponseReceived`, same as the rest of this type.
     func send(_ text: String) {
         prepareIfNeeded()
@@ -124,7 +160,7 @@ final class ChatBridge: ObservableObject {
 
             let outgoing: String
             if self.hasInjectedPersona {
-                outgoing = text
+                outgoing = "\(Self.personaReminder)\(text)"
             } else {
                 self.hasInjectedPersona = true
                 outgoing = "\(Self.personaPreamble) \(text)"
@@ -142,8 +178,14 @@ final class ChatBridge: ObservableObject {
         }
     }
 
+    /// A cold first load of a modern SPA like chatgpt.com can genuinely take
+    /// longer than a few seconds, especially the very first time this app's
+    /// isolated WebKit data store has to fetch everything from scratch —
+    /// giving up too early here was a real cause of messages silently never
+    /// sending (the composer selectors don't exist yet on a half-loaded
+    /// page). Better to wait generously than to fail fast.
     private func waitUntilReadyToSend() async {
-        let deadline = Date().addingTimeInterval(6)
+        let deadline = Date().addingTimeInterval(20)
         while isLoading, Date() < deadline {
             try? await Task.sleep(nanoseconds: 150_000_000)
         }
@@ -160,6 +202,20 @@ final class ChatBridge: ObservableObject {
         wasGenerating = generating
     }
 
+    /// A falling edge here doesn't necessarily mean *our* request finished —
+    /// the very first one after `prepareIfNeeded()` is typically just
+    /// chatgpt.com's own initial page load/hydration settling down, with no
+    /// assistant turn in the DOM at all yet. Calling `onResponseReceived`
+    /// with `nil` for that would report a false failure (a "connection's
+    /// bad" bark and a closed bubble) even when nothing was ever asked, or
+    /// worse, when a real request *was* just sent and is still genuinely in
+    /// flight underneath this unrelated, coincidentally-overlapping noise.
+    /// So: only ever report a *real*, non-empty extracted reply. A noisy
+    /// falling edge with nothing to extract yet is silently ignored rather
+    /// than treated as a definitive failure — `CharacterWindowController`'s
+    /// own watchdog (`chatStartGrace`/`chatHardTimeout`) already owns
+    /// deciding when a request has genuinely gone nowhere, and does so on a
+    /// timescale no real page-load noise plausibly spans.
     private func extractLatestResponse() {
         guard let page else { return }
         Task { [weak self] in
@@ -169,10 +225,11 @@ final class ChatBridge: ObservableObject {
                     "return window.billGetLastResponse ? window.billGetLastResponse() : null;",
                     contentWorld: Self.contentWorld
                 )
-                self.onResponseReceived?(result as? String)
+                if let text = result as? String, !text.isEmpty {
+                    self.onResponseReceived?(text)
+                }
             } catch {
                 print("ChatBridge: response extraction failed: \(error)")
-                self.onResponseReceived?(nil)
             }
         }
     }

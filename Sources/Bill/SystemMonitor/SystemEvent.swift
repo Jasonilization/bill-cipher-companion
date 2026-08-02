@@ -6,6 +6,7 @@ enum AppCategory: String, Sendable, CaseIterable, Codable {
     case browsing
     case music
     case creative
+    case finder
 
     var displayName: String {
         switch self {
@@ -14,6 +15,7 @@ enum AppCategory: String, Sendable, CaseIterable, Codable {
         case .browsing: return "Browsing"
         case .music: return "Music"
         case .creative: return "Creative apps"
+        case .finder: return "Finder"
         }
     }
 }

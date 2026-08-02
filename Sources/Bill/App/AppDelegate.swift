@@ -16,8 +16,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var cancellables = Set<AnyCancellable>()
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        characterWindowController = CharacterWindowController(characterEngine: characterEngine, preferences: preferences, chatBridge: chatBridge)
+        characterWindowController = CharacterWindowController(characterEngine: characterEngine, preferences: preferences, chatBridge: chatBridge, memoryStore: memoryStore)
         chatPanelController = ChatPanelController(chatBridge: chatBridge)
+        characterWindowController.warmUpChatEngine = { [weak self] in self?.chatPanelController.warmUpIfNeeded() }
         settingsWindowController = SettingsWindowController(
             preferences: preferences,
             memoryStore: memoryStore,
@@ -39,7 +40,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         chatBridge.$isGenerating
             .removeDuplicates()
             .sink { [weak self] isGenerating in
-                self?.characterEngine.request(isGenerating ? .talking : .idle)
+                guard let self, characterWindowController.isPerformingBackgroundChatWork == false else { return }
+                self.characterEngine.request(isGenerating ? .talking : .idle)
             }
             .store(in: &cancellables)
 

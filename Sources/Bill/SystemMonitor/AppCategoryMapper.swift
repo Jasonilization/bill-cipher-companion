@@ -51,6 +51,9 @@ enum AppCategoryMapper {
         "com.seriflabs.affinityphoto2": .creative,
         "com.pixelmatorteam.pixelmator.x": .creative,
         "com.pixelmatorteam.pixelmator": .creative,
+
+        // Finder — a system app with no LSApplicationCategoryType of its own.
+        "com.apple.finder": .finder,
     ]
 
     private static let categoryUTIMap: [String: AppCategory] = [

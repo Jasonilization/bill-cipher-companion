@@ -30,6 +30,13 @@ final class BillStateMachine {
     init(rig: BillRigNode) {
         self.rig = rig
         equipProp(.none)
+        // Ambient idle isn't kicked off here: `onActivityChanged` isn't
+        // wired up by the host view yet at construction time (that happens
+        // in `CharacterWindowController.init`, which runs after this), so
+        // the resulting activity signal would fire into a nil closure and
+        // be silently lost, leaving the view paused despite the bob action
+        // technically running. `CharacterEngine.start()` — called once
+        // everything is connected — starts it instead.
     }
 
     /// Request a state change. Continuous states (walking, talking, sleeping,
@@ -51,8 +58,19 @@ final class BillStateMachine {
     func playIdleVariant(_ variant: AnimationClipLibrary.IdleVariant) {
         guard currentState == .idle else { return }
         runClip(variant.clip) { [weak self] in
-            self?.setClipActive(false)
+            // Resume the continuous idle bob rather than going fully static
+            // — a variant beat is a brief interruption of ambient idle, not
+            // a reason to freeze afterward.
+            self?.startAmbientIdle()
         }
+    }
+
+    /// Starts (or resumes) Bill's continuous idle bob — see
+    /// `AnimationClipLibrary.idle`'s doc comment for why this must never
+    /// simply stop and leave him static. Safe to call repeatedly; each call
+    /// just re-runs the same looping action under the same key.
+    private func startAmbientIdle() {
+        runClip(AnimationClipLibrary.idle, completion: nil)
     }
 
     /// Shows a short-lived speech bubble above Bill's head with a bark line.
@@ -132,23 +150,38 @@ final class BillStateMachine {
             let home = rig.homes[part] ?? PartHome()
             let move = SKAction.move(to: CGPoint(x: home.offset.dx, y: home.offset.dy), duration: 0.25)
             let rotate = SKAction.rotate(toAngle: home.rotation, duration: 0.25, shortestUnitArc: true)
-            let scale = SKAction.scale(to: 1, duration: 0.25)
             move.timingMode = .easeOut
             rotate.timingMode = .easeOut
-            scale.timingMode = .easeOut
-            var resetActions = [move, rotate, scale]
+            // Deliberately no scale reset here at all (there used to be a
+            // `scale(to: 1)`): scale is not a "home transform" concept the
+            // way offset/rotation are — nothing in this rig's rest pose
+            // needs a scale of exactly `1` (the body's actual rest scale is
+            // `BillRigNode.displayScale`, applied once at construction), and
+            // a handful of clips (stretch, charging's pulse) already ease
+            // their own scale back to neutral as their last keyframe. This
+            // reset was firing on every settle regardless, which is what
+            // was silently shrinking Bill from displayScale toward 1.0 and
+            // (via the sign of that same target) fighting wander's
+            // horizontal direction-flip. Scale is now only ever touched by
+            // whatever explicitly wants to change it.
+            var resetActions = [move, rotate]
             // Whatever clip was playing may have left the body on a
             // non-idle texture (annoyed's frown, a mid-walk-cycle frame,
             // ...) — settling back to idle has to restore the rest frame,
-            // not just the transform.
+            // not just the transform. `resize: false` since every frame
+            // shares one baked canvas size already (see `AnimationClip.
+            // textureAction`'s doc comment for why `resize: true` is both
+            // unnecessary and actively harmful here).
             if part == .body {
-                resetActions.append(SKAction.setTexture(BillSpriteCatalog.restTexture, resize: true))
+                resetActions.append(SKAction.setTexture(BillSpriteCatalog.restTexture, resize: false))
             }
             node.run(SKAction.group(resetActions), withKey: Self.actionKey)
         }
 
         setClipActive(true)
-        let work = DispatchWorkItem { [weak self] in self?.setClipActive(false) }
+        // Once the ease-back-to-rest finishes, hand off to the continuous
+        // idle bob rather than going static — see `startAmbientIdle`.
+        let work = DispatchWorkItem { [weak self] in self?.startAmbientIdle() }
         pendingWork = work
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3, execute: work)
     }
