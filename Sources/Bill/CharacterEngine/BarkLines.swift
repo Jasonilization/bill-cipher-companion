@@ -82,6 +82,52 @@ enum BarkLines {
         "{app} time. Let's see what questionable decisions get made today.",
     ]
 
+    /// `AppCategory.communication` — mail/chat/video-call apps. Bill's
+    /// actually addressing someone here (paired with the existing
+    /// `.talking` state), a distinct beat from `.coding`'s "watching
+    /// intently" read.
+    static let communication = [
+        "Ah, {app}. Off to charm or torment another human, I assume.",
+        "Communication! The mortal ritual of typing a thing, deleting it, and typing it again.",
+        "{app} again. Do try to say something interesting this time.",
+        "Someone on the other end of {app} has no idea what they're in for.",
+        "Ah, human correspondence. Slower than telepathy, but I'll allow it.",
+    ]
+
+    /// `AppCategory.productivity` — docs/sheets/slides/notes/school-portal
+    /// apps. The "sits down and focuses" beat (paired with `.focused`),
+    /// distinct from `.coding`'s pose.
+    static let productivity = [
+        "{app}. Look at you, pretending to be organized.",
+        "Ah, productivity. The performance mortals put on right before procrastinating anyway.",
+        "{app} open. A brave attempt at being a functional adult.",
+        "Spreadsheets, documents, whatever this is — I'll be here, unimpressed but watching.",
+        "Focus mode engaged. Try not to sprain something.",
+    ]
+
+    /// `AppCategory.aiChat` — a *different* AI chat app, specifically. A
+    /// knowing, faintly territorial reaction (paired with `.smug`) rather
+    /// than a neutral one, since there's only supposed to be one dream demon
+    /// in this relationship.
+    static let aiChat = [
+        "Oh, {app}? Talking to someone else now? Rude, but I'm not threatened. Mostly.",
+        "Another AI. How quaint. None of them have seen what I've seen.",
+        "{app}, huh. Go on, compare notes. I'll still be the interesting one.",
+        "You know I can hear you flirting with {app}, right?",
+    ]
+
+    /// `AppCategory.tinkering` — packet sniffers, SDR/radio tools, VM
+    /// managers, flashing/imaging utilities. Reads as "mad-science
+    /// tinkering" (paired with `.channeling`), which fits Bill's
+    /// personality better than lumping it into plain `.coding`.
+    static let tinkering = [
+        "{app}. Now THIS is the chaotic energy I respect.",
+        "Ah, tinkering. The fine art of breaking something to understand it.",
+        "I can feel the mad-science energy radiating off {app}. Delicious.",
+        "Careful with {app} — that's the kind of thing that summons things. I'd know.",
+        "Wires, protocols, virtual machines — my kind of mischief.",
+    ]
+
     static let batteryLow = [
         "Your little metal heart is dying. Might want to feed it.",
         "Low battery. Even I nap sometimes. Mostly not. But sometimes.",

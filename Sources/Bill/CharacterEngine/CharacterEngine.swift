@@ -14,6 +14,14 @@ final class CharacterEngine {
     private var isRunning = false
     private var lastRareEventDate: Date?
 
+    /// Divides the delay between idle beats — set by `AppDelegate` from
+    /// `AppPreferences.speakingFrequency` and kept live via a Combine
+    /// subscription there. Above 1.0 means shorter delays (chattier), below
+    /// means longer ones (quieter); a divisor rather than a multiplier so
+    /// "bigger number on the slider" reads as "more frequent," matching the
+    /// slider's intent rather than its literal arithmetic.
+    var speakingFrequencyMultiplier: Double = 1.0
+
     /// Rare Easter eggs (power surge / zodiac vision / summon ritual / …)
     /// are deliberately dramatic — see `BillState.rareEasterEggs` — so
     /// they're gated to a small chance per idle beat *and* a cooldown,
@@ -59,7 +67,8 @@ final class CharacterEngine {
 
     private func scheduleNextIdleBeat() {
         idleBeatTimer?.invalidate()
-        let delay = Double.random(in: 4...9)
+        let baseDelay = Double.random(in: 4...9)
+        let delay = max(0.5, baseDelay / speakingFrequencyMultiplier)
         idleBeatTimer = Timer.scheduledTimer(withTimeInterval: delay, repeats: false) { [weak self] _ in
             Task { @MainActor in
                 self?.fireIdleBeat()

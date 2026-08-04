@@ -13,26 +13,35 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var characterWindowController: CharacterWindowController!
     private var chatPanelController: ChatPanelController!
     private var settingsWindowController: SettingsWindowController!
+    private var dialogueRefreshLogWindowController: DialogueRefreshLogWindowController!
     private var cancellables = Set<AnyCancellable>()
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         characterWindowController = CharacterWindowController(characterEngine: characterEngine, preferences: preferences, chatBridge: chatBridge, memoryStore: memoryStore)
         chatPanelController = ChatPanelController(chatBridge: chatBridge)
         characterWindowController.warmUpChatEngine = { [weak self] in self?.chatPanelController.warmUpIfNeeded() }
+        characterWindowController.beginAwaitingChatResponse = { [weak self] in self?.chatPanelController.beginAwaitingResponse() }
+        characterWindowController.endAwaitingChatResponse = { [weak self] in self?.chatPanelController.endAwaitingResponse() }
         settingsWindowController = SettingsWindowController(
             preferences: preferences,
             memoryStore: memoryStore,
             onSignOut: { [weak self] in self?.chatBridge.signOut() }
         )
+        dialogueRefreshLogWindowController = DialogueRefreshLogWindowController(characterWindowController: characterWindowController)
         statusItemController = StatusItemController(
             appDelegate: self,
             characterEngine: characterEngine,
             characterWindowController: characterWindowController,
             chatPanelController: chatPanelController,
-            settingsWindowController: settingsWindowController
+            settingsWindowController: settingsWindowController,
+            dialogueRefreshLogWindowController: dialogueRefreshLogWindowController
         )
         characterWindowController.show()
         characterEngine.start()
+
+        preferences.$speakingFrequency
+            .sink { [weak self] frequency in self?.characterEngine.speakingFrequencyMultiplier = frequency }
+            .store(in: &cancellables)
 
         // Best-effort DOM-activity signal from the real ChatGPT page — see
         // ChatBridge's doc comment. Bill "talks" while it looks like content

@@ -1,5 +1,6 @@
 import AppKit
 import SpriteKit
+import Combine
 
 @MainActor
 final class CharacterWindowController: NSObject {
@@ -17,12 +18,20 @@ final class CharacterWindowController: NSObject {
     private var isAwaitingChatResponse = false
     private var chatTimeoutWork: DispatchWorkItem?
     private var dialogueRefreshTimer: Timer?
+    private var cancellables = Set<AnyCancellable>()
 
     /// Set by `AppDelegate` to `chatPanelController.warmUpIfNeeded` — see
     /// that method's doc comment for why this indirection exists (the real
     /// `WebView` chat needs has to come from the already-working full-panel
     /// path, not a dedicated hidden one, which crashed).
     var warmUpChatEngine: (() -> Void)?
+    /// Set by `AppDelegate` to `chatPanelController.beginAwaitingResponse`/
+    /// `endAwaitingResponse` — see those methods' doc comments for why a
+    /// reply's underlying `WebView` needs to be genuinely on-screen for the
+    /// short window while it's actually awaited, and why leaving it that
+    /// way permanently isn't worth what it costs.
+    var beginAwaitingChatResponse: (() -> Void)?
+    var endAwaitingChatResponse: (() -> Void)?
 
     /// True while a *silent* background chat request (the daily dialogue
     /// refresh) is in flight — `AppDelegate`'s `isGenerating`-driven
@@ -47,6 +56,19 @@ final class CharacterWindowController: NSObject {
     private static let chatStartGrace: TimeInterval = 20
     private static let chatHardTimeout: TimeInterval = 120
 
+    /// Reference values `applyCharacterScale` scales together — all
+    /// calibrated for `AppPreferences.characterScale == 1.0` (today's
+    /// existing look). Scaling just `rig.root` alone (SpriteKit's `xScale`/
+    /// `yScale`) would make Bill visually bigger or smaller *inside* an
+    /// unchanged, fixed-size window — fine for shrinking, but clips a
+    /// bigger Bill (and his bark bubble, which shares the same rig root)
+    /// against the window's own edges. Growing the window, hit region, and
+    /// rig anchor by the same factor keeps everything in the same relative
+    /// proportion at any scale, not just 1.0.
+    private static let baseWindowSize = NSSize(width: 260, height: 700)
+    private static let baseHitRegion = CGRect(x: 60, y: 25, width: 140, height: 195)
+    private static let baseBodyAnchorY: CGFloat = 110
+
     init(characterEngine: CharacterEngine, preferences: AppPreferences, chatBridge: ChatBridge, memoryStore: MemoryStore) {
         self.characterEngine = characterEngine
         self.preferences = preferences
@@ -56,8 +78,13 @@ final class CharacterWindowController: NSObject {
         // for the speech-bubble bark text — 360 wasn't enough once the bark
         // bubble moved to the chunkier pixel-font design (bigger per-line
         // height), which visibly clipped the top of anything past ~2 lines
-        // against the view's own bounds.
-        let size = NSSize(width: 260, height: 500)
+        // against the view's own bounds. Grown again from 500 to 700
+        // alongside raising `BarkBubble.maxLines` — idle/ambient text (up to
+        // and including the longer ChatGPT-generated dialogue lines) should
+        // always display in full rather than truncating with "…", and that
+        // needs real headroom for a much taller bubble to not just move the
+        // same clipping problem further up.
+        let size = NSSize(width: 260, height: 700)
         panel = NSPanel(
             contentRect: NSRect(origin: .zero, size: size),
             styleMask: [.borderless, .nonactivatingPanel],
@@ -77,10 +104,14 @@ final class CharacterWindowController: NSObject {
         panel.level = .floating
         panel.collectionBehavior = [.canJoinAllSpaces, .stationary, .fullScreenAuxiliary]
         panel.isMovableByWindowBackground = false
-        // The panel itself accepts mouse events now; BillHitTestView's own
-        // hitTest is what actually passes clicks through everywhere except
-        // Bill's silhouette, so the empty space around him stays click-through.
-        panel.ignoresMouseEvents = false
+        // `BillHitTestView`'s own hitTest only decides which view *within
+        // this window* handles an event — it doesn't make the window pass
+        // events through to whatever's behind it on screen, which needs
+        // `ignoresMouseEvents` toggled on the window itself. Starts `true`
+        // (click-through) since the cursor's position relative to Bill is
+        // unknown at launch; `startClickThroughTracking` (from `show()`)
+        // corrects this within one tick regardless of where it actually is.
+        panel.ignoresMouseEvents = true
 
         hitView.allowsTransparency = true
         hitView.ignoresSiblingOrder = true
@@ -102,13 +133,60 @@ final class CharacterWindowController: NSObject {
             hitView?.isPaused = !isActive
         }
 
-        if let screen = NSScreen.main {
-            let origin = NSPoint(
-                x: screen.visibleFrame.maxX - size.width - 24,
+        applyCharacterScale(preferences.characterScale, keepingCurrentPosition: false)
+        preferences.$characterScale
+            .sink { [weak self] scale in self?.applyCharacterScale(scale, keepingCurrentPosition: true) }
+            .store(in: &cancellables)
+    }
+
+    /// Resizes the window, `hitView`'s frame, Bill's clickable hit region,
+    /// and his rig's own position/scale together from `Self.base*` — see
+    /// their doc comment for why these all need to move as one unit rather
+    /// than just scaling `rig.root` in isolation.
+    ///
+    /// `keepingCurrentPosition`: `false` (only at initial setup) anchors
+    /// the window to its default screen corner the same way the original
+    /// fixed-size window always did; `true` (every later call, e.g. the
+    /// user dragging the Settings scale slider) instead keeps Bill's
+    /// current horizontal center and bottom edge fixed, so adjusting scale
+    /// grows/shrinks him in place rather than snapping him back to that
+    /// corner from wherever he'd wandered to.
+    private func applyCharacterScale(_ scale: CGFloat, keepingCurrentPosition: Bool) {
+        let newSize = NSSize(width: Self.baseWindowSize.width * scale, height: Self.baseWindowSize.height * scale)
+        var newOrigin: NSPoint
+        if keepingCurrentPosition {
+            let current = panel.frame
+            newOrigin = NSPoint(x: current.midX - newSize.width / 2, y: current.minY)
+        } else if let screen = NSScreen.main {
+            newOrigin = NSPoint(
+                x: screen.visibleFrame.maxX - newSize.width - 24,
                 y: screen.visibleFrame.minY + 24
             )
-            panel.setFrameOrigin(origin)
+        } else {
+            newOrigin = panel.frame.origin
         }
+
+        // `keepingCurrentPosition` re-centers on the *old* midpoint, so
+        // scaling up while Bill sits near a screen edge (his default spot)
+        // can push the wider/taller window partly off screen — clamp back
+        // on, rather than letting him (and his hit region, and wherever
+        // the chat bubble anchors from) drift somewhere half off-screen.
+        if let screen = NSScreen.main {
+            let visible = screen.visibleFrame
+            newOrigin.x = min(max(newOrigin.x, visible.minX), visible.maxX - newSize.width)
+            newOrigin.y = min(max(newOrigin.y, visible.minY), visible.maxY - newSize.height)
+        }
+
+        panel.setFrame(NSRect(origin: newOrigin, size: newSize), display: true)
+        hitView.frame = NSRect(origin: .zero, size: newSize)
+        hitView.hitRegion = CGRect(
+            x: Self.baseHitRegion.minX * scale,
+            y: Self.baseHitRegion.minY * scale,
+            width: Self.baseHitRegion.width * scale,
+            height: Self.baseHitRegion.height * scale
+        )
+        characterEngine.rig.root.position = CGPoint(x: newSize.width / 2, y: Self.baseBodyAnchorY * scale)
+        characterEngine.rig.root.setScale(scale)
     }
 
     /// Bill *is* the chat interface now: right-click → "Talk" opens a small
@@ -187,6 +265,7 @@ final class CharacterWindowController: NSObject {
 
     private func handleChatSubmit(_ text: String) {
         isAwaitingChatResponse = true
+        beginAwaitingChatResponse?()
         characterEngine.request(.thinking, force: true)
         chatBridge.send(contextualized(text))
         if let screen = NSScreen.main {
@@ -264,6 +343,7 @@ final class CharacterWindowController: NSObject {
         chatTimeoutWork?.cancel()
         chatTimeoutWork = nil
         isAwaitingChatResponse = false
+        endAwaitingChatResponse?()
         guard let response, !response.isEmpty else {
             characterEngine.request(.idle)
             characterEngine.bark(BarkLines.random(from: BarkLines.chatFailed))
@@ -314,6 +394,7 @@ final class CharacterWindowController: NSObject {
         panel.orderFrontRegardless()
         scheduleNextWander()
         startCursorWatch()
+        startClickThroughTracking()
         scheduleDialogueRefreshCheck()
     }
 
@@ -353,8 +434,30 @@ final class CharacterWindowController: NSObject {
     private static let maxAppDescriptionsPerRefresh = 5
 
     private func maybeRefreshDialogue() {
-        guard !isAwaitingChatResponse, !chatBubble.isVisible, !isPerformingBackgroundChatWork else { return }
         guard memoryStore.shouldRefreshDialogue(interval: Self.dialogueRefreshInterval) else { return }
+        performDialogueRefresh()
+    }
+
+    /// Manually forces the same daily refresh `maybeRefreshDialogue` fires
+    /// on its own once every 24h — reachable from the menu bar's "Refresh
+    /// Bill's Context Now" for anyone who doesn't want to wait for the
+    /// timer, e.g. right after a burst of using some new app. Bypasses only
+    /// the *interval* gate; still silently does nothing if a chat exchange
+    /// is already in flight or the bubble is open, same as the automatic
+    /// path, since this is meant to run invisibly in the background either
+    /// way.
+    func refreshDialogueNow() {
+        performDialogueRefresh()
+    }
+
+    /// Kept purely for the debug log window (see `DialogueRefreshLogEntry`'s
+    /// doc comment) — capped since this is a debug convenience, not
+    /// something meant to grow unbounded over a long-running session.
+    private(set) var dialogueRefreshLog: [DialogueRefreshLogEntry] = []
+    private static let maxDialogueRefreshLogEntries = 20
+
+    private func performDialogueRefresh() {
+        guard !isAwaitingChatResponse, !chatBubble.isVisible, !isPerformingBackgroundChatWork else { return }
         let summary = memoryStore.recentActivitySummary
         guard !summary.isEmpty else { return }
 
@@ -376,19 +479,32 @@ final class CharacterWindowController: NSObject {
                 """
         }
 
+        dialogueRefreshLog.append(DialogueRefreshLogEntry(date: Date(), prompt: prompt))
+        if dialogueRefreshLog.count > Self.maxDialogueRefreshLogEntries {
+            dialogueRefreshLog.removeFirst(dialogueRefreshLog.count - Self.maxDialogueRefreshLogEntries)
+        }
+
         isPerformingBackgroundChatWork = true
+        beginAwaitingChatResponse?()
         chatBridge.prepareIfNeeded()
         chatBridge.send(prompt)
     }
 
     private func finishDialogueRefresh(_ response: String?) {
         isPerformingBackgroundChatWork = false
+        endAwaitingChatResponse?()
         let pending = pendingDescriptionRequests
         pendingDescriptionRequests = [:]
-        guard let response else { return }
+        let logIndex = dialogueRefreshLog.indices.last
+
+        guard let response else {
+            if let logIndex { dialogueRefreshLog[logIndex].failureReason = "No response received (send failed or timed out)." }
+            return
+        }
 
         let trimChars = CharacterSet(charactersIn: " -•*0123456789.\"'")
         var dialogueLines: [String] = []
+        var descriptionsAdded: [(name: String, description: String)] = []
         for rawLine in response.components(separatedBy: .newlines) {
             let line = rawLine.trimmingCharacters(in: .whitespaces)
             guard line.hasPrefix("APP:") else {
@@ -407,8 +523,19 @@ final class CharacterWindowController: NSObject {
             let description = afterPrefix[separatorRange.upperBound...].trimmingCharacters(in: .whitespaces)
             guard let bundleID = pending[name], !description.isEmpty else { continue }
             memoryStore.setAppDescription(bundleID: bundleID, description)
+            descriptionsAdded.append((name: name, description: description))
         }
-        memoryStore.addGeneratedDialogue(Array(dialogueLines.prefix(8)))
+        let addedLines = Array(dialogueLines.prefix(8))
+        memoryStore.addGeneratedDialogue(addedLines)
+
+        if let logIndex {
+            dialogueRefreshLog[logIndex].rawResponse = response
+            dialogueRefreshLog[logIndex].dialogueLinesAdded = addedLines
+            dialogueRefreshLog[logIndex].appDescriptionsAdded = descriptionsAdded
+            if addedLines.isEmpty, descriptionsAdded.isEmpty {
+                dialogueRefreshLog[logIndex].failureReason = "Response received but nothing usable was parsed from it."
+            }
+        }
     }
 
     private func handleClick() {
@@ -605,5 +732,53 @@ final class CharacterWindowController: NSObject {
         if Bool.random() {
             characterEngine.bark(BarkLines.random(from: BarkLines.noticesCursor))
         }
+    }
+
+    // MARK: - Click-through outside Bill's silhouette
+
+    /// `BillHitTestView.hitTest(_:)` returning `nil` only decides which
+    /// view *inside this app's own window* handles an event — it does
+    /// nothing to pass that event through to whatever app is behind the
+    /// window on screen, since `panel.ignoresMouseEvents = false` means the
+    /// window itself still claims every click/scroll anywhere within its
+    /// frame. The character window's frame is large (260x700, to leave
+    /// headroom for the bark bubble above Bill's head), so left as-is that
+    /// silently ate clicks and scrolls over a sizable chunk of the screen —
+    /// a real "can't control my Mac" problem, not just a visual one.
+    ///
+    /// The fix macOS actually supports is toggling `ignoresMouseEvents` on
+    /// the whole window based on where the cursor currently is: `true`
+    /// (events pass through to whatever's behind) whenever the cursor is
+    /// outside Bill's own silhouette, `false` (events land on Bill, so
+    /// click/drag/right-click still work) when it's inside. `NSEvent.
+    /// mouseLocation` is a plain synchronous global read, so polling it
+    /// frequently is cheap — this runs much faster than `cursorWatchTimer`
+    /// above (that one's an occasional ambient-reaction check; this one
+    /// needs to feel instantaneous to not itself feel like the bug it's
+    /// fixing). Each tick itself is trivially cheap (a rect-contains-point
+    /// comparison), but a continuous, forever-running timer still means
+    /// the process never fully idles — macOS's energy-impact accounting
+    /// weighs wakeup *frequency*, not just per-wakeup CPU time. 100ms is
+    /// still well under human click-reaction time for a binary
+    /// pass-through toggle, so this halves the wakeup rate from the
+    /// original 20Hz with no perceptible responsiveness change.
+    private var clickThroughTimer: Timer?
+    private static let clickThroughCheckInterval: TimeInterval = 0.1
+
+    private func startClickThroughTracking() {
+        clickThroughTimer?.invalidate()
+        clickThroughTimer = Timer.scheduledTimer(withTimeInterval: Self.clickThroughCheckInterval, repeats: true) { [weak self] _ in
+            Task { @MainActor in self?.updateClickThrough() }
+        }
+    }
+
+    private func updateClickThrough() {
+        // Never flip mid-gesture — switching to click-through while a
+        // button is held would abandon an in-progress drag on Bill (or,
+        // symmetrically, suddenly start swallowing a drag that started
+        // elsewhere and is just passing over the window).
+        guard NSEvent.pressedMouseButtons == 0 else { return }
+        let hitRegionOnScreen = hitView.hitRegion.offsetBy(dx: panel.frame.minX, dy: panel.frame.minY)
+        panel.ignoresMouseEvents = !hitRegionOnScreen.contains(NSEvent.mouseLocation)
     }
 }

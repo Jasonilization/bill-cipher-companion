@@ -22,6 +22,8 @@ enum BillState: String, CaseIterable, Sendable {
     case sleeping
     case gaming
     case coding
+    case channeling
+    case focused
     case heatingUp
     case charging
     case surprised
@@ -62,7 +64,8 @@ enum BillState: String, CaseIterable, Sendable {
         case .confused: return 65
         case .smug: return 62
         case .happy: return 60
-        case .gaming, .coding: return 50
+        case .focused: return 58
+        case .gaming, .coding, .channeling: return 50
         case .thinking, .talking: return 45
         case .charging: return 40
         case .walking: return 30
@@ -75,10 +78,10 @@ enum BillState: String, CaseIterable, Sendable {
     /// single beat and then settles back to idle (false).
     var isContinuous: Bool {
         switch self {
-        case .talking, .thinking, .sleeping, .gaming, .coding, .heatingUp, .charging, .walking:
+        case .talking, .thinking, .sleeping, .gaming, .coding, .channeling, .heatingUp, .charging, .walking:
             return true
         case .idle, .happy, .annoyed, .surprised, .celebrating, .confused, .dazed, .poked,
-             .smug, .caneFlourish, .powerSurge, .zodiacVision, .summonRitual,
+             .smug, .focused, .caneFlourish, .powerSurge, .zodiacVision, .summonRitual,
              .ghostPale, .glitchForm, .shadowHands, .meltdown:
             return false
         }

@@ -87,12 +87,17 @@ private final class MessageStackView: NSView {
 /// one element that's always present regardless of how many messages are
 /// stacked above it — there's no separate big background panel anymore for
 /// those to live on.
+///
+/// Sized dynamically from the current typed text (see `updateSize(for:)`)
+/// rather than a single fixed bar — a short reply and a long paragraph
+/// shouldn't have to compose inside the same oversized box.
 private final class PixelInputBubbleView: NSView {
     enum TailSide { case left, right }
     var tailSide: TailSide = .left { didSet { needsDisplay = true } }
 
-    private let bodyWidthUnits: CGFloat
-    private let bodyHeightUnits: CGFloat
+    private var bodyWidthUnits: CGFloat = 0
+    private var bodyHeightUnits: CGFloat = 0
+    private let maxTextWidth: CGFloat
     let closeButton = PixelCloseButton()
 
     private static let pixelScale: CGFloat = PixelMessageBubbleView.pixelScale
@@ -101,21 +106,20 @@ private final class PixelInputBubbleView: NSView {
     private static let accentThickness = 1
     private static let closeButtonSize: CGFloat = 14
     private static let closeGap: CGFloat = 5
+    private static let paddingX: CGFloat = 10
+    private static let paddingY: CGFloat = 6
+    private static let font = NSFont.monospacedSystemFont(ofSize: 13, weight: .medium)
+    /// Floor on the composed width — an empty or one-character box would
+    /// otherwise shrink to almost nothing, which doesn't read as "type
+    /// here" the way a small-but-deliberate box does.
+    private static let minTextWidth: CGFloat = 90
+    private static let borderInsetPoints = CGFloat(borderThickness + accentThickness) * pixelScale
 
-    init(bodyWidth: CGFloat, bodyHeight: CGFloat) {
-        bodyWidthUnits = bodyWidth / Self.pixelScale
-        bodyHeightUnits = bodyHeight / Self.pixelScale
-        let topStrip = Self.closeButtonSize + Self.closeGap * 2
-        let totalSize = NSSize(width: bodyWidth, height: bodyHeight + topStrip)
-        super.init(frame: NSRect(origin: .zero, size: totalSize))
-
-        closeButton.frame = NSRect(
-            x: totalSize.width - Self.closeGap - Self.closeButtonSize,
-            y: totalSize.height - Self.closeGap - Self.closeButtonSize,
-            width: Self.closeButtonSize,
-            height: Self.closeButtonSize
-        )
+    init(maxTextWidth: CGFloat) {
+        self.maxTextWidth = maxTextWidth
+        super.init(frame: .zero)
         addSubview(closeButton)
+        updateSize(for: "")
     }
 
     required init?(coder: NSCoder) {
@@ -124,11 +128,54 @@ private final class PixelInputBubbleView: NSView {
 
     override var isFlipped: Bool { false }
 
+    /// Recomputes this bubble's size from `text` — the same stateless,
+    /// two-pass `boundingRect` measurement `PixelMessageBubbleView` uses
+    /// (measure at the max width to find how wide the content wants to be,
+    /// then re-measure at that final, possibly-narrower width, since
+    /// narrowing can change where lines wrap). Returns whether the size
+    /// actually changed, so the caller only needs to relayout the
+    /// surrounding panel when it did.
+    @discardableResult
+    func updateSize(for text: String) -> Bool {
+        let oldSize = frame.size
+        let sample = text.isEmpty ? " " : text
+        let attributed = NSAttributedString(string: sample, attributes: [.font: Self.font])
+
+        let wideBounding = attributed.boundingRect(
+            with: NSSize(width: maxTextWidth, height: .greatestFiniteMagnitude),
+            options: [.usesLineFragmentOrigin, .usesFontLeading]
+        )
+        let textWidth = min(max(ceil(wideBounding.width), Self.minTextWidth), maxTextWidth)
+
+        let finalBounding = attributed.boundingRect(
+            with: NSSize(width: textWidth, height: .greatestFiniteMagnitude),
+            options: [.usesLineFragmentOrigin, .usesFontLeading]
+        )
+        let textHeight = max(ceil(finalBounding.height), Self.font.pointSize + 4) + 4
+
+        bodyWidthUnits = (textWidth + Self.paddingX * 2 + Self.borderInsetPoints * 2) / Self.pixelScale
+        bodyHeightUnits = (textHeight + Self.paddingY * 2 + Self.borderInsetPoints * 2) / Self.pixelScale
+
+        let bodySize = NSSize(width: bodyWidthUnits * Self.pixelScale, height: bodyHeightUnits * Self.pixelScale)
+        let topStrip = Self.closeButtonSize + Self.closeGap * 2
+        let totalSize = NSSize(width: bodySize.width, height: bodySize.height + topStrip)
+        frame.size = totalSize
+
+        closeButton.frame = NSRect(
+            x: totalSize.width - Self.closeGap - Self.closeButtonSize,
+            y: totalSize.height - Self.closeGap - Self.closeButtonSize,
+            width: Self.closeButtonSize,
+            height: Self.closeButtonSize
+        )
+        needsDisplay = true
+        return frame.size != oldSize
+    }
+
     /// The rect (in this view's own point space) the caller should place
     /// its input text view within — inset from `bounds` to land inside the
     /// drawn border rather than under it.
     var contentRect: NSRect {
-        let inset = CGFloat(Self.borderThickness + Self.accentThickness) * Self.pixelScale + 2
+        let inset = Self.borderInsetPoints + 2
         return NSRect(x: inset, y: inset, width: bodyWidthUnits * Self.pixelScale - inset * 2, height: bodyHeightUnits * Self.pixelScale - inset * 2)
     }
 
@@ -196,7 +243,6 @@ final class PixelChatBubble: NSObject, NSTextViewDelegate {
     private static let maxWidth: CGFloat = 600
     private static let minWidth: CGFloat = 260
     private static let panelPadding: CGFloat = 8
-    private static let inputBodyHeight: CGFloat = 30
     private static let bubbleSpacing: CGFloat = 8
     private static let thinkingFrames = ["THINKING.", "THINKING..", "THINKING..."]
     private static let resizeAnimationDuration: TimeInterval = 0.22
@@ -225,7 +271,12 @@ final class PixelChatBubble: NSObject, NSTextViewDelegate {
         container = NSView(frame: NSRect(origin: .zero, size: panel.frame.size))
         stackView = MessageStackView()
         textView = NSTextView()
-        inputBubble = PixelInputBubbleView(bodyWidth: Self.maxWidth - Self.panelPadding * 2, bodyHeight: Self.inputBodyHeight)
+        // Matches PixelMessageBubbleView.maxTextWidth exactly (520) — same
+        // reasoning as the message bubbles themselves: contentWidth (584)
+        // minus this bubble's own worst-case footprint (520 + 28 padding/
+        // border ≈ 548) leaves the same ~36pt of slack, so no rounding
+        // difference can clip it against the panel's edge.
+        inputBubble = PixelInputBubbleView(maxTextWidth: 520)
         super.init()
         configure()
     }
@@ -248,8 +299,12 @@ final class PixelChatBubble: NSObject, NSTextViewDelegate {
         textView.isVerticallyResizable = false
         textView.isHorizontallyResizable = false
         textView.autoresizingMask = [.width]
-        textView.textContainer?.widthTracksTextView = true
-        textView.textContainer?.heightTracksTextView = true
+        // Both default to `true`, which silently re-clips the container to
+        // match `textView.frame` on every reassignment — the same cropping
+        // bug already fixed in `PixelMessageBubbleView`, just missed here
+        // since this is a separate text view (the composer, not a message).
+        textView.textContainer?.widthTracksTextView = false
+        textView.textContainer?.heightTracksTextView = false
 
         inputBubble.closeButton.onClick = { [weak self] in self?.hide() }
         inputBubble.addSubview(textView)
@@ -452,7 +507,20 @@ final class PixelChatBubble: NSObject, NSTextViewDelegate {
             + Self.panelPadding
         let size = NSSize(width: Self.maxWidth, height: totalHeight)
 
-        inputBubble.frame.origin = CGPoint(x: Self.panelPadding, y: 0)
+        // Anchored to whichever edge is closer to Bill (matching `tailSide`)
+        // so typing more text grows the bubble *away* from him instead of
+        // toward/into his window — a fixed left origin here meant that in
+        // the `.right` case (Bill to the panel's right) the bubble grew
+        // rightward, straight into Bill, since its tail-side edge was the
+        // wrong one to hold fixed.
+        let inputX: CGFloat
+        switch inputBubble.tailSide {
+        case .left:
+            inputX = Self.panelPadding
+        case .right:
+            inputX = contentWidth + Self.panelPadding - inputBubble.frame.width
+        }
+        inputBubble.frame.origin = CGPoint(x: inputX, y: 0)
         let scrollY = inputBubble.frame.height + (hasStackContent ? Self.bubbleSpacing : 0)
         stackView.frame = NSRect(x: Self.panelPadding, y: scrollY, width: contentWidth, height: naturalStackHeight)
 
@@ -536,10 +604,19 @@ final class PixelChatBubble: NSObject, NSTextViewDelegate {
         return false
     }
 
+    /// Grows/shrinks the input bubble as the user types — setting
+    /// `textView.string` directly (as `submit()` does to clear it) doesn't
+    /// post this notification, so that path resizes explicitly instead.
+    func textDidChange(_ notification: Notification) {
+        guard isComposing, inputBubble.updateSize(for: textView.string) else { return }
+        relayoutStack(animated: false)
+    }
+
     private func submit() {
         let text = textView.string.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty else { return }
         textView.string = ""
+        inputBubble.updateSize(for: "")
         if let anchorFrame = lastAnchorFrame, let screen = lastScreen {
             appendMessage(ChatMessage(text: text, isFromUser: true), near: anchorFrame, on: screen)
         }

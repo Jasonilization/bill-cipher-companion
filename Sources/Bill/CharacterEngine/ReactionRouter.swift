@@ -136,6 +136,22 @@ final class ReactionRouter {
             characterEngine.bark(BarkLines.resolvedRandom(from: BarkLines.browsing, appName: name))
         case .finder:
             characterEngine.bark(BarkLines.random(from: BarkLines.finder))
+        case .communication:
+            // Addressing someone else — `.talking`'s hand-raised gesture
+            // fits directly, unlike `.coding`'s "watching intently" read.
+            characterEngine.request(.talking)
+            characterEngine.bark(BarkLines.resolvedRandom(from: BarkLines.communication, appName: name))
+        case .productivity:
+            characterEngine.request(.focused)
+            characterEngine.bark(BarkLines.resolvedRandom(from: BarkLines.productivity, appName: name))
+        case .aiChat:
+            // Knowing/territorial rather than neutral — see `BarkLines.
+            // aiChat`'s doc comment.
+            characterEngine.request(.smug)
+            characterEngine.bark(BarkLines.resolvedRandom(from: BarkLines.aiChat, appName: name))
+        case .tinkering:
+            characterEngine.request(.channeling)
+            characterEngine.bark(BarkLines.resolvedRandom(from: BarkLines.tinkering, appName: name))
         }
     }
 

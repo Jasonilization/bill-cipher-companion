@@ -18,8 +18,8 @@ final class AppActivityMonitor {
                 let app = notification.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication,
                 let bundleID = app.bundleIdentifier
             else { return }
-            let category = AppCategoryMapper.category(bundleID: bundleID, bundleURL: app.bundleURL)
             let name = app.localizedName ?? bundleID
+            let category = AppCategoryMapper.category(bundleID: bundleID, bundleURL: app.bundleURL, name: name)
             Task { @MainActor in
                 self?.onAppActivated?(bundleID, name, category)
             }

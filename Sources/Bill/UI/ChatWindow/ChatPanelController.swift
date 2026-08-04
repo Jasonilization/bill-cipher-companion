@@ -14,6 +14,12 @@ final class ChatPanelController: NSObject {
     private let panel: NSPanel
     let chatBridge: ChatBridge
     private var outsideClickMonitor: Any?
+    /// True only while the user has explicitly opened this panel via `show()`
+    /// — distinct from `panel.isVisible`, which would also read `true`
+    /// during `beginAwaitingResponse()`'s deliberately-invisible (alpha
+    /// near zero) on-screen window, and needs to be told apart from that so
+    /// `endAwaitingResponse()` never stomps on a genuinely-open full view.
+    private var isExplicitlyShown = false
 
     init(chatBridge: ChatBridge) {
         self.chatBridge = chatBridge
@@ -56,15 +62,13 @@ final class ChatPanelController: NSObject {
         panel.ignoresMouseEvents = false
         panel.makeKeyAndOrderFront(nil)
         installOutsideClickMonitor()
+        isExplicitlyShown = true
     }
 
-    /// Fades back to invisible rather than `orderOut` — see `warmUpIfNeeded`'s
-    /// doc comment for why this panel needs to stay genuinely on-screen
-    /// (just invisible) instead of ordered out once chat has been used.
     func hide() {
-        panel.alphaValue = 0.01
-        panel.ignoresMouseEvents = true
+        panel.orderOut(nil)
         removeOutsideClickMonitor()
+        isExplicitlyShown = false
     }
 
     /// Bill's own speech-bubble chat (`PixelChatBubble`) drives `chatBridge`
@@ -94,24 +98,51 @@ final class ChatPanelController: NSObject {
     /// makes it naturally idempotent — later calls see a non-nil page and
     /// skip straight through.
     ///
-    /// Left genuinely on-screen at `alphaValue` near zero afterward, rather
-    /// than `orderOut` — WKWebView throttles a page's timers/observers once
-    /// its window is fully ordered out (occluded), and `ChatGPTBridgeScripts`
-    /// leans entirely on a `MutationObserver` plus `setTimeout` debouncing to
-    /// notice a reply. Ordering this panel out after warm-up meant that
-    /// observer could go quiet the moment the panel hid, so a reply might
-    /// never get reported back to Bill's own bubble until the user
-    /// separately opened "Open Full Chat View…" — which re-showed the panel
-    /// and let the *same*, already-arrived DOM content finally get noticed.
-    /// Staying on-screen (just invisible and click-through) keeps the page
-    /// running normally the whole time instead.
+    /// Ordered back out afterward — a brief real visibility window is
+    /// enough for `NSHostingView` to actually mount the `WKWebView` (see
+    /// `beginAwaitingResponse` for why it needs to come back *briefly*
+    /// later too). An earlier version of this left the panel sitting
+    /// on-screen at near-zero alpha permanently instead, which turned out
+    /// to render as a faint but genuinely visible pale box near the top of
+    /// the screen — not worth that cost just to keep one page's background
+    /// timers alive for an entire session when the actual need for that is
+    /// only ever a few seconds at a time.
     func warmUpIfNeeded() {
         guard chatBridge.page == nil else { return }
         chatBridge.prepareIfNeeded()
         positionTopRight()
+        panel.orderFrontRegardless()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
+            guard let self, !self.isExplicitlyShown else { return }
+            self.panel.orderOut(nil)
+        }
+    }
+
+    /// Call right after sending a message Bill is now awaiting a reply to.
+    /// Briefly brings this panel's `WebView` back to a genuinely on-screen
+    /// (not fully occluded/ordered-out) state — invisible in a screen
+    /// corner at near-zero alpha, click-through — only for the duration of
+    /// that one exchange: WKWebView throttles a fully-hidden page's own
+    /// timers/observers, and `ChatGPTBridgeScripts`'s "did a reply arrive"
+    /// signal depends entirely on the page's `MutationObserver` continuing
+    /// to run. Pairs with `endAwaitingResponse()`, which puts it back to
+    /// fully hidden once the exchange resolves, so this doesn't cost real
+    /// CPU/GPU for the rest of an idle session the way leaving it
+    /// permanently on-screen did.
+    func beginAwaitingResponse() {
+        guard chatBridge.page != nil, !isExplicitlyShown else { return }
+        positionTopRight()
         panel.alphaValue = 0.01
         panel.ignoresMouseEvents = true
         panel.orderFrontRegardless()
+    }
+
+    /// Pairs with `beginAwaitingResponse()` — never fires while the user has
+    /// the full view genuinely open (`isExplicitlyShown`), so a reply
+    /// resolving mid-browse doesn't yank the window out from under them.
+    func endAwaitingResponse() {
+        guard !isExplicitlyShown else { return }
+        panel.orderOut(nil)
     }
 
     private func positionTopRight() {

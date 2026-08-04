@@ -30,6 +30,8 @@ enum BillSpriteCatalog {
     static let talking = loadFrames("bill_talking", count: 3)
     static let smug = loadFrames("bill_smug", count: 2)
     static let snap = loadFrames("bill_snap", count: 3)
+    static let focused = loadFrames("bill_focused", count: 4)
+    static let channeling = loadFrames("bill_channeling", count: 9)
     static let celebrating = loadFrames("bill_celebrating", count: 5)
     static let curious = loadFrames("bill_curious", count: 4)
     static let cane = loadFrames("bill_cane", count: 8)
@@ -39,13 +41,61 @@ enum BillSpriteCatalog {
     static let powerSurgeClose = loadFrames("bill_powersurgeclose", count: 1)
     static let portalRing = loadFrames("bill_portalring", count: 8)
     static let zodiac = loadFrames("bill_zodiac", count: 8)
-    static let summonBuild = loadFrames("bill_summonbuild", count: 3)
-    static let summonHold = loadFrames("bill_summonhold", count: 1)
-    static let ghost = loadFrames("bill_ghost", count: 5)
+    /// Replaces the old `summonBuild`(3)+`summonHold`(1) pair — the
+    /// animation-director audit found the sheet's actual "glowing ritual
+    /// circle" (8 identical clone-triangles arranged in a ring, matching the
+    /// classic Bill-Cipher summoning motif) elsewhere on the sheet, a
+    /// stronger match for `summonRitual`'s own name/doc-comment than the
+    /// growth sequence previously backing it. Frame 1 is the full static
+    /// ring (curated as one merged frame, not an animatable sequence in its
+    /// own right); frames 2-4 are alternate eye-render variants of Bill
+    /// standing in it.
+    static let summonRitual = loadFrames("bill_summonritual", count: 4)
+    /// Re-exported through the corrected pipeline — was 5 frames (the pale
+    /// materialize-in only); the sheet's white box actually continues for 3
+    /// more frames (solid yellow true-form, a mark across the body, settling
+    /// in a red pool) with no internal border separating them from the first
+    /// 5, so the full 8-frame sequence is one continuous beat, not two.
+    static let ghost = loadFrames("bill_ghost", count: 8)
     static let glitch = loadFrames("bill_glitch", count: 4)
     static let shadowA = loadFrames("bill_shadowa", count: 5)
     static let shadowB = loadFrames("bill_shadowb", count: 4)
     static let meltdown = loadFrames("bill_meltdown", count: 8)
+
+    // MARK: - Dock-app reactions (animation-director audit — see
+    // `Docs/SpriteAnimationCatalog.md`). Each of these backs one specific
+    // app or a small cluster of genuinely-equivalent apps (see
+    // `SpecialAppMapper`), rather than one of the broad `AppCategory`
+    // buckets above — the sheet had enough distinct, verified material to
+    // give the dock's more distinctive apps their own reaction instead of
+    // lumping everything into `coding`/`creative`.
+    static let trickster = loadFrames("bill_trickster", count: 8)
+    static let darkWorld = loadFrames("bill_darkworld", count: 9)
+    static let hollowed = loadFrames("bill_hollowed", count: 11)
+    static let cultLeader = loadFrames("bill_cultleader", count: 8)
+    static let spooked = loadFrames("bill_spooked", count: 5)
+    static let scanning = loadFrames("bill_scanning", count: 8)
+    static let sneaking = loadFrames("bill_sneaking", count: 6)
+    static let glitching = loadFrames("bill_glitching", count: 4)
+    static let charged = loadFrames("bill_charged", count: 6)
+    static let transferring = loadFrames("bill_transferring", count: 12)
+    static let summoning = loadFrames("bill_summoning", count: 8)
+    static let sculpting = loadFrames("bill_sculpting", count: 14)
+    static let kinship = loadFrames("bill_kinship", count: 5)
+    static let fractaling = loadFrames("bill_fractaling", count: 3)
+    static let presenting = loadFrames("bill_presenting", count: 3)
+    static let guilty = loadFrames("bill_guilty", count: 3)
+    static let dreading = loadFrames("bill_dreading", count: 4)
+    static let grooving = loadFrames("bill_grooving", count: 3)
+    static let dispatching = loadFrames("bill_dispatching", count: 4)
+    static let ambushed = loadFrames("bill_ambushed", count: 8)
+    static let stressed = loadFrames("bill_stressed", count: 7)
+    static let watched = loadFrames("bill_watched", count: 5)
+    static let flinching = loadFrames("bill_flinching", count: 3)
+    static let huffy = loadFrames("bill_huffy", count: 6)
+    static let pushingCode = loadFrames("bill_pushingcode", count: 6)
+    static let browsingStore = loadFrames("bill_browsingstore", count: 3)
+    static let dancing = loadFrames("bill_dancing", count: 7)
 
     /// The single frame everything else falls back to / settles on.
     static var restTexture: SKTexture { idle[0] }

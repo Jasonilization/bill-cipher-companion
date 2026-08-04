@@ -8,19 +8,22 @@ final class StatusItemController: NSObject {
     private let characterWindowController: CharacterWindowController
     private let chatPanelController: ChatPanelController
     private let settingsWindowController: SettingsWindowController
+    private let dialogueRefreshLogWindowController: DialogueRefreshLogWindowController
 
     init(
         appDelegate: AppDelegate,
         characterEngine: CharacterEngine,
         characterWindowController: CharacterWindowController,
         chatPanelController: ChatPanelController,
-        settingsWindowController: SettingsWindowController
+        settingsWindowController: SettingsWindowController,
+        dialogueRefreshLogWindowController: DialogueRefreshLogWindowController
     ) {
         self.appDelegate = appDelegate
         self.characterEngine = characterEngine
         self.characterWindowController = characterWindowController
         self.chatPanelController = chatPanelController
         self.settingsWindowController = settingsWindowController
+        self.dialogueRefreshLogWindowController = dialogueRefreshLogWindowController
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         super.init()
         configure()
@@ -39,6 +42,9 @@ final class StatusItemController: NSObject {
         let openChatItem = NSMenuItem(title: "Open Full Chat View…", action: #selector(openChat), keyEquivalent: "")
         openChatItem.target = self
         menu.addItem(openChatItem)
+        let refreshContextItem = NSMenuItem(title: "Refresh Bill's Context Now", action: #selector(refreshDialogue), keyEquivalent: "")
+        refreshContextItem.target = self
+        menu.addItem(refreshContextItem)
         menu.addItem(.separator())
         let settingsItem = NSMenuItem(title: "Settings…", action: #selector(openSettings), keyEquivalent: ",")
         settingsItem.target = self
@@ -60,6 +66,10 @@ final class StatusItemController: NSObject {
         let wanderItem = NSMenuItem(title: "Debug: Trigger Wander Now", action: #selector(triggerWander), keyEquivalent: "")
         wanderItem.target = self
         menu.addItem(wanderItem)
+
+        let dialogueLogItem = NSMenuItem(title: "Debug: Show Dialogue Refresh Log", action: #selector(showDialogueRefreshLog), keyEquivalent: "")
+        dialogueLogItem.target = self
+        menu.addItem(dialogueLogItem)
         menu.addItem(.separator())
 
         let quitItem = NSMenuItem(title: "Quit Bill", action: #selector(AppDelegate.quit), keyEquivalent: "q")
@@ -88,6 +98,10 @@ final class StatusItemController: NSObject {
         chatPanelController.toggle()
     }
 
+    @objc private func refreshDialogue() {
+        characterWindowController.refreshDialogueNow()
+    }
+
     @objc private func openSettings() {
         settingsWindowController.show()
     }
@@ -107,5 +121,9 @@ final class StatusItemController: NSObject {
 
     @objc private func triggerWander() {
         characterWindowController.debugTriggerWander()
+    }
+
+    @objc private func showDialogueRefreshLog() {
+        dialogueRefreshLogWindowController.show()
     }
 }

@@ -7,6 +7,20 @@ enum AppCategory: String, Sendable, CaseIterable, Codable {
     case music
     case creative
     case finder
+    /// Mail/chat/video-call apps — a distinct pose from `coding`'s "watching
+    /// intently" read, since Bill's actually addressing someone here.
+    case communication
+    /// Docs/sheets/slides/notes/school-portal/language-learning apps — the
+    /// "sits down and focuses" beat, distinct from `coding`'s pose.
+    case productivity
+    /// Another AI chat app specifically (there's more than one of these
+    /// pinned in the dock) — a knowing, faintly territorial reaction rather
+    /// than a neutral one.
+    case aiChat
+    /// Packet sniffers, SDR/radio tools, VM managers, flashing/imaging
+    /// utilities — reads as "mad-science tinkering," which fits Bill's
+    /// personality better than lumping it into plain `coding`.
+    case tinkering
 
     var displayName: String {
         switch self {
@@ -16,6 +30,10 @@ enum AppCategory: String, Sendable, CaseIterable, Codable {
         case .music: return "Music"
         case .creative: return "Creative apps"
         case .finder: return "Finder"
+        case .communication: return "Communication"
+        case .productivity: return "Productivity"
+        case .aiChat: return "AI chat"
+        case .tinkering: return "Tinkering"
         }
     }
 }

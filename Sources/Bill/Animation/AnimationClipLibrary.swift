@@ -101,6 +101,8 @@ enum AnimationClipLibrary {
         case .glitchForm: return glitchForm
         case .shadowHands: return shadowHands
         case .meltdown: return meltdown
+        case .channeling: return channeling
+        case .focused: return focused
         }
     }
 
@@ -294,12 +296,13 @@ enum AnimationClipLibrary {
         loop: .once
     )
 
-    /// A conjured ring builds through three frames, then the full ritual
-    /// circle holds — replacing the old single static image with a real
-    /// windup.
+    /// The full ring formation holds first (the actual dramatic reveal —
+    /// see `BillSpriteCatalog.summonRitual`'s doc comment for why this
+    /// replaced the old growth-sequence source), then the 3 alternate
+    /// eye-render frames play through quickly as the ritual completes.
     static let summonRitual = AnimationClip(
-        textures: BillSpriteCatalog.summonBuild + holdLast(BillSpriteCatalog.summonHold, extra: 8),
-        frameDuration: 0.28,
+        textures: Array(repeating: BillSpriteCatalog.summonRitual[0], count: 6) + Array(BillSpriteCatalog.summonRitual.dropFirst()),
+        frameDuration: 0.25,
         loop: .once
     )
 
@@ -408,6 +411,26 @@ enum AnimationClipLibrary {
             ],
         ],
         loop: .pingpong
+    )
+
+    /// The sheet's channeling/spellcasting pose — continuous like
+    /// coding/gaming (see `BillState.isContinuous`/`priority`, which already
+    /// group this alongside them), pingponged forever rather than a
+    /// one-shot beat.
+    static let channeling = AnimationClip(
+        textures: pingpongLoop(BillSpriteCatalog.channeling),
+        frameDuration: 0.15,
+        loop: .loop
+    )
+
+    /// The sheet's focused-concentration pose — unlike `channeling`, this
+    /// is a brief personality beat (see `BillState.isContinuous`, which
+    /// groups it with `smug`/`happy` rather than the sustained activity
+    /// states), not a sustained activity loop.
+    static let focused = AnimationClip(
+        textures: pingpong(BillSpriteCatalog.focused),
+        frameDuration: 0.2,
+        loop: .once
     )
 
     // MARK: - Idle variety (short, sparse beats — not a continuous loop)

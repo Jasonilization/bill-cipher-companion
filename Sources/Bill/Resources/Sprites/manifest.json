@@ -27,6 +27,17 @@
       "bill_celebrating_04.png",
       "bill_celebrating_05.png"
     ],
+    "bill_channeling": [
+      "bill_channeling_01.png",
+      "bill_channeling_02.png",
+      "bill_channeling_03.png",
+      "bill_channeling_04.png",
+      "bill_channeling_05.png",
+      "bill_channeling_06.png",
+      "bill_channeling_07.png",
+      "bill_channeling_08.png",
+      "bill_channeling_09.png"
+    ],
     "bill_charging": [
       "bill_charging_01.png"
     ],
@@ -49,6 +60,12 @@
     "bill_dazed": [
       "bill_dazed_01.png",
       "bill_dazed_02.png"
+    ],
+    "bill_focused": [
+      "bill_focused_01.png",
+      "bill_focused_02.png",
+      "bill_focused_03.png",
+      "bill_focused_04.png"
     ],
     "bill_ghost": [
       "bill_ghost_01.png",

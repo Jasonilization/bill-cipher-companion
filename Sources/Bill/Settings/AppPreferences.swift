@@ -12,6 +12,8 @@ final class AppPreferences: ObservableObject {
         static let roaming = "billRoamingEnabled"
         static let disabledCategories = "billDisabledCategories"
         static let adLib = "billAdLibEnabled"
+        static let characterScale = "billCharacterScale"
+        static let speakingFrequency = "billSpeakingFrequency"
     }
 
     @Published var isRoamingEnabled: Bool {
@@ -30,6 +32,31 @@ final class AppPreferences: ObservableObject {
         didSet { UserDefaults.standard.set(isAdLibEnabled, forKey: Keys.adLib) }
     }
 
+    /// Multiplies Bill's base on-screen size — `BillRigNode.displayScale`
+    /// is the 1.0 baseline this scales from. Clamped to a sane range so a
+    /// bad persisted value (or a stray slider drag) can't make him
+    /// disappear to a pixel or take over the whole screen.
+    @Published var characterScale: Double {
+        didSet {
+            let clamped = min(max(characterScale, Self.characterScaleRange.lowerBound), Self.characterScaleRange.upperBound)
+            if clamped != characterScale { characterScale = clamped; return }
+            UserDefaults.standard.set(characterScale, forKey: Keys.characterScale)
+        }
+    }
+    static let characterScaleRange: ClosedRange<Double> = 0.5...2.0
+
+    /// Multiplies how often Bill fires an ambient idle beat/bark — see
+    /// `CharacterEngine.scheduleNextIdleBeat`'s use of this. 1.0 is the
+    /// existing baseline cadence; lower is quieter, higher is chattier.
+    @Published var speakingFrequency: Double {
+        didSet {
+            let clamped = min(max(speakingFrequency, Self.speakingFrequencyRange.lowerBound), Self.speakingFrequencyRange.upperBound)
+            if clamped != speakingFrequency { speakingFrequency = clamped; return }
+            UserDefaults.standard.set(speakingFrequency, forKey: Keys.speakingFrequency)
+        }
+    }
+    static let speakingFrequencyRange: ClosedRange<Double> = 0.25...2.5
+
     @Published private(set) var launchAtLoginStatus: SMAppService.Status
 
     init() {
@@ -38,6 +65,10 @@ final class AppPreferences: ObservableObject {
         isAdLibEnabled = (defaults.object(forKey: Keys.adLib) as? Bool) ?? false
         let disabledRaw = defaults.stringArray(forKey: Keys.disabledCategories) ?? []
         disabledCategories = Set(disabledRaw.compactMap(AppCategory.init(rawValue:)))
+        let storedScale = (defaults.object(forKey: Keys.characterScale) as? Double) ?? 1.0
+        characterScale = min(max(storedScale, Self.characterScaleRange.lowerBound), Self.characterScaleRange.upperBound)
+        let storedFrequency = (defaults.object(forKey: Keys.speakingFrequency) as? Double) ?? 1.0
+        speakingFrequency = min(max(storedFrequency, Self.speakingFrequencyRange.lowerBound), Self.speakingFrequencyRange.upperBound)
         launchAtLoginStatus = SMAppService.mainApp.status
     }
 

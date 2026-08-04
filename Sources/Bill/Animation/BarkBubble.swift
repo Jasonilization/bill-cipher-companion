@@ -45,9 +45,15 @@ enum BarkBubble {
     /// separate window, so anything wider gets clipped by the view bounds
     /// — the exact "resizing looks wrong" bug for long lines).
     private static let maxTextWidthUnits = 66
-    /// Caps vertical growth for the same reason — six lines is as tall as
-    /// the bubble can go without crowding the top of the character window.
-    private static let maxLines = 6
+    /// Caps vertical growth for the same reason — the character window's
+    /// height (`CharacterWindowController`) is sized to leave enough
+    /// headroom above Bill's head for this many lines without the bubble
+    /// itself getting clipped by the window's own top edge. Raised well
+    /// past the old cap of 6 (which was truncating with "…" for anything
+    /// longer than a short one-liner, including the ChatGPT-generated
+    /// dialogue lines and any longer static bark) — idle/ambient text
+    /// should always show in full.
+    private static let maxLines = 14
 
     static func makeNode(text: String, maxWidth: CGFloat) -> SKNode {
         let lines = PixelFont.wrap(normalize(text.uppercased()), maxWidthUnits: maxTextWidthUnits, maxLines: maxLines)

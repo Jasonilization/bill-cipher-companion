@@ -20,14 +20,21 @@ enum AppCategoryMapper {
         "com.sublimetext.4": .coding,
         "dev.warp.Warp-Stable": .coding,
         "com.vscodium": .coding,
+        "com.electron.dockerdesktop": .coding,
 
-        // Gaming (platforms/launchers — individual games are usually
-        // covered by the LSApplicationCategoryType fallback below)
+        // Gaming (platforms/launchers — most individual games are covered by
+        // the LSApplicationCategoryType fallback below, but Steam games in
+        // particular often ship with no `LSApplicationCategoryType` set at
+        // all, so the ones actually in this dock are listed explicitly).
         "com.valvesoftware.steam": .gaming,
         "net.battle.app": .gaming,
         "com.epicgames.EpicGamesLauncher": .gaming,
         "com.gog.galaxy": .gaming,
         "com.blizzard.worldofwarcraft": .gaming,
+        "com.Massive-Monster.Cult-Of-The-Lamb": .gaming,
+        "com.tobyfox.undertale": .gaming,
+        "com.tobyfox.deltarune": .gaming,
+        "unity.Team Cherry.Hollow Knight": .gaming,
 
         // Browsing — no generic App Store category exists for "browser"
         "com.apple.Safari": .browsing,
@@ -51,9 +58,37 @@ enum AppCategoryMapper {
         "com.seriflabs.affinityphoto2": .creative,
         "com.pixelmatorteam.pixelmator.x": .creative,
         "com.pixelmatorteam.pixelmator": .creative,
+        "org.blenderfoundation.blender": .creative,
+        "com.orama-interactive.pixelorama": .creative,
+        "com.jasonilization.mandelbrotexplorer": .creative,
 
         // Finder — a system app with no LSApplicationCategoryType of its own.
         "com.apple.finder": .finder,
+
+        // Communication
+        "com.apple.mail": .communication,
+        "us.zoom.xos": .communication,
+        "com.tencent.xinWeChat": .communication,
+        "com.apple.MobileSMS": .communication,
+
+        // Productivity
+        "com.apple.Notes": .productivity,
+
+        // AI chat — deliberately its own category, not `.coding`/`.creative`,
+        // since the reaction (see `ReactionRouter`) is a knowing dig at
+        // "another AI" rather than a neutral work pose.
+        "com.openai.codex": .aiChat,
+        "com.openai.chat": .aiChat,
+
+        // Tinkering — hacking/hardware/mad-science tools. This is where
+        // Bill's mystical-schemer personality gets to have the most fun.
+        "org.wireshark.Wireshark": .tinkering,
+        "oorg.sdrpp.sdrpp": .tinkering,
+        "com.altillimity.satdump": .tinkering,
+        "com.raspberrypi.rpi-imager": .tinkering,
+        "io.balena.etcher": .tinkering,
+        "com.yourcompany.qFlipper": .tinkering,
+        "com.utmapp.UTM": .tinkering,
     ]
 
     private static let categoryUTIMap: [String: AppCategory] = [
@@ -63,11 +98,45 @@ enum AppCategoryMapper {
         "public.app-category.graphics-design": .creative,
         "public.app-category.photography": .creative,
         "public.app-category.video": .creative,
+        "public.app-category.education": .productivity,
+        "public.app-category.productivity": .productivity,
+        "public.app-category.social-networking": .communication,
     ]
 
-    static func category(bundleID: String, bundleURL: URL?) -> AppCategory? {
+    /// Safari Web Apps (sites pinned to the Dock via "Add to Dock") each get
+    /// a random per-installation bundle ID like
+    /// `com.apple.Safari.WebApp.<UUID>` — there's no stable identifier to
+    /// hardcode for these the way there is for a real native app, so they're
+    /// matched by their (stable, user-visible) Dock label instead. Matching
+    /// is case-insensitive substring, not exact, so small name variations
+    /// (a site's tab title changing slightly, "Google Docs" vs "Docs") don't
+    /// silently stop matching.
+    private static let webAppNameOverrides: [(match: String, category: AppCategory)] = [
+        ("google docs", .productivity),
+        ("google sheets", .productivity),
+        ("google slides", .productivity),
+        ("google classroom", .productivity),
+        ("drive", .productivity),
+        ("duolingo", .productivity),
+        ("shrewsbury", .productivity),
+        ("socs", .productivity),
+        ("student", .productivity),
+        ("gmail", .communication),
+        ("chat", .communication),
+        ("youtube", .music),
+        ("github", .coding),
+        ("canva", .creative),
+    ]
+
+    static func category(bundleID: String, bundleURL: URL?, name: String = "") -> AppCategory? {
         if let known = bundleIDOverrides[bundleID] {
             return known
+        }
+        if bundleID.hasPrefix("com.apple.Safari.WebApp"), !name.isEmpty {
+            let lowered = name.lowercased()
+            if let match = webAppNameOverrides.first(where: { lowered.contains($0.match) }) {
+                return match.category
+            }
         }
         guard let bundleURL, let bundle = Bundle(url: bundleURL),
               let uti = bundle.infoDictionary?["LSApplicationCategoryType"] as? String
