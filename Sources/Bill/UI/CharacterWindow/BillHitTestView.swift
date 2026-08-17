@@ -50,8 +50,32 @@ final class BillHitTestView: SKView {
             onDragStarted?()
         }
         if isDragging {
-            window.setFrameOrigin(NSPoint(x: startOrigin.x + dx, y: startOrigin.y + dy))
+            let proposed = NSPoint(x: startOrigin.x + dx, y: startOrigin.y + dy)
+            window.setFrameOrigin(clampedOrigin(for: proposed))
         }
+    }
+
+    /// Keeps Bill's *silhouette* on screen, rather than his window.
+    ///
+    /// `BillPanel` deliberately opts out of AppKit's own frame constraint so
+    /// that the tall empty bark-bubble headroom above his hat can run off
+    /// the top of the screen (otherwise that headroom hits the menu bar and
+    /// Bill stops well short of the top — the bug this exists to fix). That
+    /// removes the only thing stopping a drag from parking him somewhere
+    /// unreachable, so the constraint is reapplied here against
+    /// `hitRegion` — the part of the window that's actually *him*, and the
+    /// only part that can be grabbed to drag him back.
+    private func clampedOrigin(for proposed: NSPoint) -> NSPoint {
+        let regionOnScreen = hitRegion.offsetBy(dx: proposed.x, dy: proposed.y)
+        let screen = NSScreen.screens.first { $0.frame.intersects(regionOnScreen) }
+            ?? window?.screen
+            ?? NSScreen.main
+        guard let visible = screen?.visibleFrame else { return proposed }
+
+        return NSPoint(
+            x: min(max(proposed.x, visible.minX - hitRegion.minX), visible.maxX - hitRegion.maxX),
+            y: min(max(proposed.y, visible.minY - hitRegion.minY), visible.maxY - hitRegion.maxY)
+        )
     }
 
     override func mouseUp(with event: NSEvent) {

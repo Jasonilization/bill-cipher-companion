@@ -86,6 +86,7 @@ final class BillStateMachine {
         bubble.zPosition = 10
         rig.root.addChild(bubble)
         barkNode = bubble
+        nudgeBarkOnScreen(bubble)
 
         setBarkActive(true)
         bubble.run(.fadeIn(withDuration: 0.2))
@@ -102,6 +103,67 @@ final class BillStateMachine {
         }
         barkDismissWork = work
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.2 + displayDuration, execute: work)
+    }
+
+    /// Slides a just-placed bark bubble back onto the screen if Bill is
+    /// standing somewhere that would push it off an edge.
+    ///
+    /// Bill's window is much larger than Bill, and it is deliberately
+    /// allowed to hang off the screen edges (see `BillPanel`) so that he
+    /// himself can reach them — his window's empty margins, not his body,
+    /// are what would otherwise collide with the screen bounds. The bubble
+    /// lives in those margins, so once he's parked at an edge the default
+    /// "centered, 128 above the anchor" spot can land partly or entirely
+    /// out of view. Rather than restrict where he can stand, the bubble
+    /// gives way: it slides down/sideways just far enough to stay readable,
+    /// overlapping him if that's what it takes (a speech bubble crowding
+    /// the character is normal comic framing; a speech bubble off the top of
+    /// the screen is just a missing line).
+    private func nudgeBarkOnScreen(_ bubble: SKNode) {
+        guard let scene = rig.root.scene,
+              let window = scene.view?.window,
+              let visible = (window.screen ?? NSScreen.main)?.visibleFrame
+        else { return }
+
+        // `calculateAccumulatedFrame` is in the parent's (rig.root's) space,
+        // so convert through the scene to land in window/screen points.
+        let localFrame = bubble.calculateAccumulatedFrame()
+        let bottomLeftInScene = scene.convert(CGPoint(x: localFrame.minX, y: localFrame.minY), from: rig.root)
+        let topRightInScene = scene.convert(CGPoint(x: localFrame.maxX, y: localFrame.maxY), from: rig.root)
+        let onScreen = CGRect(
+            x: window.frame.minX + bottomLeftInScene.x,
+            y: window.frame.minY + bottomLeftInScene.y,
+            width: topRightInScene.x - bottomLeftInScene.x,
+            height: topRightInScene.y - bottomLeftInScene.y
+        )
+
+        // Scene points -> rig-local units, since `bubble.position` is
+        // expressed in the (scaled) rig's own space.
+        let rigScaleX = rig.root.xScale == 0 ? 1 : abs(rig.root.xScale)
+        let rigScaleY = rig.root.yScale == 0 ? 1 : abs(rig.root.yScale)
+
+        var dx: CGFloat = 0
+        if onScreen.maxX > visible.maxX {
+            dx = visible.maxX - onScreen.maxX
+        } else if onScreen.minX < visible.minX {
+            dx = visible.minX - onScreen.minX
+        }
+
+        var dy: CGFloat = 0
+        if onScreen.maxY > visible.maxY {
+            dy = visible.maxY - onScreen.maxY
+        } else if onScreen.minY < visible.minY {
+            dy = visible.minY - onScreen.minY
+        }
+
+        guard dx != 0 || dy != 0 else { return }
+        bubble.position = CGPoint(
+            x: bubble.position.x + dx / rigScaleX,
+            // Floored at Bill's own anchor: past that the bubble would be
+            // sliding down *below* him, which never buys back any
+            // visibility that moving it further could not.
+            y: max(0, bubble.position.y + dy / rigScaleY)
+        )
     }
 
     private func play(_ state: BillState) {

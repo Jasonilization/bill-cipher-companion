@@ -85,7 +85,11 @@ final class CharacterWindowController: NSObject {
         // needs real headroom for a much taller bubble to not just move the
         // same clipping problem further up.
         let size = NSSize(width: 260, height: 700)
-        panel = NSPanel(
+        // `BillPanel`, not a plain `NSPanel` — see its doc comment: the
+        // stock frame constraint pins this (deliberately headroom-heavy)
+        // window's top to the menu bar, which is what stopped Bill being
+        // draggable past roughly 60% of the screen height.
+        panel = BillPanel(
             contentRect: NSRect(origin: .zero, size: size),
             styleMask: [.borderless, .nonactivatingPanel],
             backing: .buffered,
@@ -153,6 +157,12 @@ final class CharacterWindowController: NSObject {
     /// corner from wherever he'd wandered to.
     private func applyCharacterScale(_ scale: CGFloat, keepingCurrentPosition: Bool) {
         let newSize = NSSize(width: Self.baseWindowSize.width * scale, height: Self.baseWindowSize.height * scale)
+        let newHitRegion = CGRect(
+            x: Self.baseHitRegion.minX * scale,
+            y: Self.baseHitRegion.minY * scale,
+            width: Self.baseHitRegion.width * scale,
+            height: Self.baseHitRegion.height * scale
+        )
         var newOrigin: NSPoint
         if keepingCurrentPosition {
             let current = panel.frame
@@ -166,25 +176,28 @@ final class CharacterWindowController: NSObject {
             newOrigin = panel.frame.origin
         }
 
-        // `keepingCurrentPosition` re-centers on the *old* midpoint, so
-        // scaling up while Bill sits near a screen edge (his default spot)
-        // can push the wider/taller window partly off screen — clamp back
-        // on, rather than letting him (and his hit region, and wherever
-        // the chat bubble anchors from) drift somewhere half off-screen.
+        // Clamp so Bill's actual silhouette (`newHitRegion`) stays
+        // reachable on screen — *not* the full window rect, which is
+        // mostly empty, click-through headroom reserved above his hat for
+        // the bark bubble. Clamping the whole window there meant a taller
+        // window at larger scale pushed Bill further and further down as
+        // scale grew, even though that empty headroom never needed to be
+        // on screen at all. This still lets the window's top run off
+        // screen, which is exactly what lets Bill's own hat reach the
+        // screen's actual top edge instead of stopping short of it.
         if let screen = NSScreen.main {
             let visible = screen.visibleFrame
-            newOrigin.x = min(max(newOrigin.x, visible.minX), visible.maxX - newSize.width)
-            newOrigin.y = min(max(newOrigin.y, visible.minY), visible.maxY - newSize.height)
+            let minOriginX = visible.minX - newHitRegion.minX
+            let maxOriginX = visible.maxX - newHitRegion.maxX
+            newOrigin.x = min(max(newOrigin.x, minOriginX), maxOriginX)
+            let minOriginY = visible.minY - newHitRegion.minY
+            let maxOriginY = visible.maxY - newHitRegion.maxY
+            newOrigin.y = min(max(newOrigin.y, minOriginY), maxOriginY)
         }
 
         panel.setFrame(NSRect(origin: newOrigin, size: newSize), display: true)
         hitView.frame = NSRect(origin: .zero, size: newSize)
-        hitView.hitRegion = CGRect(
-            x: Self.baseHitRegion.minX * scale,
-            y: Self.baseHitRegion.minY * scale,
-            width: Self.baseHitRegion.width * scale,
-            height: Self.baseHitRegion.height * scale
-        )
+        hitView.hitRegion = newHitRegion
         characterEngine.rig.root.position = CGPoint(x: newSize.width / 2, y: Self.baseBodyAnchorY * scale)
         characterEngine.rig.root.setScale(scale)
     }
@@ -634,8 +647,14 @@ final class CharacterWindowController: NSObject {
 
         let currentOrigin = panel.frame.origin
         let deltaX = CGFloat.random(in: -170...170)
-        let minX = screen.visibleFrame.minX
-        let maxX = screen.visibleFrame.maxX - panel.frame.width
+        // Bounded by Bill's silhouette, not his window — the window is far
+        // wider than he is (empty click-through margin either side), so
+        // clamping the window edge to the screen edge parked him a visible
+        // gap short of both sides and he could never walk fully into a
+        // corner. Same reasoning as `BillHitTestView.clampedOrigin(for:)`.
+        let hit = hitView.hitRegion
+        let minX = screen.visibleFrame.minX - hit.minX
+        let maxX = screen.visibleFrame.maxX - hit.maxX
         let newX = min(max(currentOrigin.x + deltaX, minX), maxX)
 
         // The walk-cycle art is a side-facing run (legs kick and the lead
