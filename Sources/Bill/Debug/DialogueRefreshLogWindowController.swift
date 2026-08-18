@@ -14,18 +14,17 @@ final class DialogueRefreshLogWindowController: NSObject {
         self.characterWindowController = characterWindowController
     }
 
-    /// Rebuilds the content each time rather than reusing a cached view —
-    /// the log keeps growing in the background, so a stale snapshot from
-    /// whenever the window happened to first open wouldn't be useful.
+    /// The view observes the store directly now, so it stays live while the
+    /// window is open — no rebuild-on-show workaround needed.
     func show() {
-        let view = DialogueRefreshLogView(entries: characterWindowController.dialogueRefreshLog)
+        let view = DialogueRefreshLogView(store: characterWindowController.dialogueRefreshStore)
         let hosting = NSHostingController(rootView: view)
         if let window {
             window.contentViewController = hosting
         } else {
             let win = NSWindow(contentViewController: hosting)
             win.title = "Bill — Dialogue Refresh Log"
-            win.styleMask = [.titled, .closable, .resizable]
+            win.styleMask = [NSWindow.StyleMask.titled, .closable, .resizable]
             win.isReleasedWhenClosed = false
             window = win
         }

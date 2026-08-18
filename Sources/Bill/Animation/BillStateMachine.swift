@@ -33,6 +33,18 @@ final class BillStateMachine {
 
     /// Fires whenever animation starts (`true`) or fully settles (`false`),
     /// so the host `SKView` can be paused/unpaused accordingly.
+    /// `true` when Bill needs the full frame rate, `false` when only the
+    /// ambient idle bob is running.
+    ///
+    /// This replaces a pause signal that could never fire. The original design
+    /// paused the `SKView` entirely while idle, but `setClipActive(false)` was
+    /// never called anywhere, so `isPaused` went false on the first clip and
+    /// stayed false for the whole session. Even if it had been called, ambient
+    /// idle deliberately animates forever (Bill must never freeze), so pausing
+    /// was never actually reachable. Dropping the frame rate instead is the
+    /// win that was intended: idle is the overwhelming majority of the runtime
+    /// and its content changes ~6.7 times a second, so rendering it at 30fps
+    /// was roughly double what it needed.
     var onActivityChanged: ((Bool) -> Void)?
     /// Called every time a clip actually begins playing, with the state that
     /// started it. `CharacterEngine` wires this to `AnimationCoverage`.
@@ -82,6 +94,10 @@ final class BillStateMachine {
     /// just re-runs the same looping action under the same key.
     private func startAmbientIdle() {
         runClip(AnimationClipLibrary.idle, completion: nil)
+        // `runClip` has just flagged the clip active; ambient idle is the one
+        // clip that does NOT need the full frame rate, so step straight back
+        // down. This is the only place the low-rate edge is produced.
+        setAmbientOnly()
     }
 
     /// Shows a short-lived speech bubble above Bill's head with a bark line.
@@ -313,6 +329,13 @@ final class BillStateMachine {
     private func setClipActive(_ active: Bool) {
         isClipActive = active
         onActivityChanged?(isClipActive || isBarkActive)
+    }
+
+    /// Called once a clip has fully settled back to ambient idle — this is the
+    /// `false` edge that never used to exist.
+    private func setAmbientOnly() {
+        isClipActive = false
+        onActivityChanged?(isBarkActive)
     }
 
     private func setBarkActive(_ active: Bool) {

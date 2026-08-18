@@ -151,6 +151,43 @@ final class ChatBridge: ObservableObject {
     /// `personaReminder`'s doc comment for why). Fire-and-forget from the
     /// caller's perspective — progress shows up via
     /// `isGenerating`/`onResponseReceived`, same as the rest of this type.
+    /// A distinct preamble for *background* work.
+    ///
+    /// `personaPreamble` and `personaReminder` both instruct "one or two
+    /// sentences", which directly contradicts the dialogue refresh asking for a
+    /// dozen tagged lines — the two were fighting, and the reply came back
+    /// truncated or in prose. Background tasks get their own framing that keeps
+    /// the voice but drops the length constraint.
+    private static let taskPreamble = """
+    You're Bill Cipher: a dimension-hopping dream demon who finds humans \
+    amusing — mischievous, sarcastic, playful, occasionally dramatic. This is a \
+    bulk writing task, not a conversation, so ignore any earlier instruction \
+    about keeping replies to one or two sentences. Follow the output format \
+    below exactly and output nothing else — no preamble, no commentary, no \
+    numbering, no markdown.
+    """
+
+    /// Sends without the conversational persona framing. Used only by the
+    /// background dialogue refresh.
+    func sendTask(_ text: String) {
+        prepareIfNeeded()
+        Task { [weak self] in
+            guard let self else { return }
+            await self.waitUntilReadyToSend()
+            guard let page = self.page else { return }
+            let outgoing = "\(Self.taskPreamble)\n\n\(text)"
+            do {
+                _ = try await page.callJavaScript(
+                    "return window.billSendMessage ? window.billSendMessage(text) : false;",
+                    arguments: ["text": outgoing],
+                    contentWorld: Self.contentWorld
+                )
+            } catch {
+                print("ChatBridge: task send failed: \(error)")
+            }
+        }
+    }
+
     func send(_ text: String) {
         prepareIfNeeded()
         Task { [weak self] in

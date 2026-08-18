@@ -67,6 +67,12 @@ final class CharacterWindowController: NSObject {
     private static let baseHitRegion = CGRect(x: 60, y: 25, width: 140, height: 195)
     private static let baseBodyAnchorY: CGFloat = 110
 
+    /// Full rate, used while a real clip, a bark, or a roaming beat is running.
+    private static let activeFramesPerSecond = 30
+    /// The ambient idle bob changes content ~6.7 times a second (7 frames at
+    /// 0.15s), so rendering it faster than this buys nothing visible.
+    private static let ambientFramesPerSecond = 12
+
     init(characterEngine: CharacterEngine, preferences: AppPreferences, chatBridge: ChatBridge, memoryStore: MemoryStore) {
         self.characterEngine = characterEngine
         self.preferences = preferences
@@ -117,8 +123,9 @@ final class CharacterWindowController: NSObject {
 
         hitView.allowsTransparency = true
         hitView.ignoresSiblingOrder = true
-        // Bill is small and simple — 30fps is imperceptible and halves render cost vs 60fps.
-        hitView.preferredFramesPerSecond = 30
+        // Bill is small and simple — 30fps is imperceptible and halves render
+        // cost vs 60fps. See `onActivityChanged` below for the ambient step-down.
+        hitView.preferredFramesPerSecond = Self.activeFramesPerSecond
         hitView.onClick = { [weak self] in self?.handleClick() }
         hitView.onDragStarted = { [weak self] in self?.handleDragStarted() }
         hitView.onDragEnded = { [weak self] in self?.handleDragEnded() }
@@ -128,11 +135,17 @@ final class CharacterWindowController: NSObject {
         hitView.presentScene(scene)
         panel.contentView = hitView
 
-        // Idle Bill has nothing to draw every frame — pause the render loop
-        // entirely and only wake it while a clip is actually playing.
-        hitView.isPaused = true
+        // Idle Bill still animates (the ambient bob must never freeze), so the
+        // render loop cannot simply be paused. Instead it runs at
+        // `ambientFramesPerSecond` while nothing but that bob is happening and
+        // steps up to `activeFramesPerSecond` for real clips, barks and
+        // roaming. Idle dominates the runtime, so this is where the GPU time
+        // actually goes.
+        hitView.preferredFramesPerSecond = Self.ambientFramesPerSecond
         characterEngine.stateMachine.onActivityChanged = { [weak hitView] isActive in
-            hitView?.isPaused = !isActive
+            hitView?.preferredFramesPerSecond = isActive
+                ? Self.activeFramesPerSecond
+                : Self.ambientFramesPerSecond
         }
 
         applyCharacterScale(preferences.characterScale, keepingCurrentPosition: false)
@@ -444,7 +457,7 @@ final class CharacterWindowController: NSObject {
 
     private func maybeRefreshDialogue() {
         guard memoryStore.shouldRefreshDialogue(interval: Self.dialogueRefreshInterval) else { return }
-        performDialogueRefresh()
+        performDialogueRefresh(trigger: "daily timer")
     }
 
     /// Manually forces the same daily refresh `maybeRefreshDialogue` fires
@@ -456,95 +469,265 @@ final class CharacterWindowController: NSObject {
     /// path, since this is meant to run invisibly in the background either
     /// way.
     func refreshDialogueNow() {
-        performDialogueRefresh()
+        performDialogueRefresh(trigger: "menu: Refresh Bill's Context Now")
     }
 
     /// Kept purely for the debug log window (see `DialogueRefreshLogEntry`'s
     /// doc comment) — capped since this is a debug convenience, not
     /// something meant to grow unbounded over a long-running session.
-    private(set) var dialogueRefreshLog: [DialogueRefreshLogEntry] = []
-    private static let maxDialogueRefreshLogEntries = 20
+    /// Observable + persisted, so the log window updates live and survives a
+    /// relaunch. See `DialogueRefreshStore` for the three defects this fixes.
+    let dialogueRefreshStore = DialogueRefreshStore()
 
-    private func performDialogueRefresh() {
-        guard !isAwaitingChatResponse, !chatBubble.isVisible, !isPerformingBackgroundChatWork else { return }
+    private var activeRefreshID: UUID?
+    private var refreshMarker: String?
+    private var refreshWatchdog: DispatchWorkItem?
+    /// Generous: a cold chatgpt.com load plus a dozen generated lines can
+    /// legitimately take a while. What matters is that it *always* resolves.
+    private static let refreshTimeout: TimeInterval = 150
+
+    /// The pools a refresh is allowed to write into. Deliberately a subset —
+    /// the ones where an extra line is pure upside. System-critical pools
+    /// (study mode, battery warnings) stay fully authored.
+    private static let refreshablePools = [
+        "coding", "gaming", "browsing", "music", "creative",
+        "productivity", "communication", "aiChat", "tinkering", "finder",
+    ]
+
+    private func performDialogueRefresh(trigger: String) {
+        // Every early return is now recorded. Previously these returned before
+        // the log entry was appended, so the log was emptiest exactly when
+        // something had gone wrong — which is precisely why it read as broken.
+        if isPerformingBackgroundChatWork {
+            dialogueRefreshStore.recordImmediateFailure(
+                trigger: trigger,
+                reason: "A refresh is already in flight. (If this persists, the previous one is stuck — it will time out on its own.)"
+            )
+            return
+        }
+        if isAwaitingChatResponse || chatBubble.isVisible {
+            dialogueRefreshStore.recordImmediateFailure(
+                trigger: trigger, reason: "Skipped: you were mid-conversation with Bill."
+            )
+            return
+        }
         let summary = memoryStore.recentActivitySummary
-        guard !summary.isEmpty else { return }
+        if summary.isEmpty {
+            dialogueRefreshStore.recordImmediateFailure(
+                trigger: trigger,
+                reason: "No recent activity to describe yet — open a few recognised apps first."
+            )
+            return
+        }
 
         let undescribed = Array(memoryStore.undescribedFrequentApps().prefix(Self.maxAppDescriptionsPerRefresh))
         pendingDescriptionRequests = Dictionary(uniqueKeysWithValues: undescribed.map { ($0.name, $0.bundleID) })
 
+        // A per-request marker. The DOM observer that tells us a reply landed
+        // fires on *any* mutation, so without this we can consume the previous
+        // assistant turn and drop the real answer. Requiring the marker back
+        // makes a stale read detectable instead of silent.
+        let marker = "BILL-\(Int.random(in: 100000...999999))"
+        refreshMarker = marker
+
+        let pools = Self.refreshablePools.joined(separator: ", ")
+        let times = "any, morning, midday, afternoon, night"
         var prompt = """
-            Generate exactly 6 short, one-sentence quips you'd say about how \
-            this Mac has been used recently: \(summary). One per line, no \
-            numbering, no quotes, each under 100 characters.
+            \(marker)
+            Recent activity on this Mac: \(summary).
+
+            Write 12 short Bill-Cipher quips about it, ONE PER LINE, each in \
+            exactly this pipe-separated format and nothing else:
+            POOL|TIME|LINE
+
+            POOL must be exactly one of: \(pools)
+            TIME must be exactly one of: \(times)
+            LINE must be under 100 characters, no quotes, no numbering.
+
+            Spread them across at least 4 different POOLs and at least 3 \
+            different TIMEs. TIME is when the line makes sense — a "night" line \
+            should only work at night. Begin your reply with \(marker) on its \
+            own line.
             """
         if !undescribed.isEmpty {
             let names = undescribed.map(\.name).joined(separator: ", ")
             prompt += """
-                \n\nThen, one per line, prefixed with "APP:", give a single \
-                short sarcastic-but-informative sentence describing what each \
-                of these apps is for, formatted exactly as \
+                \n\nThen, one per line, prefixed with "APP:", one short \
+                sarcastic-but-informative sentence describing what each of \
+                these apps is for, formatted exactly as \
                 "APP: <name>: <description>", for: \(names).
                 """
         }
 
-        dialogueRefreshLog.append(DialogueRefreshLogEntry(date: Date(), prompt: prompt))
-        if dialogueRefreshLog.count > Self.maxDialogueRefreshLogEntries {
-            dialogueRefreshLog.removeFirst(dialogueRefreshLog.count - Self.maxDialogueRefreshLogEntries)
-        }
-
+        activeRefreshID = dialogueRefreshStore.begin(trigger: trigger, prompt: prompt)
         isPerformingBackgroundChatWork = true
-        beginAwaitingChatResponse?()
+
+        // Correct order, and the step that was missing entirely.
+        //
+        // `prepareIfNeeded()` only constructs the `WebPage` model object; its
+        // injected scripts do not run until a real `WebView` actually renders
+        // it, so on a cold session `window.billSendMessage` was undefined and
+        // the send silently did nothing — the menu item genuinely did nothing
+        // at all. `warmUpChatEngine` is what mounts that view. And
+        // `beginAwaitingChatResponse` has to come *after* `prepareIfNeeded`,
+        // because it bails out when `chatBridge.page` is still nil.
+        warmUpChatEngine?()
         chatBridge.prepareIfNeeded()
-        chatBridge.send(prompt)
+        beginAwaitingChatResponse?()
+        chatBridge.sendTask(prompt)
+
+        scheduleRefreshWatchdog()
+    }
+
+    /// The background path had no watchdog at all — only the interactive chat
+    /// path did. So a refresh that never came back left
+    /// `isPerformingBackgroundChatWork` true *forever*, which both blocked
+    /// every future refresh and permanently disabled Bill's talking animation
+    /// (AppDelegate suppresses it while that flag is set). One failure bricked
+    /// the feature for the rest of the session.
+    private func scheduleRefreshWatchdog() {
+        refreshWatchdog?.cancel()
+        let work = DispatchWorkItem { [weak self] in
+            Task { @MainActor in
+                guard let self, self.isPerformingBackgroundChatWork else { return }
+                self.resolveRefresh(
+                    response: nil,
+                    failure: "Timed out after \(Int(Self.refreshTimeout))s with no reply. ChatGPT may not be signed in, or the page never finished loading."
+                )
+            }
+        }
+        refreshWatchdog = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + Self.refreshTimeout, execute: work)
     }
 
     private func finishDialogueRefresh(_ response: String?) {
+        guard let response, !response.isEmpty else {
+            resolveRefresh(response: nil, failure: "Empty response.")
+            return
+        }
+        // Stale-reply guard: if our marker isn't in there, this is a different
+        // (usually earlier) assistant turn that the DOM observer surfaced.
+        // Keep waiting rather than consuming it — the watchdog still bounds it.
+        if let marker = refreshMarker, !response.contains(marker) {
+            return
+        }
+        resolveRefresh(response: response, failure: nil)
+    }
+
+    /// The single place the in-flight state is cleared, so it cannot leak.
+    private func resolveRefresh(response: String?, failure: String?) {
+        refreshWatchdog?.cancel()
+        refreshWatchdog = nil
         isPerformingBackgroundChatWork = false
         endAwaitingChatResponse?()
+        refreshMarker = nil
+
         let pending = pendingDescriptionRequests
         pendingDescriptionRequests = [:]
-        let logIndex = dialogueRefreshLog.indices.last
+        let id = activeRefreshID
+        activeRefreshID = nil
 
         guard let response else {
-            if let logIndex { dialogueRefreshLog[logIndex].failureReason = "No response received (send failed or timed out)." }
+            if let id {
+                dialogueRefreshStore.finish(id, rawResponse: nil, linesAdded: [], descriptions: [], failureReason: failure)
+            }
             return
         }
 
-        let trimChars = CharacterSet(charactersIn: " -•*0123456789.\"'")
-        var dialogueLines: [String] = []
-        var descriptionsAdded: [(name: String, description: String)] = []
-        for rawLine in response.components(separatedBy: .newlines) {
-            let line = rawLine.trimmingCharacters(in: .whitespaces)
-            guard line.hasPrefix("APP:") else {
-                let cleaned = line.trimmingCharacters(in: trimChars)
-                if !cleaned.isEmpty, cleaned.count <= 140 {
-                    dialogueLines.append(cleaned)
-                }
+        let parsed = Self.parseRefresh(response, pending: pending)
+        for (name, description) in parsed.descriptions {
+            if let bundleID = pending[name] {
+                memoryStore.setAppDescription(bundleID: bundleID, description)
+            }
+        }
+
+        if !parsed.pools.isEmpty {
+            // Merge into what is already stored rather than replacing, capped
+            // per bucket so the generated half cannot grow without bound.
+            var merged = memoryStore.generatedPools
+            for (key, pool) in parsed.pools {
+                var existing = merged[key] ?? DialoguePool()
+                existing.merge(pool, cappingBucketsAt: 12)
+                merged[key] = existing
+            }
+            memoryStore.setGeneratedPools(merged)
+            DialogueLibrary.shared.setGenerated(merged)
+        }
+
+        // Broken into explicit steps: the one-liner form of this took the
+        // type checker past its budget.
+        var flat: [String] = []
+        for (key, pool) in parsed.pools {
+            var lines: [String] = pool.any
+            lines.append(contentsOf: pool.morning)
+            lines.append(contentsOf: pool.midday)
+            lines.append(contentsOf: pool.afternoon)
+            lines.append(contentsOf: pool.night)
+            for line in lines {
+                flat.append(key + ": " + line)
+            }
+        }
+        let descriptions = parsed.descriptions.map {
+            DialogueRefreshLogEntry.AppDescription(name: $0.key, description: $0.value)
+        }
+        let reason = (flat.isEmpty && descriptions.isEmpty)
+            ? "Reply received but nothing matched the POOL|TIME|LINE format."
+            : nil
+        if let id {
+            dialogueRefreshStore.finish(id, rawResponse: response, linesAdded: flat, descriptions: descriptions, failureReason: reason)
+        }
+    }
+
+    /// Strict parser for the tagged format.
+    ///
+    /// The old one accepted *any* non-`APP:` line as dialogue, so a
+    /// conversational preamble ("Sure! Here are six quips:") was stored and
+    /// later spoken as though Bill had written it. This one requires the
+    /// pipe-separated shape and validates both fields, so anything
+    /// conversational is simply not matched.
+    static func parseRefresh(
+        _ response: String,
+        pending: [String: String]
+    ) -> (pools: [String: DialoguePool], descriptions: [String: String]) {
+        var pools: [String: DialoguePool] = [:]
+        var descriptions: [String: String] = [:]
+        var seen = Set<String>()
+        let validPools = Set(refreshablePools)
+        let validTimes = Set(TimeOfDay.allCases.map(\.rawValue) + ["any"])
+
+        for raw in response.components(separatedBy: .newlines) {
+            let line = raw.trimmingCharacters(in: .whitespaces)
+            if line.hasPrefix("APP:") {
+                let after = line.dropFirst(4).trimmingCharacters(in: .whitespaces)
+                guard let sep = after.range(of: ":") else { continue }
+                let name = String(after[..<sep.lowerBound]).trimmingCharacters(in: .whitespaces)
+                let text = String(after[sep.upperBound...]).trimmingCharacters(in: .whitespaces)
+                guard pending[name] != nil, !text.isEmpty, text.count <= 160 else { continue }
+                descriptions[name] = text
                 continue
             }
-            // "APP: <name>: <description>" — split on the *first two*
-            // colons only, since a description is free text and may well
-            // contain its own colons further in.
-            let afterPrefix = line.dropFirst("APP:".count).trimmingCharacters(in: .whitespaces)
-            guard let separatorRange = afterPrefix.range(of: ":") else { continue }
-            let name = afterPrefix[afterPrefix.startIndex..<separatorRange.lowerBound].trimmingCharacters(in: .whitespaces)
-            let description = afterPrefix[separatorRange.upperBound...].trimmingCharacters(in: .whitespaces)
-            guard let bundleID = pending[name], !description.isEmpty else { continue }
-            memoryStore.setAppDescription(bundleID: bundleID, description)
-            descriptionsAdded.append((name: name, description: description))
-        }
-        let addedLines = Array(dialogueLines.prefix(8))
-        memoryStore.addGeneratedDialogue(addedLines)
 
-        if let logIndex {
-            dialogueRefreshLog[logIndex].rawResponse = response
-            dialogueRefreshLog[logIndex].dialogueLinesAdded = addedLines
-            dialogueRefreshLog[logIndex].appDescriptionsAdded = descriptionsAdded
-            if addedLines.isEmpty, descriptionsAdded.isEmpty {
-                dialogueRefreshLog[logIndex].failureReason = "Response received but nothing usable was parsed from it."
+            let parts = line.components(separatedBy: "|")
+            guard parts.count >= 3 else { continue }
+            let pool = parts[0].trimmingCharacters(in: .whitespaces).lowercased()
+            let time = parts[1].trimmingCharacters(in: .whitespaces).lowercased()
+            let text = parts[2...].joined(separator: "|").trimmingCharacters(in: .whitespaces)
+            guard validPools.contains(pool), validTimes.contains(time) else { continue }
+            guard !text.isEmpty, text.count <= 120 else { continue }
+            let key = "\(pool)|\(time)|\(text.lowercased())"
+            guard seen.insert(key).inserted else { continue }
+
+            var entry = pools[pool] ?? DialoguePool()
+            switch time {
+            case "morning":   entry.morning.append(text)
+            case "midday":    entry.midday.append(text)
+            case "afternoon": entry.afternoon.append(text)
+            case "night":     entry.night.append(text)
+            default:          entry.any.append(text)
             }
+            pools[pool] = entry
         }
+        return (pools, descriptions)
     }
 
     private func handleClick() {

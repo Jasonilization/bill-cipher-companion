@@ -9,6 +9,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let preferences = AppPreferences()
     private let memoryStore = MemoryStore()
     let studyMode = StudyMode()
+    private var habitNagger: HabitNagger?
     private var reactionRouter: ReactionRouter!
     private var statusItemController: StatusItemController!
     private var characterWindowController: CharacterWindowController!
@@ -22,6 +23,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // A few milliseconds for ~750 short strings, and every bark path
         // depends on it, so it happens first rather than lazily mid-reaction.
         DialogueLibrary.shared.warmUp()
+        // Fold in whatever the last ChatGPT refresh produced. This is the step
+        // that makes generated dialogue actually reachable: previously the
+        // generated lines were only ever read from one branch of the wander
+        // beat, at roughly 3.75% of beats and only when roaming was enabled,
+        // which is why new dialogue read as "not implemented".
+        DialogueLibrary.shared.setGenerated(memoryStore.generatedPools)
 
         characterWindowController = CharacterWindowController(characterEngine: characterEngine, preferences: preferences, chatBridge: chatBridge, memoryStore: memoryStore)
         chatPanelController = ChatPanelController(chatBridge: chatBridge)
@@ -81,6 +88,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         studyMode.announce = { [weak self] keys, states, substitutions in
             self?.reactionRouter.announceStudy(keys: keys, states: states, substitutions: substitutions)
         }
+        let nagger = HabitNagger(memoryStore: memoryStore)
+        nagger.onNag = { [weak self] key in self?.reactionRouter.nag(key) }
+        reactionRouter.habitNagger = nagger
+        habitNagger = nagger
         studyMode.onStateChanged = { [weak self] in
             self?.statusItemController.refreshStudyModeItem()
         }
@@ -88,6 +99,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             self?.reactionRouter.handle(event)
         }
         systemMonitor.start()
+    }
+
+    /// Nothing used to run at shutdown at all — no monitors stopped, no state
+    /// flushed. Now that persistence is coalesced (see `MemoryStore.save()`),
+    /// a clean flush here is load-bearing rather than merely tidy.
+    func applicationWillTerminate(_ notification: Notification) {
+        systemMonitor.stop()
+        characterEngine.stop()
+        characterEngine.coverage.flushNow()
+        memoryStore.flushNow()
     }
 
     @objc func quit() {

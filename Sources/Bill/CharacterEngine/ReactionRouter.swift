@@ -29,6 +29,9 @@ final class ReactionRouter {
     var goToApp: ((pid_t) -> Bool)?
     /// Consulted before any app reaction — Study Mode gets first refusal so it
     /// can block instead of react. Returns `true` if it handled the activation.
+    /// Decides whether Bill should point out that no homework / learning /
+    /// fun has happened today. Driven by the half-hour chime.
+    var habitNagger: HabitNagger?
     var studyModeInterceptor: ((_ bundleID: String, _ name: String, _ pid: pid_t) -> Bool)?
 
     // MARK: - Per-session app focus state
@@ -67,7 +70,11 @@ final class ReactionRouter {
         .stressed, .dreading, .huffy, .grumpEyes, .watched, .annoyed, .confused,
     ]
     private static let batteryChargingStates: [BillState] = [
-        .charged, .celebrating, .happy, .powerSurge, .transferring,
+        // `.charging` is the dedicated plugged-in pose and must stay in this
+        // pool — it is the one state whose *only* real-world trigger is this
+        // event, and the coverage sweep deliberately never showcases it
+        // (standing in a charging pose while unplugged reads as a bug).
+        .charging, .charged, .celebrating, .happy, .powerSurge, .transferring,
     ]
     private static let volumeStates: [BillState] = [
         .dancing, .grooving, .happy, .flinching, .surprised, .caneFlourish, .kinship,
@@ -146,6 +153,8 @@ final class ReactionRouter {
 
         case .halfHour(let hour, let minute):
             handleHalfHour(hour: hour, minute: minute)
+            // Piggy-backed on the chime rather than given its own timer.
+            habitNagger?.considerNagging()
 
         case .timeOfDayChanged:
             // The dialogue pools swap themselves via `TimeOfDayCache`; nothing

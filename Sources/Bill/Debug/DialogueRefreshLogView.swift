@@ -1,78 +1,113 @@
 import SwiftUI
 
-/// Read-only debug view of `CharacterWindowController.dialogueRefreshLog` —
-/// the daily context refresh runs silently in the background by design, so
-/// this is the only way to actually see what was sent, what came back, and
-/// what it resulted in.
+/// Live view of the dialogue refresh log.
+///
+/// Takes the store as an `@ObservedObject` rather than a plain array snapshot.
+/// That is the whole fix for "the log doesn't really work": a refresh takes
+/// many seconds, so with a snapshot the window opened, showed a prompt with no
+/// response, and never changed — you had to close and reopen it to learn
+/// anything, and if the refresh had jammed there was nothing to see at all.
 struct DialogueRefreshLogView: View {
-    let entries: [DialogueRefreshLogEntry]
+    @ObservedObject var store: DialogueRefreshStore
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 18) {
-                if entries.isEmpty {
-                    Text("No refreshes yet. Use \"Refresh Bill's Context Now\" in the menu bar to trigger one.")
-                        .foregroundStyle(.secondary)
-                } else {
-                    ForEach(entries.reversed()) { entry in
-                        entryView(entry)
-                        Divider()
+        VStack(spacing: 0) {
+            header
+            Divider()
+            ScrollView {
+                VStack(alignment: .leading, spacing: 18) {
+                    if store.entries.isEmpty {
+                        Text("No refreshes recorded yet. Use \"Refresh Bill's Context Now\" in the menu bar to trigger one — every attempt is logged here, including ones that fail before sending.")
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    } else {
+                        ForEach(store.entries.reversed()) { entry in
+                            entryView(entry)
+                            Divider()
+                        }
                     }
                 }
+                .padding()
             }
-            .padding()
         }
-        .frame(minWidth: 480, minHeight: 360)
+        .frame(minWidth: 560, minHeight: 420)
+    }
+
+    private var header: some View {
+        HStack {
+            let ok = store.entries.filter(\.succeeded).count
+            Text("\(store.entries.count) attempt\(store.entries.count == 1 ? "" : "s") · \(ok) succeeded")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            Spacer()
+            Button("Clear") { store.clear() }
+                .disabled(store.entries.isEmpty)
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
     }
 
     @ViewBuilder
     private func entryView(_ entry: DialogueRefreshLogEntry) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text(entry.date.formatted(date: .abbreviated, time: .standard))
-                .font(.headline)
-
-            Text("Prompt sent")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-            Text(entry.prompt)
-                .font(.system(.body, design: .monospaced))
-                .textSelection(.enabled)
-
-            if let failureReason = entry.failureReason {
-                Text("⚠️ \(failureReason)")
-                    .foregroundStyle(.orange)
-                    .padding(.top, 4)
-            }
-
-            if let rawResponse = entry.rawResponse {
-                Text("Raw response")
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 8) {
+                Image(systemName: entry.succeeded ? "checkmark.circle.fill"
+                                 : entry.failureReason != nil ? "xmark.octagon.fill" : "clock.fill")
+                    .foregroundStyle(entry.succeeded ? .green : entry.failureReason != nil ? .red : .orange)
+                Text(entry.date.formatted(date: .abbreviated, time: .standard))
+                    .font(.headline)
+                Text(entry.trigger)
                     .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .padding(.top, 4)
-                Text(rawResponse)
-                    .font(.system(.body, design: .monospaced))
-                    .textSelection(.enabled)
-            }
-
-            if !entry.dialogueLinesAdded.isEmpty {
-                Text("Dialogue lines added")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .padding(.top, 4)
-                ForEach(entry.dialogueLinesAdded, id: \.self) { line in
-                    Text("• \(line)")
+                    .padding(.horizontal, 6).padding(.vertical, 2)
+                    .background(.quaternary, in: Capsule())
+                if let seconds = entry.durationSeconds {
+                    Text(String(format: "%.1fs", seconds))
+                        .font(.caption).foregroundStyle(.secondary)
                 }
             }
 
+            if let failure = entry.failureReason {
+                Text(failure)
+                    .font(.callout)
+                    .foregroundStyle(.red)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            if !entry.linesAdded.isEmpty {
+                section("Lines added (\(entry.linesAdded.count))") {
+                    ForEach(entry.linesAdded, id: \.self) { Text("• \($0)").font(.callout) }
+                }
+            }
             if !entry.appDescriptionsAdded.isEmpty {
-                Text("App descriptions learned")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .padding(.top, 4)
-                ForEach(entry.appDescriptionsAdded, id: \.name) { item in
-                    Text("• \(item.name): \(item.description)")
+                section("App descriptions learned") {
+                    ForEach(entry.appDescriptionsAdded, id: \.self) {
+                        Text("• \($0.name): \($0.description)").font(.callout)
+                    }
                 }
             }
+
+            DisclosureGroup("Prompt sent") {
+                Text(entry.prompt)
+                    .font(.system(.caption, design: .monospaced))
+                    .textSelection(.enabled)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            if let raw = entry.rawResponse {
+                DisclosureGroup("Raw response") {
+                    Text(raw)
+                        .font(.system(.caption, design: .monospaced))
+                        .textSelection(.enabled)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func section(_ title: String, @ViewBuilder content: () -> some View) -> some View {
+        VStack(alignment: .leading, spacing: 3) {
+            Text(title).font(.caption).foregroundStyle(.secondary)
+            content()
         }
     }
 }

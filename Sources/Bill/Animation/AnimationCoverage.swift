@@ -197,6 +197,15 @@ final class AnimationCoverage {
         DispatchQueue.main.asyncAfter(deadline: .now() + 5, execute: work)
     }
 
+    /// Writes immediately and synchronously — shutdown only, for the same
+    /// reason as `MemoryStore.flushNow()`.
+    func flushNow() {
+        saveWork?.cancel()
+        saveWork = nil
+        guard let data = try? JSONEncoder().encode(store) else { return }
+        try? data.write(to: url, options: .atomic)
+    }
+
     private func save() {
         guard let data = try? JSONEncoder().encode(store) else { return }
         let target = url

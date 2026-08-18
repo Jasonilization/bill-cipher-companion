@@ -41,6 +41,19 @@ struct MemoryData: Codable {
     /// refresh and `ReactionRouter.handleUncategorizedApp`), keyed by
     /// bundle ID. Learned gradually and locally rather than hardcoded.
     var appDescriptions: [String: String] = [:]
+    /// ChatGPT-generated lines, keyed by dialogue pool and split by time of
+    /// day — the same shape `DialogueLibrary` uses, so a refresh merges
+    /// directly into the live pools instead of landing in a flat list that
+    /// only one obscure code path ever read.
+    var generatedPools: [String: DialoguePool] = [:]
+    /// Per-day category tallies, keyed `yyyy-MM-dd` -> category -> count.
+    ///
+    /// `recentActivations` is capped at 60 entries, which at this machine's
+    /// observed rate (~38 activations/day) covers barely a day and a half —
+    /// far too tight to answer "did you touch anything educational today?"
+    /// reliably. This is a tiny fixed-size rollup that can, retained for
+    /// `dailyRetentionDays`.
+    var dailyCategoryCounts: [String: [String: Int]] = [:]
     /// When each bundle ID was first ever seen — lets Bill tell "never seen
     /// this before" apart from "seen it a bunch, still don't know what it
     /// is" for uncategorized apps, without a separate tracking structure.
@@ -99,6 +112,7 @@ final class MemoryStore: ObservableObject {
         }
         if let category {
             data.categoryOpenCounts[category.rawValue, default: 0] += 1
+        recordDaily(category: category)
         }
         data.recentActivations.append(AppActivation(bundleID: bundleID, name: name, category: category?.rawValue, date: Date()))
         if data.recentActivations.count > Self.maxRecentActivations {
@@ -174,6 +188,42 @@ final class MemoryStore: ObservableObject {
         data.categoryOpenCounts[category.rawValue] ?? 0
     }
 
+    // MARK: - Per-day rollups
+
+    private static let dailyRetentionDays = 14
+
+    static let dayFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "yyyy-MM-dd"
+        f.locale = Locale(identifier: "en_US_POSIX")
+        return f
+    }()
+
+    private func recordDaily(category: AppCategory?) {
+        guard let category else { return }
+        let day = Self.dayFormatter.string(from: Date())
+        data.dailyCategoryCounts[day, default: [:]][category.rawValue, default: 0] += 1
+        // Trim old days. Cheap: at most 15 keys ever.
+        if data.dailyCategoryCounts.count > Self.dailyRetentionDays {
+            let keep = Set(data.dailyCategoryCounts.keys.sorted().suffix(Self.dailyRetentionDays))
+            data.dailyCategoryCounts = data.dailyCategoryCounts.filter { keep.contains($0.key) }
+        }
+    }
+
+    /// How many times a category was opened on a given day (today by default).
+    func count(of category: AppCategory, on date: Date = Date()) -> Int {
+        let day = Self.dayFormatter.string(from: date)
+        return data.dailyCategoryCounts[day]?[category.rawValue] ?? 0
+    }
+
+    /// Total activations recorded today across all categories — used to tell
+    /// "you did nothing educational" apart from "you barely used the machine",
+    /// which should not earn a telling-off.
+    func totalActivationsToday() -> Int {
+        let day = Self.dayFormatter.string(from: Date())
+        return data.dailyCategoryCounts[day]?.values.reduce(0, +) ?? 0
+    }
+
     func recordChargingEvent() {
         data.chargingEventCount += 1
         save()
@@ -204,6 +254,15 @@ final class MemoryStore: ObservableObject {
 
     // MARK: - Growing dialogue library (see CharacterEngine's daily refresh)
 
+    /// Replaces the generated half of the dialogue library.
+    func setGeneratedPools(_ pools: [String: DialoguePool]) {
+        data.generatedPools = pools
+        data.lastDialogueRefreshDate = Date()
+        save()
+    }
+
+    var generatedPools: [String: DialoguePool] { data.generatedPools }
+
     func addGeneratedDialogue(_ lines: [String]) {
         let cleaned = lines.map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }.filter { !$0.isEmpty }
         guard !cleaned.isEmpty else { return }
@@ -233,8 +292,40 @@ final class MemoryStore: ObservableObject {
         save()
     }
 
+    private var saveWork: DispatchWorkItem?
+
+    /// Coalesced, and the write itself is off the main actor.
+    ///
+    /// `save()` is called from `recordAppOpen`, which fires on *every*
+    /// `NSWorkspace` app activation — so rapid Cmd-Tabbing produced a burst of
+    /// synchronous `JSONEncoder` runs plus atomic file writes on the main
+    /// thread, each one a full rewrite of a 16KB file. Now a burst collapses
+    /// into one write a second later, and only the encode stays on the main
+    /// actor (it has to: `data` is main-actor state).
     private func save() {
+        saveWork?.cancel()
+        let work = DispatchWorkItem { [weak self] in
+            Task { @MainActor in self?.flush() }
+        }
+        saveWork = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0, execute: work)
+    }
+
+    /// Writes immediately and synchronously. Only for shutdown — the
+    /// coalescing above deliberately delays writes by a second, which would
+    /// otherwise lose the last activation of a session on quit.
+    func flushNow() {
+        saveWork?.cancel()
+        saveWork = nil
         guard let encoded = try? JSONEncoder().encode(data) else { return }
         try? encoded.write(to: fileURL, options: .atomic)
+    }
+
+    private func flush() {
+        guard let encoded = try? JSONEncoder().encode(data) else { return }
+        let target = fileURL
+        Task.detached(priority: .utility) {
+            try? encoded.write(to: target, options: .atomic)
+        }
     }
 }
