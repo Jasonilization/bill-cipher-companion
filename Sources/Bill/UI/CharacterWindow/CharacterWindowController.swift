@@ -12,8 +12,6 @@ final class CharacterWindowController: NSObject {
     private let memoryStore: MemoryStore
     private let chatBubble = PixelChatBubble()
     private let contextMenu = NSMenu()
-    private var wanderTimer: Timer?
-    private var wasWanderingBeforeDrag = false
     private var wasWanderingBeforeChat = false
     private var isAwaitingChatResponse = false
     private var chatTimeoutWork: DispatchWorkItem?
@@ -224,7 +222,7 @@ final class CharacterWindowController: NSObject {
             characterEngine.request(.idle)
             if wasWanderingBeforeChat {
                 wasWanderingBeforeChat = false
-                scheduleNextWander()
+                roaming?.resume()
             }
         }
         chatBridge.onResponseReceived = { [weak self] response in
@@ -260,7 +258,7 @@ final class CharacterWindowController: NSObject {
         }
         guard let screen = NSScreen.main else { return }
         wasWanderingBeforeChat = true
-        wanderTimer?.invalidate()
+        roaming?.suspend()
         // Once per time chat is *opened*, not once ever — the user's recent
         // activity may well have changed since the last time they talked to
         // Bill, even if the conversation stack on screen is the same one
@@ -394,19 +392,17 @@ final class CharacterWindowController: NSObject {
         }
     }
 
-    /// Forces an immediate wander leg for manual verification — bypasses the
-    /// random delay, the current-state gate, and the glance-only roll
-    /// entirely, so it always visibly moves regardless of what Bill's doing.
+    /// Forces an immediate roaming beat for manual verification — bypasses
+    /// the rest delay and the idle-state gate entirely, so it always visibly
+    /// moves regardless of what Bill's doing.
     func debugTriggerWander() {
-        wanderTimer?.invalidate()
         characterEngine.request(.idle)
-        performWanderLeg(remaining: 2)
+        roaming?.triggerNow()
     }
 
     func show() {
         panel.orderFrontRegardless()
-        scheduleNextWander()
-        startCursorWatch()
+        startRoaming()
         startClickThroughTracking()
         scheduleDialogueRefreshCheck()
     }
@@ -557,8 +553,8 @@ final class CharacterWindowController: NSObject {
     }
 
     private func handleDragStarted() {
-        wasWanderingBeforeDrag = true
-        wanderTimer?.invalidate()
+        // The simulation must not fight the user for the window's position.
+        roaming?.suspend()
         characterEngine.request(.surprised, force: true)
     }
 
@@ -569,189 +565,95 @@ final class CharacterWindowController: NSObject {
         // and it settles back to idle on its own afterward since it's a
         // one-shot state.
         characterEngine.request(.dazed, force: true)
-        if wasWanderingBeforeDrag {
-            scheduleNextWander()
-        }
+        // Dropped mid-air, Bill should fall to whatever is beneath him rather
+        // than hang there — resuming re-seeds the simulation from wherever the
+        // user actually let go, and gravity takes it from there.
+        roaming?.resume()
     }
 
-    /// Bill occasionally wanders across the screen while idle — otherwise
-    /// "roaming" is a settings toggle with nothing behind it. Only ever
-    /// fires from genuine idle, and only while roaming is on.
+    // MARK: - Desktop roaming
+
+    /// Bill roams the desktop under gravity rather than sliding along one
+    /// fixed Y: he walks, crouches, leaps onto the top edges of real
+    /// application windows, catches their sides on the way past, climbs, and
+    /// drops back to the floor. See `RoamingController` for the behaviour
+    /// layer, `GravitySimulator` for the physics, and `WindowTopology` for
+    /// where the platforms come from.
     ///
-    /// Live-instrumented (temporary debug prints, since removed) against a
-    /// real running instance to see why wandering felt entirely absent: a
-    /// wander check only has a narrow window to land in — it's blocked
-    /// outright while asleep or mid-beat on some other state (an idle-beat
-    /// personality flourish, a rare Easter egg, chat, ...), and on top of
-    /// that the old 30%-chance-to-actually-move meant even a check that
-    /// *did* land during plain idle usually just did a glance instead. Four
-    /// consecutive real checks in that instrumented run produced zero
-    /// visible movement: sleep-blocked, a rare-event collision, then two
-    /// glance-only rolls in a row. Fixed by making an eligible check
-    /// overwhelmingly likely to actually move (15% glance chance, down from
-    /// 30%) and checking more often (15-32s, down from 22-50s) so a
-    /// same-moment collision with sleep/another beat has more follow-up
-    /// chances rather than waiting the better part of a minute for the next
-    /// one.
-    private func scheduleNextWander() {
-        wanderTimer?.invalidate()
-        let delay = Double.random(in: 15...32)
-        wanderTimer = Timer.scheduledTimer(withTimeInterval: delay, repeats: false) { [weak self] _ in
-            Task { @MainActor in self?.beginWanderBeat() }
+    /// This replaces the previous `beginWanderBeat`/`performWanderLeg` pair,
+    /// which animated `panel.animator().setFrame` horizontally between two
+    /// points at a constant height. That version also clamped against
+    /// `NSScreen.main` (the screen of whatever app the *user* is in, not the
+    /// one Bill is on) and against `hitRegion`, whose lower edge sits ~20pt
+    /// above Bill's actual feet — so he could stand visibly inside the Dock.
+    /// Both are fixed here: the simulation resolves Bill's own screen, and
+    /// clamps to real feet geometry.
+    private(set) var roaming: RoamingController?
+
+    private func startRoaming() {
+        let controller = RoamingController(
+            panel: panel,
+            characterEngine: characterEngine,
+            preferences: preferences
+        )
+        controller.onEvent = { [weak self] event in self?.handleRoamEvent(event) }
+        roaming = controller
+        controller.start()
+
+        // The window layout Bill navigates changes whenever the user switches
+        // apps or reconfigures displays. Both are push notifications, so the
+        // topology cache is refreshed exactly when it is actually stale
+        // rather than on a poll.
+        NSWorkspace.shared.notificationCenter.addObserver(
+            forName: NSWorkspace.didActivateApplicationNotification,
+            object: nil, queue: .main
+        ) { [weak controller] _ in
+            Task { @MainActor in controller?.invalidateTopology() }
+        }
+        NotificationCenter.default.addObserver(
+            forName: NSApplication.didChangeScreenParametersNotification,
+            object: nil, queue: .main
+        ) { [weak controller] _ in
+            Task { @MainActor in controller?.invalidateTopology() }
         }
     }
 
-    /// One "beat" of ambient movement: either a pure look-around (no
-    /// relocation) or a short walk of one or two legs with a chance to
-    /// pause and look around between legs — never one long uninterrupted
-    /// slide, which is what made the first pass's wandering feel like a
-    /// scripted slide rather than a choice Bill is making.
-    private func beginWanderBeat() {
-        guard preferences.isRoamingEnabled,
-              characterEngine.stateMachine.currentState == .idle,
-              NSScreen.main != nil
-        else {
-            scheduleNextWander()
-            return
-        }
+    /// Sends Bill to physically stand on the frontmost window of `pid` — used
+    /// so a reaction to an app happens *at* that app rather than wherever he
+    /// happened to be standing.
+    @discardableResult
+    func sendBillToApp(pid: pid_t) -> Bool {
+        roaming?.goToApp(pid: pid) ?? false
+    }
 
-        guard Double.random(in: 0..<1) > 0.15 else {
-            // Stayed put, just glanced around — kept as a small chance for
-            // variety, not the coin-flip it was (see this method's caller's
-            // doc comment for why that made actual movement too rare).
-            characterEngine.stateMachine.playIdleVariant(
-                [.tiltCheck, .curious].randomElement()!
-            )
-            // Occasionally surface a line from the growing, ChatGPT-seeded
-            // dialogue library instead of nothing — additive to the static
-            // BarkLines pools, never a replacement for them.
-            let generated = memoryStore.data.generatedDialogue
-            if !generated.isEmpty, Double.random(in: 0..<1) < 0.25 {
-                characterEngine.bark(BarkLines.random(from: generated))
+    private func handleRoamEvent(_ event: RoamEvent) {
+        switch event {
+        case .landed(let hard, let fromHeight):
+            // Only a genuinely long drop is worth remarking on; every routine
+            // hop would be chatter, which is exactly what we are removing.
+            if hard, fromHeight > 260 {
+                characterEngine.bark(BarkLines.random(from: BarkLines.roamHardLanding))
             }
-            scheduleNextWander()
-            return
-        }
-
-        performWanderLeg(remaining: Int.random(in: 1...2))
-    }
-
-    private func performWanderLeg(remaining: Int) {
-        guard remaining > 0, let screen = NSScreen.main else {
-            characterEngine.request(.idle)
-            scheduleNextWander()
-            return
-        }
-
-        characterEngine.request(.walking)
-
-        let currentOrigin = panel.frame.origin
-        let deltaX = CGFloat.random(in: -170...170)
-        // Bounded by Bill's silhouette, not his window — the window is far
-        // wider than he is (empty click-through margin either side), so
-        // clamping the window edge to the screen edge parked him a visible
-        // gap short of both sides and he could never walk fully into a
-        // corner. Same reasoning as `BillHitTestView.clampedOrigin(for:)`.
-        let hit = hitView.hitRegion
-        let minX = screen.visibleFrame.minX - hit.minX
-        let maxX = screen.visibleFrame.maxX - hit.maxX
-        let newX = min(max(currentOrigin.x + deltaX, minX), maxX)
-
-        // The walk-cycle art is a side-facing run (legs kick and the lead
-        // arm swings toward one specific side) — without mirroring it, Bill
-        // would visibly "moonwalk" backward on every other leg since he
-        // wanders both directions. The sheet's frames face left, so flip
-        // for rightward travel.
-        if newX > currentOrigin.x + 0.5 {
-            characterEngine.rig.bodyNode.xScale = -BillRigNode.displayScale
-        } else if newX < currentOrigin.x - 0.5 {
-            characterEngine.rig.bodyNode.xScale = BillRigNode.displayScale
-        }
-
-        // Duration derived from a target speed (not independently randomized
-        // from distance) so a short hop and a long crossing both move at
-        // roughly the same natural pace instead of one looking like a slow
-        // drift and the other a dash. Tuned to roughly match the walk
-        // clip's slowed-down (ambling, not sprinting) frame rate — mismatch
-        // between apparent foot-speed and actual ground-speed is what reads
-        // as sliding/moonwalking, independent of the direction-flip itself.
-        let distance = abs(newX - currentOrigin.x)
-        let speed = CGFloat.random(in: 55...80)
-        let duration = min(3.2, max(0.9, Double(distance / speed)))
-
-        // `NSWindow.animator().setFrameOrigin(_:)` is not actually one of
-        // the animator proxy's supported properties (unlike NSView, where
-        // it works fine) — the completion handler fires right on schedule,
-        // but the window's frame never actually changes. This was
-        // confirmed by logging `panel.frame` inside the completion handler:
-        // it read back identical to `currentOrigin` every time, so wander
-        // was silently never moving Bill at all, just running his walk
-        // texture-cycle in place — exactly what "he never visibly moves"
-        // looks like. `setFrame(_:display:)` is the form NSWindow's
-        // animator proxy actually supports.
-        let targetFrame = NSRect(x: newX, y: currentOrigin.y, width: panel.frame.width, height: panel.frame.height)
-        NSAnimationContext.runAnimationGroup { context in
-            context.duration = duration
-            context.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
-            panel.animator().setFrame(targetFrame, display: true)
-        } completionHandler: { [weak self] in
-            Task { @MainActor in
-                guard let self else { return }
-                self.characterEngine.request(.idle)
-
-                guard remaining > 1 else {
-                    self.scheduleNextWander()
-                    return
-                }
-                // Pause and look around before the next leg — an "inspecting
-                // the neighborhood" beat rather than beelining to a
-                // destination.
-                self.characterEngine.stateMachine.playIdleVariant(.tiltCheck)
-                DispatchQueue.main.asyncAfter(deadline: .now() + Double.random(in: 0.9...1.7)) { [weak self] in
-                    self?.performWanderLeg(remaining: remaining - 1)
-                }
-            }
+        case .grabbedLedge:
+            characterEngine.bark(BarkLines.random(from: BarkLines.roamLedgeGrab))
+        case .fellOffWorld:
+            characterEngine.bark(BarkLines.random(from: BarkLines.roamFellOffWorld))
+        case .bonkedHead, .walkedOffEdge, .reachedGoal:
+            break
         }
     }
 
-    // MARK: - Cursor awareness
 
-    /// A coarse, cheap poll (not a global event tap — this project
-    /// deliberately avoids those; see the architecture doc) that lets Bill
-    /// notice when the cursor lingers right next to him and give a small
-    /// acknowledgment, so he doesn't feel oblivious to the one thing
-    /// sharing his screen. `NSEvent.mouseLocation` is a plain synchronous
-    /// read, not a subscription, so polling it every few seconds while
-    /// idle costs nothing measurable.
-    private var cursorWatchTimer: Timer?
-    private var lastCursorReactionDate: Date?
-    private static let cursorProximityCheckInterval: TimeInterval = 2.5
-    private static let cursorProximityReactionCooldown: TimeInterval = 100
+    // MARK: - Cursor awareness (removed)
+    //
+    // A 2.5s poll used to check whether the cursor was lingering near Bill
+    // and, on a 50/50 roll behind a 100s cooldown, emit a `noticesCursor`
+    // line. That was the fourth and last source of non-contextual chatter —
+    // "the mouse is near me" is not something happening on the machine, it is
+    // just proximity — so it has been deleted along with its timer rather
+    // than left running silently. Net effect: one fewer always-on wakeup
+    // source, and Bill only ever speaks about things that actually happened.
 
-    private func startCursorWatch() {
-        cursorWatchTimer?.invalidate()
-        cursorWatchTimer = Timer.scheduledTimer(withTimeInterval: Self.cursorProximityCheckInterval, repeats: true) { [weak self] _ in
-            Task { @MainActor in self?.checkCursorProximity() }
-        }
-    }
-
-    private func checkCursorProximity() {
-        guard preferences.isRoamingEnabled,
-              characterEngine.stateMachine.currentState == .idle,
-              panel.isVisible
-        else { return }
-        if let last = lastCursorReactionDate, Date().timeIntervalSince(last) < Self.cursorProximityReactionCooldown {
-            return
-        }
-        let proximityRect = panel.frame.insetBy(dx: -30, dy: -30)
-        guard proximityRect.contains(NSEvent.mouseLocation) else { return }
-
-        lastCursorReactionDate = Date()
-        characterEngine.stateMachine.playIdleVariant(.tiltCheck)
-        if Bool.random() {
-            characterEngine.bark(BarkLines.random(from: BarkLines.noticesCursor))
-        }
-    }
 
     // MARK: - Click-through outside Bill's silhouette
 

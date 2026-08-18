@@ -14,6 +14,14 @@ final class BillStateMachine {
     private var pendingWork: DispatchWorkItem?
     private static let actionKey = "billClip"
 
+    private var barkQueue: [String] = []
+    private var isBarkShowing = false
+    /// Every queued line is guaranteed at least this long on screen.
+    private static let minimumBarkDisplay: TimeInterval = 1.9
+    /// Beyond this the backlog is dropped oldest-first — a burst of events
+    /// should not commit Bill to half a minute of monologue.
+    private static let maxQueuedBarks = 3
+
     private var barkNode: SKNode?
     private var barkDismissWork: DispatchWorkItem?
 
@@ -26,6 +34,9 @@ final class BillStateMachine {
     /// Fires whenever animation starts (`true`) or fully settles (`false`),
     /// so the host `SKView` can be paused/unpaused accordingly.
     var onActivityChanged: ((Bool) -> Void)?
+    /// Called every time a clip actually begins playing, with the state that
+    /// started it. `CharacterEngine` wires this to `AnimationCoverage`.
+    var onClipStarted: ((BillState) -> Void)?
 
     init(rig: BillRigNode) {
         self.rig = rig
@@ -76,7 +87,41 @@ final class BillStateMachine {
     /// Shows a short-lived speech bubble above Bill's head with a bark line.
     /// Independent of `currentState` — a bark can show up whether Bill's
     /// idle, coding, celebrating, whatever.
+    /// Queues a short-lived speech bubble above Bill's head.
+    ///
+    /// **Queued, not stomped.** This used to `removeFromParent()` the previous
+    /// bubble instantly, with no fade and no minimum on-screen time. Two barks
+    /// fired in the same tick — which is routine, e.g. opening two apps in
+    /// quick succession, or a transition line plus the destination app's own
+    /// line — meant the first was destroyed before a single frame was drawn,
+    /// so it may as well never have been generated. Now each line is
+    /// guaranteed `minimumDisplay` on screen before the next one starts.
     func showBark(_ text: String) {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+        barkQueue.append(trimmed)
+        // A hard cap so a burst of events cannot back up half a minute of
+        // speech. The *newest* lines win: they describe what just happened.
+        if barkQueue.count > Self.maxQueuedBarks {
+            barkQueue.removeFirst(barkQueue.count - Self.maxQueuedBarks)
+        }
+        drainBarkQueue()
+    }
+
+    /// Clears anything waiting — used when Bill is interrupted (a drag, a
+    /// chat opening) and the backlog is no longer relevant.
+    func clearBarkQueue() {
+        barkQueue.removeAll()
+    }
+
+    private func drainBarkQueue() {
+        guard !isBarkShowing, !barkQueue.isEmpty else { return }
+        let text = barkQueue.removeFirst()
+        isBarkShowing = true
+        present(bark: text)
+    }
+
+    private func present(bark text: String) {
         barkNode?.removeFromParent()
         barkDismissWork?.cancel()
 
@@ -91,18 +136,30 @@ final class BillStateMachine {
         setBarkActive(true)
         bubble.run(.fadeIn(withDuration: 0.2))
 
-        let displayDuration = max(2.2, min(6.0, Double(text.count) * 0.045))
+        // Long enough to read, and never shorter than `minimumDisplay` even
+        // for a two-word line, which is what makes the queue meaningful.
+        let displayDuration = max(Self.minimumBarkDisplay, min(6.0, Double(text.count) * 0.045))
         let work = DispatchWorkItem { [weak self, weak bubble] in
+            guard let self else { return }
             guard let bubble else {
-                self?.setBarkActive(false)
+                self.finishBark()
                 return
             }
             bubble.run(.sequence([.fadeOut(withDuration: 0.3), .removeFromParent()])) { [weak self] in
-                self?.setBarkActive(false)
+                self?.finishBark()
             }
         }
         barkDismissWork = work
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.2 + displayDuration, execute: work)
+    }
+
+    private func finishBark() {
+        isBarkShowing = false
+        if barkQueue.isEmpty {
+            setBarkActive(false)
+        } else {
+            drainBarkQueue()
+        }
     }
 
     /// Slides a just-placed bark bubble back onto the screen if Bill is
@@ -168,6 +225,11 @@ final class BillStateMachine {
 
     private func play(_ state: BillState) {
         currentState = state
+        // Fires for every clip that genuinely starts, whatever requested it —
+        // `AnimationCoverage` uses this as its single, unavoidable recording
+        // point rather than trying to instrument each of the many call sites
+        // that can request a state.
+        onClipStarted?(state)
         equipProp(AnimationClipLibrary.prop(for: state))
         applyFX(AnimationClipLibrary.fx(for: state))
         let clip = AnimationClipLibrary.clip(for: state)

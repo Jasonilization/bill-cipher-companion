@@ -4,7 +4,7 @@ import AppKit
 /// — no polling involved.
 @MainActor
 final class AppActivityMonitor {
-    var onAppActivated: ((_ bundleID: String, _ name: String, _ category: AppCategory?) -> Void)?
+    var onAppActivated: ((_ bundleID: String, _ name: String, _ category: AppCategory?, _ pid: pid_t) -> Void)?
     private var token: NSObjectProtocol?
 
     func start() {
@@ -21,7 +21,7 @@ final class AppActivityMonitor {
             let name = app.localizedName ?? bundleID
             let category = AppCategoryMapper.category(bundleID: bundleID, bundleURL: app.bundleURL, name: name)
             Task { @MainActor in
-                self?.onAppActivated?(bundleID, name, category)
+                self?.onAppActivated?(bundleID, name, category, app.processIdentifier)
             }
         }
     }

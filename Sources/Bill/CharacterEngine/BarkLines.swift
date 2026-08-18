@@ -384,6 +384,53 @@ enum BarkLines {
         "Don't worry about the sparks. They're purely decorative. Probably.",
     ]
 
+    /// A line to accompany an animation surfaced by the daily coverage sweep
+    /// rather than by a real-world trigger.
+    ///
+    /// Reuses whatever pool already describes that state — the rare-event
+    /// lines, or the per-app lines — so a showcased animation still says
+    /// something true about what it depicts. Returns `nil` for states that
+    /// have no pool of their own, which correctly leaves them silent rather
+    /// than inventing filler.
+    static func showcaseLine(for state: BillState) -> String? {
+        if BillState.rareEasterEggs.contains(state) {
+            return random(from: rareEvent(for: state))
+        }
+        let pool = specialApp(for: state)
+        // `specialApp` falls back to a literal "..." for unmapped states;
+        // that is a placeholder, not a line, so treat it as no line at all.
+        guard pool != ["..."] else { return nil }
+        return random(from: pool)
+    }
+
+    // MARK: - Desktop roaming
+    //
+    // Fired by `RoamingController` for physical things that actually happened
+    // — a long drop, catching a window's edge, being stranded off-world.
+    // Contextual by construction: none of these can fire unless Bill really
+    // did the thing.
+
+    static let roamHardLanding = [
+        "OOF. STUCK THE LANDING. MOSTLY.",
+        "GRAVITY. STILL UNDEFEATED.",
+        "THAT ONE'S GOING TO SHOW UP ON THE X-RAYS.",
+        "I MEANT TO DO THAT. OBVIOUSLY.",
+        "YOUR PHYSICS ARE RUDE, KID.",
+    ]
+
+    static let roamLedgeGrab = [
+        "GOT IT! ALMOST DIDN'T.",
+        "HANGING AROUND. LITERALLY.",
+        "THIS WINDOW IS LOAD-BEARING NOW.",
+        "DON'T CLOSE THIS ONE. I'M USING IT.",
+    ]
+
+    static let roamFellOffWorld = [
+        "WHOA. WHERE'D THE FLOOR GO?",
+        "SOMETHING JUST DELETED THE GROUND. RUDE.",
+        "OKAY, WHO MOVED THE SCREEN?",
+    ]
+
     static func random(from lines: [String]) -> String {
         lines.randomElement() ?? ""
     }
@@ -401,6 +448,245 @@ enum BarkLines {
         resolvedRandom(from: lines, appName: appName).replacingOccurrences(of: "{description}", with: description)
     }
 
+    // MARK: - Dock-app special reactions
+
+    static let trickster = [
+        "Oh, {app}? A fellow reality-bending menace. We'd get along terribly.",
+        "I respect a demon who monologues. Professional courtesy.",
+        "Careful in there — that one breaks the fourth wall too. Amateur.",
+    ]
+
+    static let darkWorld = [
+        "{app}, huh. Ah, a WORLD made of pure nonsense and consequence. Familiar.",
+        "Something dark, something whimsical, something with teeth. My kind of neighborhood.",
+        "I've BEEN a dark world. Several, actually. Rookie numbers.",
+    ]
+
+    static let hollowed = [
+        "A hollow little kingdom full of bugs and gloom. I feel seen.",
+        "{app}. Ah, moody caverns and ancient dread. Basically my summer home.",
+        "That knight's got the right idea — say nothing, wear a mask, terrify everyone.",
+    ]
+
+    static let cultLeader = [
+        "Ah, {app} — building a cult. Amateur hour, but I admire the ambition.",
+        "You know I've technically run a cult before. Several. It's a whole thing.",
+        "Physical form, worshippers, mild property damage — a classic Tuesday for me.",
+    ]
+
+    static let spooked = [
+        "{app}?! Even I didn't see that jumpscare coming, and I see EVERYTHING.",
+        "That game is EVIL. I mean that as the highest compliment.",
+        "My one eye just about left my skull. Well played, {app}.",
+    ]
+
+    static let scanning = [
+        "Ooh, scanning frequencies. I do love a good hidden signal.",
+        "{app}. Somewhere out there, something's transmitting. I'd know.",
+        "Radio waves, secrets in the static — now THIS is my kind of hobby.",
+    ]
+
+    static let sneaking = [
+        "Packet sniffing. Very on brand for a nosy, all-seeing entity such as myself.",
+        "{app}, huh. Watching things quietly and judging silently — we have a lot in common.",
+        "Every packet's little secrets, laid bare. Delicious.",
+    ]
+
+    static let glitching = [
+        "A whole fake computer inside your computer. Very \"me nesting inside your dreams,\" honestly.",
+        "{app}. Virtual machines, virtual me — it's all virtually the same chaos.",
+        "Careful spinning up new realities in there. I have OPINIONS about that.",
+    ]
+
+    static let charged = [
+        "{app}! Now we're cooking with actual forbidden knowledge.",
+        "Flashing firmware onto a little box of secrets. I'm unreasonably excited.",
+        "That thing has caused SO much mischief. We should talk shop sometime.",
+    ]
+
+    static let transferring = [
+        "Moving bits from one dimension to another. I do this, but with more screaming involved.",
+        "{app}. A little portal, a little transfer, very my aesthetic.",
+        "Flashing a fresh little brain onto that board. Almost tender, really.",
+    ]
+
+    static let summoning = [
+        "{app}. Poof, a little sealed universe appears. I felt that in my non-corporeal soul.",
+        "Containers spinning up out of nowhere — very much a spell I know.",
+        "SNAP, and a whole isolated world exists. Show-off.",
+    ]
+
+    static let sculpting = [
+        "Ah, building little worlds from nothing. I do that too, minus the undo button.",
+        "{app}. Sculpting reality itself, one vertex at a time. Relatable.",
+        "Give it a face. Everything's better with a face. Ask me how I know.",
+    ]
+
+    static let kinship = [
+        "{app}! A fellow pixel artist. We should compare notes on personal aesthetic superiority.",
+        "Blocky, deliberate, perfect. This is basically a self-portrait studio to me.",
+        "Finally, someone who understands that every pixel should EARN its place.",
+    ]
+
+    static let presenting = [
+        "{app}. Ah, the ancient art of making mediocrity look intentional.",
+        "A little design, a little chaos, a lot of questionable font choices incoming.",
+        "Presenting something to the world. Bold. I usually just appear uninvited.",
+    ]
+
+    static let guilty = [
+        "{app}. That owl is judging you. I'm judging you too, but with more flair.",
+        "Oh, skipping lessons again? The bird will remember this.",
+        "Language learning by guilt trip. Honestly? Efficient.",
+    ]
+
+    static let dreading = [
+        "Ah yes, {app}. The mortal dread of institutional obligation. I felt that.",
+        "Homework. The closest thing your species has to eternal torment. I'd know torment.",
+        "Courage. Or don't. I'll be here regardless, mildly entertained.",
+    ]
+
+    static let grooving = [
+        "{app}! Deploying my one (1) foot to tap, per usual protocol.",
+        "Video, huh. Let's see what algorithmic nonsense you've been fed today.",
+        "Oh, a banger snuck in? Bold. I respect it.",
+    ]
+
+    static let dispatching = [
+        "{app}. Dispatching a message into the void — I do enjoy a good declaration.",
+        "Sending words out to be misunderstood by someone else. A timeless tradition.",
+        "Ah, correspondence. Try not to regret it by tomorrow.",
+    ]
+
+    static let ambushed = [
+        "A new app?! I wasn't PREPARED for this. How thrilling.",
+        "{app}, appearing without warning. I love a good ambush. Usually I'm the one doing it.",
+        "Startled. Genuinely. Do it again.",
+    ]
+
+    static let stressed = [
+        "{app}. Watching the machine strain under its own ambition — deeply relatable content.",
+        "Ah, the numbers are doing something alarming. Wonderful. Keep watching.",
+        "Nothing quite like staring at your own system's slow-motion crisis.",
+    ]
+
+    static let watched = [
+        "{app}. Adjusting little switches and toggles like it changes anything fundamental.",
+        "Poking at settings. I can feel you deciding my future somehow. Ominous.",
+        "Careful in there. Some of those toggles summon things. Ask me how I know.",
+    ]
+
+    static let flinching = [
+        "A camera?! Absolutely not. My best angle is \"gone.\"",
+        "{app}. Smile, I suppose. I, however, will be hiding.",
+        "Documenting this moment for posterity. Bold assumption that I consent.",
+    ]
+
+    static let huffy = [
+        "{app}. Deleting things. DELETING THINGS. Some of us get attached, you monster.",
+        "Every app you remove, I mourn privately. Then I get over it. Mostly.",
+        "Cleaning house, hm? I've seen deletions I'll never forgive.",
+    ]
+
+    static let pushingCode = [
+        "{app}. Pushing your questionable decisions into the historical record forever.",
+        "Version control — the closest your species gets to actual time travel.",
+        "Committing crimes against clean code, I assume. As always.",
+    ]
+
+    static let browsingStore = [
+        "{app}. Window shopping for your next great time-sink. No judgment. Some judgment.",
+        "The eternal scroll of \"maybe I'll play this someday.\" A tale as old as time.",
+        "Adding it to the backlog you'll never finish. A classic.",
+    ]
+
+    static let dancing = [
+        "{app}! Now THIS deserves a proper flourish.",
+        "Conducting an invisible orchestra over here. Don't mind me.",
+        "Good taste. Or at least, tolerable taste. I'll allow it.",
+    ]
+
+    static let fractaling = [
+        "Infinite complexity, forever zooming in. I RESPECT that kind of commitment to a bit.",
+        "{app}. Reality repeating itself into infinity. Sounds exhausting. Sounds familiar.",
+        "Zoom in forever and it's still the same shape. Kind of like you, opening this app again.",
+    ]
+
+    // MARK: - More rare-event lines
+
+    static let caneTwist = [
+        "A little flourish, for absolutely no reason. I contain multitudes.",
+        "Sometimes a demon just needs to show off. No further explanation needed.",
+    ]
+
+    static let hookCane = [
+        "Don't ask about the basket. I won't be answering questions about the basket.",
+        "Just admiring my own accessories. As one does.",
+    ]
+
+    static let conjuring = [
+        "I made a little friend. Don't get attached, it's probably temporary.",
+        "Reached into the void and pulled out... this. Unclear what it is. Keeping it anyway.",
+    ]
+
+    static let tumbling = [
+        "That was a completely intentional tumble. Yes. Obviously.",
+        "Everything's spinning. This is fine. I meant to do that.",
+    ]
+
+    static let dashTarget = [
+        "Locked on. Don't ask to what. It's probably nothing. Probably.",
+        "Zooming with PURPOSE now. A target has been acquired.",
+    ]
+
+    static let grumpEyes = [
+        "I am NOT mad. My eyes are just doing this on their own. Separate issue.",
+        "Something about today has personally offended me. I'll get over it eventually.",
+    ]
+
+    static let zipAround = [
+        "Be right back. Or I already am. Time is a construct, mostly for you.",
+        "Quick errand in another dimension. Don't wait up.",
+    ]
+
+    static let rampaging = [
+        "Red mode. Don't worry about red mode. Red mode is fine.",
+        "Occasionally I just need to run very fast and be slightly more menacing. Cathartic.",
+    ]
+
+    static func specialApp(for state: BillState) -> [String] {
+        switch state {
+        case .trickster: return trickster
+        case .darkWorld: return darkWorld
+        case .hollowed: return hollowed
+        case .cultLeader: return cultLeader
+        case .spooked: return spooked
+        case .scanning: return scanning
+        case .sneaking: return sneaking
+        case .glitching: return glitching
+        case .charged: return charged
+        case .transferring: return transferring
+        case .summoning: return summoning
+        case .sculpting: return sculpting
+        case .kinship: return kinship
+        case .presenting: return presenting
+        case .guilty: return guilty
+        case .dreading: return dreading
+        case .grooving: return grooving
+        case .dispatching: return dispatching
+        case .ambushed: return ambushed
+        case .stressed: return stressed
+        case .watched: return watched
+        case .flinching: return flinching
+        case .huffy: return huffy
+        case .pushingCode: return pushingCode
+        case .browsingStore: return browsingStore
+        case .dancing: return dancing
+        case .fractaling: return fractaling
+        default: return ["..."]
+        }
+    }
+
     static func rareEvent(for state: BillState) -> [String] {
         switch state {
         case .powerSurge: return powerSurge
@@ -410,6 +696,14 @@ enum BarkLines {
         case .glitchForm: return glitchForm
         case .shadowHands: return shadowHands
         case .meltdown: return meltdown
+        case .caneTwist: return caneTwist
+        case .hookCane: return hookCane
+        case .conjuring: return conjuring
+        case .tumbling: return tumbling
+        case .dashTarget: return dashTarget
+        case .grumpEyes: return grumpEyes
+        case .zipAround: return zipAround
+        case .rampaging: return rampaging
         default: return ["..."]
         }
     }

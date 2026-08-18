@@ -41,6 +41,75 @@ enum BillState: String, CaseIterable, Sendable {
     case shadowHands
     case meltdown
 
+    // Dock-app reactions (animation-director audit — see
+    // `Docs/SpriteAnimationCatalog.md`). Each backs one specific app or a
+    // small cluster of genuinely-equivalent apps (see `SpecialAppMapper`).
+    case trickster
+    case darkWorld
+    case hollowed
+    case cultLeader
+    case spooked
+    case scanning
+    case sneaking
+    case glitching
+    case charged
+    case transferring
+    case summoning
+    case sculpting
+    case kinship
+    case fractaling
+    case presenting
+    case guilty
+    case dreading
+    case grooving
+    case dispatching
+    case ambushed
+    case stressed
+    case watched
+    case flinching
+    case huffy
+    case pushingCode
+    case browsingStore
+    case dancing
+
+    // More verified groups with no natural per-app fit — rare Easter eggs
+    // (see `rareEasterEggs` below) rather than forced triggers.
+    case caneTwist
+    case hookCane
+    case conjuring
+    case tumbling
+    case dashTarget
+    case grumpEyes
+    case zipAround
+    case rampaging
+
+    // Desktop-roaming physics beats (see `GravitySimulator`/`RoamingController`).
+    // Every one of these is backed by real sprite art already exported from
+    // the sheet — nothing here is a procedural placeholder:
+    //   crouching/launching/landing*  → group 07 "duck flinch" (`bill_flinching`),
+    //       a genuine three-frame squash: upright → compressed → flattened.
+    //       Played forward it is an anticipation crouch; reversed it is the
+    //       extension that launches him.
+    //   falling                       → group 29 "dizzy tumble" (`bill_tumbling`),
+    //       four frames of limbs flailing at different rotations — already
+    //       airborne art, which is exactly what a fall needs.
+    //   climbing*/hangingIdle/ledgeGrabbing → group 20 "sneak crouch cycle"
+    //       (`bill_sneaking`), a low gripping pose whose legs read as holding on.
+    //   running                       → group 42 "red rampage run" (`bill_rampaging`).
+    //   edgePeek                      → group 31 "eye opening focus" (`bill_focused`).
+    case crouching
+    case launching
+    case rising
+    case falling
+    case landingSoft
+    case landingHard
+    case ledgeGrabbing
+    case climbingUp
+    case climbingDown
+    case hangingIdle
+    case edgePeek
+    case running
+
     /// Higher priority states can interrupt lower ones mid-beat.
     /// Reactive/emotional spikes outrank ambient/idle behavior. Rare
     /// Easter eggs sit deliberately high — once one rolls, it should play
@@ -66,6 +135,21 @@ enum BillState: String, CaseIterable, Sendable {
         case .happy: return 60
         case .focused: return 58
         case .gaming, .coding, .channeling: return 50
+        case .trickster, .darkWorld, .hollowed, .cultLeader, .spooked, .scanning, .sneaking,
+             .glitching, .charged, .transferring, .summoning, .sculpting, .kinship, .fractaling,
+             .presenting, .guilty, .dreading, .grooving, .dispatching, .ambushed, .stressed,
+             .watched, .flinching, .huffy, .pushingCode, .browsingStore, .dancing:
+            return 50
+        case .caneTwist, .hookCane, .conjuring, .tumbling, .dashTarget, .grumpEyes, .zipAround, .rampaging:
+            return 85
+        // Above every ambient/app reaction (50) but below emotional spikes:
+        // once Bill is genuinely mid-air, the animation has to stay in sync
+        // with where the simulation is actually putting him, so a passing
+        // app-launch beat must not stomp a fall. Being poked or grabbed
+        // still outranks it, which is correct — those *should* interrupt.
+        case .crouching, .launching, .rising, .falling, .landingSoft, .landingHard,
+             .ledgeGrabbing, .climbingUp, .climbingDown, .hangingIdle, .edgePeek, .running:
+            return 55
         case .thinking, .talking: return 45
         case .charging: return 40
         case .walking: return 30
@@ -78,11 +162,36 @@ enum BillState: String, CaseIterable, Sendable {
     /// single beat and then settles back to idle (false).
     var isContinuous: Bool {
         switch self {
-        case .talking, .thinking, .sleeping, .gaming, .coding, .channeling, .heatingUp, .charging, .walking:
+        case .talking, .thinking, .sleeping, .gaming, .coding, .channeling, .heatingUp, .charging, .walking,
+             .sneaking, .glitching, .pushingCode, .browsingStore,
+             // Held for as long as the simulation says so — a fall lasts
+             // exactly as long as the fall does, not a fixed clip length.
+             .rising, .falling, .climbingUp, .climbingDown, .hangingIdle, .running:
             return true
         case .idle, .happy, .annoyed, .surprised, .celebrating, .confused, .dazed, .poked,
              .smug, .focused, .caneFlourish, .powerSurge, .zodiacVision, .summonRitual,
-             .ghostPale, .glitchForm, .shadowHands, .meltdown:
+             .ghostPale, .glitchForm, .shadowHands, .meltdown,
+             .trickster, .darkWorld, .hollowed, .cultLeader, .spooked, .scanning, .charged,
+             .transferring, .summoning, .sculpting, .kinship, .fractaling, .presenting, .guilty,
+             .dreading, .grooving, .dispatching, .ambushed, .stressed, .watched, .flinching,
+             .huffy, .dancing,
+             .caneTwist, .hookCane, .conjuring, .tumbling, .dashTarget, .grumpEyes, .zipAround, .rampaging,
+             .crouching, .launching, .landingSoft, .landingHard, .ledgeGrabbing, .edgePeek:
+            return false
+        }
+    }
+
+    /// True for the states the roaming simulation drives directly. The
+    /// roaming controller owns Bill's animation completely while one of
+    /// these is current, so ambient behaviour (idle beats, rare Easter eggs,
+    /// cursor reactions) must stand down rather than fight it.
+    var isRoamingMotion: Bool {
+        switch self {
+        case .crouching, .launching, .rising, .falling, .landingSoft, .landingHard,
+             .ledgeGrabbing, .climbingUp, .climbingDown, .hangingIdle, .edgePeek,
+             .running, .walking:
+            return true
+        default:
             return false
         }
     }
@@ -91,5 +200,6 @@ enum BillState: String, CaseIterable, Sendable {
     /// idle roll rather than any normal reaction path.
     static let rareEasterEggs: [BillState] = [
         .powerSurge, .zodiacVision, .summonRitual, .ghostPale, .glitchForm, .shadowHands, .meltdown,
+        .caneTwist, .hookCane, .conjuring, .tumbling, .dashTarget, .grumpEyes, .zipAround, .rampaging,
     ]
 }

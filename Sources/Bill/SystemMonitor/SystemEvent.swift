@@ -42,14 +42,42 @@ enum AppCategory: String, Sendable, CaseIterable, Codable {
 /// no behavior/personality logic — it just reports what happened; the
 /// `ReactionRouter` decides what, if anything, Bill should do about it.
 enum SystemEvent: Sendable {
-    case appActivated(bundleID: String, name: String, category: AppCategory?)
+    /// `pid` is carried so Bill can physically walk/jump to that app's
+    /// frontmost window before reacting to it (and so Study Mode can hide it).
+    case appActivated(bundleID: String, name: String, category: AppCategory?, pid: pid_t)
     case batteryLow(percentage: Int)
+    /// Crossed a 5% step. Separate from `batteryLow`, which is the one-shot
+    /// "you are in trouble" alarm — this is the running commentary the user
+    /// asked for, and it fires in both directions.
+    case batteryLevel(percent: Int, isCharging: Bool)
     case batteryCharging
     case batteryUnplugged
     case networkLost
     case networkRestored
+    /// Link quality crossed a tier boundary (with hysteresis and a dwell
+    /// time, so a flapping connection cannot spam this).
+    case networkQualityChanged(NetworkQuality)
     case cpuHot
     case cpuNormal
     case userIdle
     case userReturned
+    /// Output volume crossed one of the 0/25/50/75/100 marks.
+    case volumeMark(percent: Int)
+    case volumeMuteChanged(isMuted: Bool)
+    /// A wall-clock half hour just passed.
+    case halfHour(hour: Int, minute: Int)
+    case timeOfDayChanged(TimeOfDay)
+}
+
+/// Coarse link quality. Deliberately four wide tiers rather than a number:
+/// the user asked to be told when the connection "falls to very low" and when
+/// it "returns high", which is a tier transition, and a raw RSSI readout would
+/// flap constantly without telling them anything they can act on.
+enum NetworkQuality: String, Sendable, Equatable {
+    case offline
+    case poor
+    case good
+    case excellent
+
+    var isUsable: Bool { self != .offline }
 }

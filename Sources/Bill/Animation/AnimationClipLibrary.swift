@@ -103,6 +103,53 @@ enum AnimationClipLibrary {
         case .meltdown: return meltdown
         case .channeling: return channeling
         case .focused: return focused
+        case .trickster: return trickster
+        case .darkWorld: return darkWorld
+        case .hollowed: return hollowed
+        case .cultLeader: return cultLeader
+        case .spooked: return spooked
+        case .scanning: return scanning
+        case .sneaking: return sneaking
+        case .glitching: return glitching
+        case .charged: return charged
+        case .transferring: return transferring
+        case .summoning: return summoning
+        case .sculpting: return sculpting
+        case .kinship: return kinship
+        case .fractaling: return fractaling
+        case .presenting: return presenting
+        case .guilty: return guilty
+        case .dreading: return dreading
+        case .grooving: return grooving
+        case .dispatching: return dispatching
+        case .ambushed: return ambushed
+        case .stressed: return stressed
+        case .watched: return watched
+        case .flinching: return flinching
+        case .huffy: return huffy
+        case .pushingCode: return pushingCode
+        case .browsingStore: return browsingStore
+        case .dancing: return dancing
+        case .caneTwist: return caneTwist
+        case .hookCane: return hookCane
+        case .conjuring: return conjuring
+        case .tumbling: return tumbling
+        case .dashTarget: return dashTarget
+        case .grumpEyes: return grumpEyes
+        case .zipAround: return zipAround
+        case .rampaging: return rampaging
+        case .crouching: return crouching
+        case .launching: return launching
+        case .rising: return rising
+        case .falling: return falling
+        case .landingSoft: return landingSoft
+        case .landingHard: return landingHard
+        case .ledgeGrabbing: return ledgeGrabbing
+        case .climbingUp: return climbingUp
+        case .climbingDown: return climbingDown
+        case .hangingIdle: return hangingIdle
+        case .edgePeek: return edgePeek
+        case .running: return running
         }
     }
 
@@ -140,7 +187,7 @@ enum AnimationClipLibrary {
     /// occasional shiftWeight/stretch/tiltCheck/curious variety beats rather
     /// than replacing them.
     static let idle = AnimationClip(
-        textures: BillSpriteCatalog.idle,
+        textures: pingpongLoop(BillSpriteCatalog.idle),
         frameDuration: 0.15,
         transform: [
             .body: [
@@ -152,7 +199,14 @@ enum AnimationClipLibrary {
                 PoseKeyframe(duration: 1.4, offset: CGVector(dx: 0, dy: 0), timing: .easeInEaseOut),
             ],
         ],
-        loop: .pingpong
+        // `pingpongLoop` + `.loop`, never native `.pingpong` — see rule 2.
+        // This is Bill's most-visible state and it was violating that rule:
+        // native `.pingpong` replayed frame 7 twice at the turnaround and
+        // frame 1 twice at the repeat boundary, a one-frame hitch twice
+        // every cycle, forever. The transform track is unaffected by the
+        // change: its two keyframes already describe a complete down-and-up
+        // oscillation, so repeating it forward is identical to pingponging it.
+        loop: .loop
     )
 
     // MARK: - Locomotion
@@ -187,18 +241,21 @@ enum AnimationClipLibrary {
 
     // MARK: - Conversational
 
-    /// The sheet's hand-raised explaining/waving gesture.
+    /// The sheet's hand-raised explaining/waving gesture. `pingpongLoop`
+    /// rather than native `.pingpong` (rule 2) — the gesture is oscillatory,
+    /// so it *should* play back and forth; it just must not stutter on the
+    /// end frames while doing it.
     static let talking = AnimationClip(
-        textures: BillSpriteCatalog.talking,
+        textures: pingpongLoop(BillSpriteCatalog.talking),
         frameDuration: 0.15,
-        loop: .pingpong
+        loop: .loop
     )
 
     /// The sheet's dedicated hand-to-chin pondering sequence.
     static let thinking = AnimationClip(
-        textures: BillSpriteCatalog.thinking,
+        textures: pingpongLoop(BillSpriteCatalog.thinking),
         frameDuration: 0.35,
-        loop: .pingpong
+        loop: .loop
     )
 
     // MARK: - Emotional beats (single-shot, settle back to idle)
@@ -348,6 +405,197 @@ enum AnimationClipLibrary {
         loop: .once
     )
 
+    // MARK: - Dock-app reactions (animation-director audit — see Docs/SpriteAnimationCatalog.md)
+
+    /// UNDERTALE — flex, then a chaotic scribble vortex, then a dazed emergence. A kindred trickster-spirit nod.
+    static let trickster = AnimationClip(
+        textures: holdLast(BillSpriteCatalog.trickster, extra: 3),
+        frameDuration: 0.15,
+        loop: .once
+    )
+
+    /// DELTARUNE — dark mask, feral crouch, lunges forward.
+    static let darkWorld = AnimationClip(
+        textures: holdLast(BillSpriteCatalog.darkWorld, extra: 3),
+        frameDuration: 0.17,
+        loop: .once
+    )
+
+    /// Hollow Knight — the stone ziggurat tower materializes, gothic and imposing.
+    static let hollowed = AnimationClip(
+        textures: holdLast(BillSpriteCatalog.hollowed, extra: 3),
+        frameDuration: 0.16,
+        loop: .once
+    )
+
+    /// Cult Of The Lamb — ghostly triangle escalates into a full brick-bodied physical form.
+    static let cultLeader = AnimationClip(
+        textures: holdLast(BillSpriteCatalog.cultLeader, extra: 3),
+        frameDuration: 0.17,
+        loop: .once
+    )
+
+    /// Baldi's Basics — wide shocked eyes, a red spike aura.
+    static let spooked = AnimationClip(
+        textures: holdLast(BillSpriteCatalog.spooked, extra: 3),
+        frameDuration: 0.13,
+        loop: .once
+    )
+
+    /// SDR++/SatDump — a shard shrinks and flies out as he channels a hypnotic-eye scan.
+    static let scanning = AnimationClip(
+        textures: holdLast(BillSpriteCatalog.scanning, extra: 3),
+        frameDuration: 0.13,
+        loop: .once
+    )
+
+    /// Wireshark — low sneaking crouch, hood over one eye. Continuous while it's frontmost.
+    static let sneaking = AnimationClip(
+        textures: pingpongLoop(BillSpriteCatalog.sneaking),
+        frameDuration: 0.14,
+        loop: .loop
+    )
+
+    /// UTM — monochrome palette, red diamond eye. Continuous while it's frontmost.
+    static let glitching = AnimationClip(
+        textures: pingpongLoop(BillSpriteCatalog.glitching),
+        frameDuration: 0.14,
+        loop: .loop
+    )
+
+    /// qFlipper — lightning-bolt chest, escalating spark/star bursts.
+    static let charged = AnimationClip(
+        textures: holdLast(BillSpriteCatalog.charged, extra: 3),
+        frameDuration: 0.14,
+        loop: .once
+    )
+
+    /// Raspberry Pi Imager/balenaEtcher — shoots a portal out, gems color-cycle through the transfer.
+    static let transferring = AnimationClip(
+        textures: holdLast(BillSpriteCatalog.transferring, extra: 3),
+        frameDuration: 0.09,
+        loop: .once
+    )
+
+    /// Docker Desktop — a kick blur, a spark, then SNAP as a container appears, then walks off.
+    static let summoning = AnimationClip(
+        textures: holdLast(BillSpriteCatalog.summoning, extra: 3),
+        frameDuration: 0.14,
+        loop: .once
+    )
+
+    /// Blender — a small floating triangle grows into a towering fanged true form.
+    static let sculpting = AnimationClip(
+        textures: holdLast(BillSpriteCatalog.sculpting, extra: 3),
+        frameDuration: 0.16,
+        loop: .once
+    )
+
+    /// Pixelorama — a proud, showy cane flourish for a fellow pixel artist.
+    static let kinship = AnimationClip(
+        textures: pingpong(BillSpriteCatalog.kinship),
+        frameDuration: 0.13,
+        loop: .once
+    )
+
+    /// Mandelbrot Explorer — a pale sliver solidifies, then melts back down. Infinite complexity, briefly touched.
+    static let fractaling = AnimationClip(
+        textures: holdLast(BillSpriteCatalog.fractaling, extra: 3),
+        frameDuration: 0.2,
+        loop: .once
+    )
+
+    /// Canva — a presenting sway with a held object.
+    static let presenting = AnimationClip(
+        textures: pingpong(BillSpriteCatalog.presenting),
+        frameDuration: 0.17,
+        loop: .once
+    )
+
+    /// Duolingo — a green, half-lidded, faintly guilty eye. (You know why.)
+    static let guilty = AnimationClip(
+        textures: pingpong(BillSpriteCatalog.guilty),
+        frameDuration: 0.2,
+        loop: .once
+    )
+
+    /// School portals/Classroom — idle poses give way to a sudden open-mouth lunge of dread.
+    static let dreading = AnimationClip(
+        textures: holdLast(BillSpriteCatalog.dreading, extra: 3),
+        frameDuration: 0.16,
+        loop: .once
+    )
+
+    /// YouTube — a calm wave, a snap on the beat, calm again.
+    static let grooving = AnimationClip(
+        textures: pingpong(BillSpriteCatalog.grooving),
+        frameDuration: 0.15,
+        loop: .once
+    )
+
+    /// Mail — a quick cable-cast, dispatching a message.
+    static let dispatching = AnimationClip(
+        textures: pingpong(BillSpriteCatalog.dispatching),
+        frameDuration: 0.14,
+        loop: .once
+    )
+
+    /// App Store — a startled puff/BANG at a new app appearing, then walks it off.
+    static let ambushed = AnimationClip(
+        textures: holdLast(BillSpriteCatalog.ambushed, extra: 3),
+        frameDuration: 0.13,
+        loop: .once
+    )
+
+    /// Activity Monitor — confusion, a flash of fire, an ashen aftermath. Watching the watcher.
+    static let stressed = AnimationClip(
+        textures: holdLast(BillSpriteCatalog.stressed, extra: 3),
+        frameDuration: 0.16,
+        loop: .once
+    )
+
+    /// System Settings — a dark claw grows and covers his eye. Someone's poking at the settings.
+    static let watched = AnimationClip(
+        textures: pingpong(BillSpriteCatalog.watched),
+        frameDuration: 0.16,
+        loop: .once
+    )
+
+    /// Photo Booth — a 3-stage flinch/duck, camera-shy.
+    static let flinching = AnimationClip(
+        textures: pingpong(BillSpriteCatalog.flinching),
+        frameDuration: 0.13,
+        loop: .once
+    )
+
+    /// AppCleaner — a whip-crack windup into an indignant stagger. Deleting things is personal.
+    static let huffy = AnimationClip(
+        textures: holdLast(BillSpriteCatalog.huffy, extra: 3),
+        frameDuration: 0.11,
+        loop: .once
+    )
+
+    /// GitHub — a diagonal sprint lean. Continuous while it's frontmost.
+    static let pushingCode = AnimationClip(
+        textures: pingpongLoop(BillSpriteCatalog.pushingCode),
+        frameDuration: 0.1,
+        loop: .loop
+    )
+
+    /// Steam (the storefront itself, not a specific game) — a run/leap lunge. Continuous while it's frontmost.
+    static let browsingStore = AnimationClip(
+        textures: pingpongLoop(BillSpriteCatalog.browsingStore),
+        frameDuration: 0.1,
+        loop: .loop
+    )
+
+    /// Spotify — an overhead cable flourish, like conducting.
+    static let dancing = AnimationClip(
+        textures: pingpong(BillSpriteCatalog.dancing),
+        frameDuration: 0.12,
+        loop: .once
+    )
+
     // MARK: - Sustained conditions
 
     /// The sheet's actual lying-down pose, combined with a slow breathing
@@ -431,6 +679,223 @@ enum AnimationClipLibrary {
         textures: pingpong(BillSpriteCatalog.focused),
         frameDuration: 0.2,
         loop: .once
+    )
+
+    // MARK: - More rare Easter eggs (leftover verified groups, no natural app fit)
+
+    /// Cane cable spins out fully as his eye slips into a sleepy half-moon, then reopens.
+    static let caneTwist = AnimationClip(
+        textures: pingpong(BillSpriteCatalog.caneTwist),
+        frameDuration: 0.13,
+        loop: .once
+    )
+
+    /// A hooked cane held in a couple of positions — one frame has an odd woven-basket texture nobody's fully explained yet.
+    static let hookCane = AnimationClip(
+        textures: pingpong(BillSpriteCatalog.hookCane),
+        frameDuration: 0.18,
+        loop: .once
+    )
+
+    /// Reaches out with an empty hand; a small shaggy grey mass grows in his grip, then settles by his feet.
+    static let conjuring = AnimationClip(
+        textures: holdLast(BillSpriteCatalog.conjuring, extra: 3),
+        frameDuration: 0.15,
+        loop: .once
+    )
+
+    /// An off-balance, legs-up tumble with a dazed X-eye and one comic close-up-eyeball beat.
+    /// A tumble is *directional*: frames 1→4 rotate him further and further
+    /// off balance. Ping-ponging it un-tumbles him, which reads as the video
+    /// being rewound rather than as a recovery — so it plays forward and
+    /// holds, like every other committed motion here.
+    static let tumbling = AnimationClip(
+        textures: holdLast(BillSpriteCatalog.tumbling, extra: 3),
+        frameDuration: 0.15,
+        loop: .once
+    )
+
+    /// A dash/lean lunge that picks up a circular target emblem on his chest
+    /// partway through.
+    ///
+    /// **This was the "dash lunge looks weird, it's not the pingpong effect
+    /// kind of" report.** It was built with `pingpong(_:)` → `[1,2,3,4,3,2,1]`,
+    /// i.e. Bill committed to a forward lunge and then played that exact lunge
+    /// backwards to stand up again. Ping-pong only reads correctly on
+    /// *oscillatory* motion (a bob, a wobble, a breath). A lunge is
+    /// *directional*: reversed, it is unmistakably a rewind. Fixed by
+    /// committing to the lunge and holding the final pose, which then hands
+    /// off to the normal 0.25s ease back to rest in `settleToIdle`.
+    static let dashTarget = AnimationClip(
+        textures: holdLast(BillSpriteCatalog.dashTarget, extra: 4),
+        frameDuration: 0.11,
+        loop: .once
+    )
+
+    /// Walking with escalating gritted-teeth anger, until his eyes go wide and round with a spark.
+    static let grumpEyes = AnimationClip(
+        textures: holdLast(BillSpriteCatalog.grumpEyes, extra: 3),
+        frameDuration: 0.15,
+        loop: .once
+    )
+
+    /// Idle, then a quick blurred dash out and back, then idle again.
+    static let zipAround = AnimationClip(
+        textures: holdLast(BillSpriteCatalog.zipAround, extra: 3),
+        frameDuration: 0.11,
+        loop: .once
+    )
+
+    /// A red palette-swap rampage run, dust kicking up with each stride.
+    static let rampaging = AnimationClip(
+        textures: holdLast(BillSpriteCatalog.rampaging, extra: 3),
+        frameDuration: 0.11,
+        loop: .once
+    )
+
+    // MARK: - Desktop roaming (driven by `GravitySimulator`)
+    //
+    // All twelve of these reuse sprite groups already exported from the
+    // sheet — no procedural placeholders, and no group is invented. The
+    // pairing was chosen by looking at the actual filmstrips:
+    //
+    //   `bill_flinching` (group 07, "duck flinch") is a true three-frame
+    //   squash — upright, compressed, flattened. That single sequence supplies
+    //   the crouch (forward), the launch (reversed, i.e. the extension), and
+    //   both landings (squash-and-recover), which is exactly how hand-animated
+    //   platformer jumps are built.
+    //
+    //   `bill_tumbling` (group 29, "dizzy tumble") is already airborne art:
+    //   four frames of limbs flailing at increasing rotation. It is the fall.
+    //
+    //   `bill_sneaking` (group 20, "sneak crouch cycle") is a low, gripping,
+    //   legs-bent cycle. Against a vertical window edge it reads as clinging
+    //   and hauling himself along, so it carries grab / climb / hang.
+
+    /// Anticipation before a leap. Compressing *into* the ground is the beat
+    /// that makes the launch afterwards read as powered rather than floaty.
+    static let crouching = AnimationClip(
+        textures: holdLast(BillSpriteCatalog.flinching, extra: 2),
+        frameDuration: 0.06,
+        loop: .once
+    )
+
+    /// The extension out of the crouch. The squash sequence played in reverse
+    /// — flattened → compressed → upright — with a brief vertical stretch on
+    /// top of it, the classic squash-and-stretch pairing.
+    static let launching = AnimationClip(
+        textures: Array(BillSpriteCatalog.flinching.reversed()),
+        frameDuration: 0.055,
+        transform: [
+            .body: [
+                PoseKeyframe(duration: 0.09, offset: CGVector(dx: 0, dy: 6), timing: .easeOut),
+                PoseKeyframe(duration: 0.08, offset: .zero, timing: .easeIn),
+            ],
+        ],
+        loop: .once
+    )
+
+    /// Held while the arc is still climbing. A single upright, legs-trailing
+    /// frame, drifting slightly upward — a texture cycle here would fight the
+    /// window's own motion and read as running in mid-air.
+    static let rising = AnimationClip(
+        textures: [BillSpriteCatalog.flinching[0]],
+        frameDuration: 0.2,
+        transform: [
+            .body: [
+                PoseKeyframe(duration: 0.45, offset: CGVector(dx: 0, dy: 4), timing: .easeOut),
+                PoseKeyframe(duration: 0.45, offset: .zero, timing: .easeIn),
+            ],
+        ],
+        loop: .loop
+    )
+
+    /// The tumble, looping forward for as long as the fall lasts. Forward
+    /// only: reversing a tumble un-tumbles him (see `tumbling`).
+    static let falling = AnimationClip(
+        textures: BillSpriteCatalog.tumbling,
+        frameDuration: 0.1,
+        loop: .loop
+    )
+
+    /// A short compress-and-recover on touchdown. Ping-pong is *correct*
+    /// here, unlike on a lunge: a landing squash genuinely is oscillatory —
+    /// it goes down and comes back.
+    static let landingSoft = AnimationClip(
+        textures: pingpong(Array(BillSpriteCatalog.flinching.prefix(2))),
+        frameDuration: 0.075,
+        loop: .once
+    )
+
+    /// A full-depth squash with a second, smaller rebound — the read for
+    /// arriving fast from a long drop.
+    static let landingHard = AnimationClip(
+        textures: pingpong(BillSpriteCatalog.flinching, cycles: 2),
+        frameDuration: 0.07,
+        transform: [
+            .body: [
+                PoseKeyframe(duration: 0.1, offset: CGVector(dx: 0, dy: -7), timing: .easeOut),
+                PoseKeyframe(duration: 0.22, offset: .zero, timing: .easeOut),
+            ],
+        ],
+        loop: .once
+    )
+
+    /// The instant of catching a window's edge on the way past it.
+    static let ledgeGrabbing = AnimationClip(
+        textures: holdLast(Array(BillSpriteCatalog.sneaking.prefix(2)), extra: 2),
+        frameDuration: 0.08,
+        loop: .once
+    )
+
+    static let climbingUp = AnimationClip(
+        textures: BillSpriteCatalog.sneaking,
+        frameDuration: 0.13,
+        loop: .loop
+    )
+
+    /// The same grip cycle run backwards, which is right here for the same
+    /// reason it is wrong on a lunge: climbing genuinely is the reverse
+    /// motion of climbing the other way.
+    static let climbingDown = AnimationClip(
+        textures: Array(BillSpriteCatalog.sneaking.reversed()),
+        frameDuration: 0.15,
+        loop: .loop
+    )
+
+    /// Dangling from a window's underside, swinging very slightly.
+    static let hangingIdle = AnimationClip(
+        textures: [BillSpriteCatalog.sneaking[0]],
+        frameDuration: 0.3,
+        transform: [
+            .body: [
+                PoseKeyframe(duration: 1.1, rotation: 0.045, timing: .easeInEaseOut),
+                PoseKeyframe(duration: 1.1, rotation: -0.045, timing: .easeInEaseOut),
+            ],
+        ],
+        loop: .loop
+    )
+
+    /// Leaning out over a ledge to look down before committing to the drop.
+    static let edgePeek = AnimationClip(
+        textures: pingpong(BillSpriteCatalog.focused),
+        frameDuration: 0.16,
+        loop: .once
+    )
+
+    /// The rampage run cycle, reused at speed for crossing long distances —
+    /// this is what finally gives group 42 daily screen time instead of
+    /// leaving it stranded behind a 3%-per-beat Easter-egg roll.
+    static let running = AnimationClip(
+        textures: BillSpriteCatalog.rampaging,
+        frameDuration: 0.08,
+        transform: [
+            .body: [
+                PoseKeyframe(duration: 0.16, offset: CGVector(dx: 0, dy: 4), timing: .easeInEaseOut),
+                PoseKeyframe(duration: 0.16, offset: .zero, timing: .easeInEaseOut),
+            ],
+        ],
+        loop: .loop
     )
 
     // MARK: - Idle variety (short, sparse beats — not a continuous loop)

@@ -97,6 +97,18 @@ enum BillSpriteCatalog {
     static let browsingStore = loadFrames("bill_browsingstore", count: 3)
     static let dancing = loadFrames("bill_dancing", count: 7)
 
+    // Remaining verified groups with no natural app pairing — folded into
+    // the rare-event rotation (see `BillState.rareEasterEggs`) instead of a
+    // forced trigger, per "not every animation needs to be common."
+    static let caneTwist = loadFrames("bill_canetwist", count: 8)
+    static let hookCane = loadFrames("bill_hookcane", count: 5)
+    static let conjuring = loadFrames("bill_conjuring", count: 18)
+    static let tumbling = loadFrames("bill_tumbling", count: 4)
+    static let dashTarget = loadFrames("bill_dashtarget", count: 4)
+    static let grumpEyes = loadFrames("bill_grumpeyes", count: 6)
+    static let zipAround = loadFrames("bill_ziparound", count: 11)
+    static let rampaging = loadFrames("bill_rampaging", count: 10)
+
     /// The single frame everything else falls back to / settles on.
     static var restTexture: SKTexture { idle[0] }
 

@@ -1,30 +1,90 @@
+import AppKit
 import Foundation
 
-/// Maps normalized `SystemEvent`s to what Bill actually does: a state,
-/// and/or a bark line. This is the only place system events and character
-/// behavior meet — `SystemMonitor` stays dumb, `CharacterEngine`/
-/// `BillStateMachine` stay unaware of *why* a state was requested.
+/// Maps normalized `SystemEvent`s to what Bill actually does: a state, a bark,
+/// and sometimes a trip across the desktop to the window in question.
 ///
-/// Also the only place that reads `MemoryStore` for *contextual* dialogue
-/// decisions (returning to an app repeatedly, referencing it by name) —
-/// `MemoryStore` itself stays a dumb log/counter, same separation of
-/// concerns as everything else here.
+/// This is the only place system events and character behaviour meet —
+/// `SystemMonitor` stays dumb, `CharacterEngine`/`BillStateMachine` stay
+/// unaware of *why* a state was requested.
+///
+/// Two rules hold across every path here, both requested explicitly:
+///
+/// - **Animations never repeat back-to-back.** Every reaction picks its state
+///   through `AnimationCoverage.pick(from:)` from a *pool* of plausible
+///   animations rather than hard-coding one, so the same trigger looks
+///   different each time and the library gets daily coverage as a side effect.
+/// - **Bill only speaks about things that actually happened.** Every line
+///   below is attached to a real event, and every one is looked up through
+///   `DialogueLibrary`, which selects a time-of-day-appropriate variant.
 @MainActor
 final class ReactionRouter {
     private let characterEngine: CharacterEngine
     private let preferences: AppPreferences
     private let memoryStore: MemoryStore
-    private var lastCategoryFire: [AppCategory: Date] = [:]
-    private var lastGenericAppFire: Date?
-    private var lastFavoriteFire: Date?
-    private var idleStartDate: Date?
-    private static let categoryCooldown: TimeInterval = 5 * 60
-    private static let genericAppCooldown: TimeInterval = 8 * 60
-    private static let favoriteCooldown: TimeInterval = 20 * 60
-    /// How many times (within the last hour) counts as "you keep coming
-    /// back to this" rather than just a normal reopen.
-    private static let favoriteRecentThreshold = 3
-    private static let favoriteRecentWindow: TimeInterval = 60 * 60
+    private var dialogue: DialogueLibrary { .shared }
+
+    /// Sends Bill to physically stand on an app's window. Wired by
+    /// `AppDelegate` to `CharacterWindowController.sendBillToApp`.
+    var goToApp: ((pid_t) -> Bool)?
+    /// Consulted before any app reaction — Study Mode gets first refusal so it
+    /// can block instead of react. Returns `true` if it handled the activation.
+    var studyModeInterceptor: ((_ bundleID: String, _ name: String, _ pid: pid_t) -> Bool)?
+
+    // MARK: - Per-session app focus state
+    //
+    // Deliberately in-memory rather than in `MemoryStore`: "first time this
+    // session" and "how many times have you come back" are session concepts,
+    // and persisting them would mean a relaunch silently owed you three
+    // refocus lines from yesterday.
+
+    /// Bundle IDs that have been activated at least once this session.
+    private var seenThisSession: Set<String> = []
+    /// How many times each app has been *returned* to this session.
+    private var refocusCount: [String: Int] = [:]
+    /// The tag (special state or category) of the app we came from, for
+    /// FROM->TO transition lines.
+    private var previousFocusTag: String?
+    private var previousBundleID: String?
+    /// Guards against the double-activation macOS sometimes emits for a single
+    /// user-visible switch, and against a rapid alt-tab bounce being counted
+    /// as a genuine return.
+    private var lastActivationAt: [String: Date] = [:]
+    private static let bounceWindow: TimeInterval = 4
+
+    /// After this many returns to the same app, Bill stops commenting on it
+    /// for the rest of the session.
+    private static let maxRefocusLines = 3
+
+    // MARK: - Animation pools
+    //
+    // Each is a set of states that all read correctly for that event. The
+    // coverage tracker chooses between them, so a pool of six means six
+    // different-looking reactions to the same event and six animations
+    // getting screen time.
+
+    private static let batteryDrainingStates: [BillState] = [
+        .stressed, .dreading, .huffy, .grumpEyes, .watched, .annoyed, .confused,
+    ]
+    private static let batteryChargingStates: [BillState] = [
+        .charged, .celebrating, .happy, .powerSurge, .transferring,
+    ]
+    private static let volumeStates: [BillState] = [
+        .dancing, .grooving, .happy, .flinching, .surprised, .caneFlourish, .kinship,
+    ]
+    private static let networkDownStates: [BillState] = [
+        .confused, .glitchForm, .spooked, .dazed, .glitching, .ambushed,
+    ]
+    private static let networkUpStates: [BillState] = [
+        .celebrating, .happy, .charged, .zipAround, .fractaling,
+    ]
+    private static let clockStates: [BillState] = [
+        .presenting, .dispatching, .watched, .smug, .zodiacVision, .caneTwist,
+        .hookCane, .focused, .scanning, .conjuring,
+    ]
+    private static let nagStates: [BillState] = [
+        .dreading, .guilty, .grumpEyes, .annoyed, .huffy, .stressed, .cultLeader,
+    ]
 
     init(characterEngine: CharacterEngine, preferences: AppPreferences, memoryStore: MemoryStore) {
         self.characterEngine = characterEngine
@@ -32,189 +92,274 @@ final class ReactionRouter {
         self.memoryStore = memoryStore
     }
 
+    // MARK: - Entry point
+
     func handle(_ event: SystemEvent) {
         switch event {
-        case .appActivated(let bundleID, let name, let category):
-            // Recorded *before* the recency/frequency checks below read it,
-            // so "you keep coming back to this" can see this activation too.
+        case .appActivated(let bundleID, let name, let category, let pid):
             memoryStore.recordAppOpen(bundleID: bundleID, name: name, category: category)
-            handleAppActivated(bundleID: bundleID, name: name, category: category)
+            handleAppActivated(bundleID: bundleID, name: name, category: category, pid: pid)
 
         case .batteryLow:
-            // No dedicated "tired" state in the animation engine's states —
-            // reuse `.annoyed` (closest existing emotional tone) and let the
-            // bark line carry the battery-specific meaning.
             memoryStore.recordLowBatteryEvent()
-            characterEngine.request(.annoyed)
-            characterEngine.bark(BarkLines.random(from: BarkLines.batteryLow))
+            play(Self.batteryDrainingStates, keys: ["batteryLow"], importance: .always)
+
+        case .batteryLevel(let percent, let isCharging):
+            handleBatteryLevel(percent: percent, isCharging: isCharging)
 
         case .batteryCharging:
             memoryStore.recordChargingEvent()
-            characterEngine.request(.charging)
-            characterEngine.bark(BarkLines.random(from: BarkLines.batteryCharging))
+            play(Self.batteryChargingStates, keys: ["batteryCharging"])
 
         case .batteryUnplugged:
             characterEngine.request(.idle)
 
         case .networkLost:
-            // Spec: "notices, acts confused, complains" — confused is a
-            // closer match than reusing surprised now that a dedicated
-            // confused animation exists.
-            characterEngine.request(.confused)
-            characterEngine.bark(BarkLines.random(from: BarkLines.networkLost))
+            play(Self.networkDownStates, keys: ["networkLost"], importance: .always)
 
         case .networkRestored:
-            characterEngine.bark(BarkLines.random(from: BarkLines.networkRestored))
+            play(Self.networkUpStates, keys: ["networkRestored"])
+
+        case .networkQualityChanged(let quality):
+            handleNetworkQuality(quality)
 
         case .cpuHot:
             characterEngine.request(.heatingUp)
-            characterEngine.bark(BarkLines.random(from: BarkLines.cpuHot))
+            speak(["cpuHot"])
 
         case .cpuNormal:
             characterEngine.request(.idle)
 
         case .userIdle:
             idleStartDate = Date()
-            characterEngine.bark(BarkLines.random(from: BarkLines.gettingSleepy))
+            speak(["gettingSleepy"])
             characterEngine.request(.sleeping)
 
         case .userReturned:
-            if let idleStartDate {
-                memoryStore.recordIdleDuration(Date().timeIntervalSince(idleStartDate))
-            }
-            idleStartDate = nil
-            // Distinguish "Bill was actually asleep" from an ordinary
-            // away-and-back — a wake-up line reads oddly if Bill was just
-            // idly standing there the whole time.
-            let wasAsleep = characterEngine.stateMachine.currentState == .sleeping
-            characterEngine.request(.idle)
-            characterEngine.bark(BarkLines.random(from: wasAsleep ? BarkLines.waking : BarkLines.userReturned))
+            handleUserReturned()
+
+        case .volumeMark(let percent):
+            play(Self.volumeStates, keys: DialogueKey.volume(percent))
+
+        case .volumeMuteChanged(let isMuted):
+            play(Self.volumeStates, keys: [isMuted ? "volume.mute" : "volume.unmute"])
+
+        case .halfHour(let hour, let minute):
+            handleHalfHour(hour: hour, minute: minute)
+
+        case .timeOfDayChanged:
+            // The dialogue pools swap themselves via `TimeOfDayCache`; nothing
+            // to announce here beyond what the half-hour chime already says.
+            break
         }
     }
 
-    private func handleAppActivated(bundleID: String, name: String, category: AppCategory?) {
+    private var idleStartDate: Date?
+
+    // MARK: - App activation
+
+    private func handleAppActivated(bundleID: String, name: String, category: AppCategory?, pid: pid_t) {
+        // Study Mode gets first refusal: a blocked app is confronted, not
+        // commented on.
+        if studyModeInterceptor?(bundleID, name, pid) == true { return }
+
+        // Collapse the duplicate activation macOS emits for a single switch.
+        if let last = lastActivationAt[bundleID], Date().timeIntervalSince(last) < Self.bounceWindow {
+            lastActivationAt[bundleID] = Date()
+            return
+        }
+        lastActivationAt[bundleID] = Date()
+
+        let tag = focusTag(bundleID: bundleID, name: name, category: category)
+
+        if seenThisSession.contains(bundleID) {
+            handleRefocus(bundleID: bundleID, name: name, tag: tag, pid: pid)
+        } else {
+            seenThisSession.insert(bundleID)
+            handleFirstOpen(bundleID: bundleID, name: name, category: category, tag: tag, pid: pid)
+        }
+
+        previousFocusTag = tag
+        previousBundleID = bundleID
+    }
+
+    /// The first time an app is activated in a session it always reacts, with
+    /// **no cooldown of any kind**.
+    ///
+    /// The previous implementation gated every app behind a 5-minute
+    /// per-category cooldown and an 8-minute generic one, which meant opening
+    /// Slides and then Gmail immediately produced exactly one reaction — the
+    /// second was silently swallowed because it shared a bucket or landed
+    /// inside the window. Both now speak. The bark *queue* (see
+    /// `BillStateMachine.showBark`) is what makes that actually work: the two
+    /// lines are spoken in sequence instead of the second destroying the first.
+    private func handleFirstOpen(
+        bundleID: String, name: String, category: AppCategory?, tag: String, pid: pid_t
+    ) {
+        guard category == nil || preferences.isCategoryEnabled(category!) else { return }
+
+        // A transition line first, when we came from somewhere interesting.
+        if let from = previousFocusTag, from != tag,
+           let line = dialogue.firstLine(DialogueKey.transition(from: from, to: tag), substitutions: ["app": name]) {
+            characterEngine.bark(line)
+        }
+
+        // Then the app's own reaction.
+        if let special = SpecialAppMapper.state(bundleID: bundleID, name: name) {
+            _ = goToApp?(pid)
+            characterEngine.request(special, force: true)
+            speak([special.rawValue], substitutions: ["app": name])
+            return
+        }
+
         guard let category else {
             handleUncategorizedApp(bundleID: bundleID, name: name)
             return
         }
-        guard preferences.isCategoryEnabled(category) else { return }
 
-        if isReturningFavorite(bundleID: bundleID) {
-            characterEngine.bark(BarkLines.resolvedRandom(from: BarkLines.returningFavorite, appName: name))
-            // `.celebrating` had no caller anywhere in the app despite being
-            // a fully-built state — "you keep coming back to this" is
-            // exactly the small positive moment it's for. It settles back
-            // to idle on its own (one-shot), so the category request right
-            // below still lands right after rather than being blocked.
-            characterEngine.request(.celebrating, force: true)
-        }
+        let (states, key) = Self.reaction(for: category)
+        play(states, keys: [key], substitutions: ["app": name])
+    }
 
-        if let last = lastCategoryFire[category], Date().timeIntervalSince(last) < Self.categoryCooldown {
-            return
-        }
-        lastCategoryFire[category] = Date()
+    /// Returning to an already-seen app gets a distinct "back again?" line,
+    /// three times, then silence for the rest of the session.
+    private func handleRefocus(bundleID: String, name: String, tag: String, pid: pid_t) {
+        let count = (refocusCount[bundleID] ?? 0) + 1
+        refocusCount[bundleID] = count
+        guard count <= Self.maxRefocusLines, let keys = DialogueKey.refocus(count: count) else { return }
+        // Escalating animations: mildly amused, then pointed, then done with it.
+        let states: [BillState] = count == 1 ? [.watched, .smug, .presenting]
+                                 : count == 2 ? [.grumpEyes, .huffy, .annoyed]
+                                              : [.dreading, .guilty, .stressed]
+        play(states, keys: keys, substitutions: ["app": name])
+    }
 
+    /// Which broad reaction a category gets when no per-app override applies.
+    /// Each returns a *pool*, so even the generic categories vary.
+    private static func reaction(for category: AppCategory) -> ([BillState], String) {
         switch category {
-        case .coding:
-            characterEngine.request(.coding)
-            characterEngine.bark(BarkLines.resolvedRandom(from: BarkLines.coding, appName: name))
-        case .gaming:
-            characterEngine.request(.gaming)
-            characterEngine.bark(BarkLines.resolvedRandom(from: BarkLines.gaming, appName: name))
-        case .creative:
-            // No dedicated creative pose yet — coding's "watching intently"
-            // pose (a real sprite state, not a placeholder) is a reasonable
-            // stand-in until the sheet yields a dedicated creative frame.
-            characterEngine.request(.coding)
-            characterEngine.bark(BarkLines.resolvedRandom(from: BarkLines.creative, appName: name))
-        case .music:
-            characterEngine.request(.happy)
-            characterEngine.bark(BarkLines.resolvedRandom(from: BarkLines.music, appName: name))
-        case .browsing:
-            // "Looks over curiously" doesn't need a dedicated state change —
-            // just the comment.
-            characterEngine.bark(BarkLines.resolvedRandom(from: BarkLines.browsing, appName: name))
-        case .finder:
-            characterEngine.bark(BarkLines.random(from: BarkLines.finder))
-        case .communication:
-            // Addressing someone else — `.talking`'s hand-raised gesture
-            // fits directly, unlike `.coding`'s "watching intently" read.
-            characterEngine.request(.talking)
-            characterEngine.bark(BarkLines.resolvedRandom(from: BarkLines.communication, appName: name))
-        case .productivity:
-            characterEngine.request(.focused)
-            characterEngine.bark(BarkLines.resolvedRandom(from: BarkLines.productivity, appName: name))
-        case .aiChat:
-            // Knowing/territorial rather than neutral — see `BarkLines.
-            // aiChat`'s doc comment.
-            characterEngine.request(.smug)
-            characterEngine.bark(BarkLines.resolvedRandom(from: BarkLines.aiChat, appName: name))
-        case .tinkering:
-            characterEngine.request(.channeling)
-            characterEngine.bark(BarkLines.resolvedRandom(from: BarkLines.tinkering, appName: name))
+        case .coding:        return ([.coding, .pushingCode, .focused, .thinking], "coding")
+        case .gaming:        return ([.gaming, .browsingStore, .celebrating, .trickster], "gaming")
+        case .creative:      return ([.sculpting, .kinship, .presenting, .conjuring], "creative")
+        case .music:         return ([.dancing, .grooving, .happy], "music")
+        case .browsing:      return ([.scanning, .watched, .confused], "browsing")
+        case .finder:        return ([.scanning, .confused, .focused], "finder")
+        case .communication: return ([.talking, .dispatching, .kinship], "communication")
+        case .productivity:  return ([.focused, .presenting, .dreading, .sculpting], "productivity")
+        case .aiChat:        return ([.smug, .glitching, .watched], "aiChat")
+        case .tinkering:     return ([.channeling, .summoning, .scanning, .transferring], "tinkering")
         }
     }
 
-    /// "You keep coming back to this, don't you?" — fired (on its own
-    /// cooldown, separate from the category cooldown) when an app has been
-    /// reopened often enough recently to read as a genuine pattern rather
-    /// than incidental app-switching.
-    private func isReturningFavorite(bundleID: String) -> Bool {
-        if let last = lastFavoriteFire, Date().timeIntervalSince(last) < Self.favoriteCooldown {
-            return false
+    /// A stable label for an app, used as the FROM/TO key in transition
+    /// lookups. Prefers the specific per-app state so "code -> Apple Music"
+    /// can be authored distinctly from "code -> some other music app".
+    private func focusTag(bundleID: String, name: String, category: AppCategory?) -> String {
+        if let special = SpecialAppMapper.state(bundleID: bundleID, name: name) {
+            return special.rawValue
         }
-        guard memoryStore.recentOpenCount(for: bundleID, within: Self.favoriteRecentWindow) >= Self.favoriteRecentThreshold else {
-            return false
-        }
-        lastFavoriteFire = Date()
-        return true
+        return category?.rawValue ?? "other"
     }
 
-    /// How many opens of an uncategorized app reads as "you keep coming
-    /// back to this" rather than a one-off — independent of
-    /// `favoriteRecentThreshold`/`favoriteRecentWindow` above, which is
-    /// specifically about *categorized* apps' recency-windowed "returning
-    /// favorite" beat; this is a plain lifetime count, since an app Bill
-    /// still can't name a category for doesn't get that whole mechanism.
+    // MARK: - Battery / network / clock
+
+    private func handleBatteryLevel(percent: Int, isCharging: Bool) {
+        let keys = isCharging ? DialogueKey.charge(percent) : DialogueKey.battery(percent)
+        let states = isCharging ? Self.batteryChargingStates : Self.batteryDrainingStates
+        // Low battery matters enough to say regardless of how quiet Bill is
+        // set to be; the rest is ordinary commentary.
+        let importance: CharacterEngine.BarkImportance = (!isCharging && percent <= 20) ? .always : .normal
+        play(states, keys: keys, substitutions: ["pct": String(percent)], importance: importance)
+    }
+
+    private func handleNetworkQuality(_ quality: NetworkQuality) {
+        switch quality {
+        case .poor:
+            play(Self.networkDownStates, keys: ["network.slow"], importance: .always)
+        case .excellent, .good:
+            play(Self.networkUpStates, keys: ["network.fast"])
+        case .offline:
+            // `.networkLost` already covers this; don't say it twice.
+            break
+        }
+    }
+
+    private func handleHalfHour(hour: Int, minute: Int) {
+        let keys = DialogueKey.clock(hour: hour, minute: minute, timeOfDay: TimeOfDayCache.current)
+        // The user asked to be told the time every half hour, so this is not
+        // subject to the speaking-frequency gate.
+        play(Self.clockStates, keys: keys, importance: .always)
+    }
+
+    private func handleUserReturned() {
+        if let idleStartDate {
+            memoryStore.recordIdleDuration(Date().timeIntervalSince(idleStartDate))
+        }
+        idleStartDate = nil
+        let wasAsleep = characterEngine.stateMachine.currentState == .sleeping
+        characterEngine.request(.idle)
+        speak([wasAsleep ? "waking" : "userReturned"])
+    }
+
+    /// Study Mode's announcements. Always spoken — the user turned this on
+    /// deliberately and being told what it is doing is the whole point, so it
+    /// is not subject to the speaking-frequency gate.
+    func announceStudy(keys: [String], states: [BillState], substitutions: [String: String]) {
+        play(states, keys: keys, substitutions: substitutions, importance: .always)
+    }
+
+    /// "You haven't done any homework / learning / anything fun today."
+    /// Called by `HabitNagger`, which owns the timing and the anti-spam rules.
+    func nag(_ key: String) {
+        play(Self.nagStates, keys: [key], importance: .always)
+    }
+
+    // MARK: - Uncategorized apps
+
     private static let uncategorizedFrequentThreshold = 3
 
-    /// Apps with no recognized category still get an occasional reaction —
-    /// otherwise every unlisted app launch is silent, which reads as Bill
-    /// not noticing anything outside a handful of hand-picked apps. Learns
-    /// gradually via `MemoryStore` (see its "App-learning additions" and
-    /// `CharacterWindowController`'s daily refresh, which is what actually
-    /// populates `appDescriptions`): a brand new app gets a curious glance,
-    /// one Bill has a learned description for gets a knowing dismissal
-    /// instead of the plain generic line, and one that's been reopened a
-    /// lot but is *still* undescribed gets a smug "still no idea" beat.
-    /// Same longer cooldown as before either way, since this still covers
-    /// a much wider, noisier slice of app launches than named categories.
     private func handleUncategorizedApp(bundleID: String, name: String) {
-        if let last = lastGenericAppFire, Date().timeIntervalSince(last) < Self.genericAppCooldown {
-            return
-        }
-        lastGenericAppFire = Date()
-
         if let description = memoryStore.description(for: bundleID) {
-            characterEngine.bark(BarkLines.resolvedRandom(from: BarkLines.appLaunchDescribed, appName: name, description: description))
+            speak(["appLaunchDescribed"], substitutions: ["app": name, "description": description])
             if memoryStore.openCount(for: bundleID) >= Self.uncategorizedFrequentThreshold {
                 characterEngine.request(.smug, force: true)
             }
             return
         }
-
         if memoryStore.isFirstSighting(of: bundleID) {
             characterEngine.stateMachine.playIdleVariant(.curious)
-            characterEngine.bark(BarkLines.resolvedRandom(from: BarkLines.appLaunchFirstSighting, appName: name))
+            speak(["appLaunchFirstSighting"], substitutions: ["app": name])
             return
         }
-
         if memoryStore.openCount(for: bundleID) >= Self.uncategorizedFrequentThreshold {
-            characterEngine.request(.smug, force: true)
-            characterEngine.bark(BarkLines.resolvedRandom(from: BarkLines.appLaunchStillUnknown, appName: name))
+            play([.smug, .watched, .grumpEyes], keys: ["appLaunchStillUnknown"], substitutions: ["app": name])
             return
         }
+        speak(["appLaunchGeneric"], substitutions: ["app": name])
+    }
 
-        characterEngine.bark(BarkLines.random(from: BarkLines.appLaunchGeneric))
+    // MARK: - Helpers
+
+    /// Requests one of `states` (never the one that just played) and speaks the
+    /// first authored line among `keys`.
+    private func play(
+        _ states: [BillState],
+        keys: [String],
+        substitutions: [String: String] = [:],
+        importance: CharacterEngine.BarkImportance = .normal
+    ) {
+        if let state = characterEngine.coverage.pick(from: states) {
+            characterEngine.request(state, force: true)
+        }
+        speak(keys, substitutions: substitutions, importance: importance)
+    }
+
+    private func speak(
+        _ keys: [String],
+        substitutions: [String: String] = [:],
+        importance: CharacterEngine.BarkImportance = .normal
+    ) {
+        guard let line = dialogue.firstLine(keys, substitutions: substitutions) else { return }
+        characterEngine.bark(line, importance: importance)
     }
 }

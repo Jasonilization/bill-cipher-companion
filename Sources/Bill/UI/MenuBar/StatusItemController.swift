@@ -29,6 +29,8 @@ final class StatusItemController: NSObject {
         configure()
     }
 
+    private var studyModeItem: NSMenuItem!
+
     private func configure() {
         if let button = statusItem.button {
             button.image = NSImage(systemSymbolName: "eye.fill", accessibilityDescription: "Bill")
@@ -45,6 +47,14 @@ final class StatusItemController: NSObject {
         let refreshContextItem = NSMenuItem(title: "Refresh Bill's Context Now", action: #selector(refreshDialogue), keyEquivalent: "")
         refreshContextItem.target = self
         menu.addItem(refreshContextItem)
+        menu.addItem(.separator())
+
+        // The only checkmark item in this menu. Its title carries the
+        // remaining time while a session is running, so the menu bar answers
+        // "how long left?" without opening anything.
+        studyModeItem = NSMenuItem(title: "Study Mode", action: #selector(toggleStudyMode), keyEquivalent: "")
+        studyModeItem.target = self
+        menu.addItem(studyModeItem)
         menu.addItem(.separator())
         let settingsItem = NSMenuItem(title: "Settings…", action: #selector(openSettings), keyEquivalent: ",")
         settingsItem.target = self
@@ -76,7 +86,43 @@ final class StatusItemController: NSObject {
         quitItem.target = appDelegate
         menu.addItem(quitItem)
 
+        menu.delegate = self
         statusItem.menu = menu
+        refreshStudyModeItem()
+    }
+
+    /// Keeps the checkmark and the remaining-time title honest. Called when
+    /// the session starts/ends and every time the menu is about to open, which
+    /// is cheaper and more reliable than a countdown timer just for a label.
+    func refreshStudyModeItem() {
+        guard let studyModeItem, let studyMode = appDelegate?.studyMode else { return }
+        if studyMode.isActive {
+            let minutes = Int((studyMode.remaining / 60).rounded(.up))
+            studyModeItem.title = "Study Mode — \(minutes) min left"
+            studyModeItem.state = .on
+        } else {
+            studyModeItem.title = "Study Mode (30 min)"
+            studyModeItem.state = .off
+        }
+    }
+
+    @objc private func toggleStudyMode() {
+        guard let studyMode = appDelegate?.studyMode else { return }
+        guard studyMode.isActive else {
+            studyMode.start()
+            return
+        }
+        // Cancelling costs a confirmation — see `StudyMode.cancel(confirmed:)`
+        // for why it is possible at all.
+        let minutes = Int((studyMode.remaining / 60).rounded(.up))
+        let alert = NSAlert()
+        alert.messageText = "End Study Mode early?"
+        alert.informativeText = "There are \(minutes) minutes left. Bill will have opinions."
+        alert.addButton(withTitle: "Keep Studying")
+        alert.addButton(withTitle: "End Session")
+        alert.alertStyle = .warning
+        let confirmed = alert.runModal() == .alertSecondButtonReturn
+        _ = studyMode.cancel(confirmed: confirmed)
     }
 
     private func makeDebugSubmenu() -> NSMenu {
@@ -125,5 +171,11 @@ final class StatusItemController: NSObject {
 
     @objc private func showDialogueRefreshLog() {
         dialogueRefreshLogWindowController.show()
+    }
+}
+
+extension StatusItemController: NSMenuDelegate {
+    func menuNeedsUpdate(_ menu: NSMenu) {
+        refreshStudyModeItem()
     }
 }

@@ -8,6 +8,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let systemMonitor = SystemMonitor()
     private let preferences = AppPreferences()
     private let memoryStore = MemoryStore()
+    let studyMode = StudyMode()
     private var reactionRouter: ReactionRouter!
     private var statusItemController: StatusItemController!
     private var characterWindowController: CharacterWindowController!
@@ -17,6 +18,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var cancellables = Set<AnyCancellable>()
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        // Decode the dialogue library before anything can ask it for a line.
+        // A few milliseconds for ~750 short strings, and every bark path
+        // depends on it, so it happens first rather than lazily mid-reaction.
+        DialogueLibrary.shared.warmUp()
+
         characterWindowController = CharacterWindowController(characterEngine: characterEngine, preferences: preferences, chatBridge: chatBridge, memoryStore: memoryStore)
         chatPanelController = ChatPanelController(chatBridge: chatBridge)
         characterWindowController.warmUpChatEngine = { [weak self] in self?.chatPanelController.warmUpIfNeeded() }
@@ -59,6 +65,25 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         reactionRouter = ReactionRouter(characterEngine: characterEngine, preferences: preferences, memoryStore: memoryStore)
+        // Lets a reaction physically take Bill to the app it is about, rather
+        // than commenting on it from wherever he happened to be standing.
+        reactionRouter.goToApp = { [weak self] pid in
+            self?.characterWindowController.sendBillToApp(pid: pid) ?? false
+        }
+        // Study Mode gets first refusal on every app activation, so a blocked
+        // app is confronted instead of reacted to.
+        reactionRouter.studyModeInterceptor = { [weak self] bundleID, name, pid in
+            self?.studyMode.intercept(bundleID: bundleID, name: name, pid: pid) ?? false
+        }
+        studyMode.goToApp = { [weak self] pid in
+            self?.characterWindowController.sendBillToApp(pid: pid) ?? false
+        }
+        studyMode.announce = { [weak self] keys, states, substitutions in
+            self?.reactionRouter.announceStudy(keys: keys, states: states, substitutions: substitutions)
+        }
+        studyMode.onStateChanged = { [weak self] in
+            self?.statusItemController.refreshStudyModeItem()
+        }
         systemMonitor.onEvent = { [weak self] event in
             self?.reactionRouter.handle(event)
         }
