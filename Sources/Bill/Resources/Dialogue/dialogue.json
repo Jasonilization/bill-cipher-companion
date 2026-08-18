@@ -1257,6 +1257,158 @@
    "UNINSTALLING THINGS AT NIGHT. THE PURGE HOUR."
   ]
  },
+ "insight.classroomAssignedCount": {
+  "afternoon": [
+   "{count} ASSIGNED AND THE AFTERNOON IS GOING FAST."
+  ],
+  "any": [
+   "{count} THINGS ASSIGNED. THEY WON'T DO THEMSELVES. I CHECKED.",
+   "{count} WAITING FOR YOU. START WITH THE SMALLEST ONE. THAT'S FREE ADVICE."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": []
+ },
+ "insight.classroomClear": {
+  "afternoon": [],
+  "any": [
+   "ALL CAUGHT UP. GENUINELY. I HAVE NOTHING TO MOCK. UNSETTLING.",
+   "NOTHING DUE. GO ENJOY YOUR ONE WILD AND PRECIOUS LIFE."
+  ],
+  "midday": [],
+  "morning": [
+   "CAUGHT UP BEFORE NOON. WHO ARE YOU."
+  ],
+  "night": []
+ },
+ "insight.classroomDone": {
+  "afternoon": [],
+  "any": [
+   "TURNED IN. LOOK AT YOU. I'M ALMOST PROUD.",
+   "DONE. GENUINELY WELL PLAYED. I'LL DENY SAYING THAT."
+  ],
+  "midday": [],
+  "morning": [
+   "DONE BEFORE NOON? WHO ARE YOU."
+  ],
+  "night": []
+ },
+ "insight.classroomDueToday": {
+  "afternoon": [],
+  "any": [
+   "SOMETHING'S DUE TODAY. TODAY. THE ONE WE'RE IN RIGHT NOW."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": [
+   "DUE TODAY, AND TODAY IS NEARLY OVER. MOVE."
+  ]
+ },
+ "insight.classroomMissing": {
+  "afternoon": [],
+  "any": [
+   "MISSING WORK. PLURAL. I CAN COUNT, YOU KNOW.",
+   "'MISSING'. SUCH A GENTLE WORD FOR WHAT THIS IS."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": [
+   "MISSING ASSIGNMENTS, AND IT'S DARK OUT. THE MATH IS NOT IN YOUR FAVOUR."
+  ]
+ },
+ "insight.classroomMissingCount": {
+  "afternoon": [],
+  "any": [
+   "{count} MISSING. I CAN COUNT, YOU KNOW.",
+   "{count} ASSIGNMENTS UNACCOUNTED FOR. THE VOID IS KEEPING SCORE.",
+   "MISSING: {count}. THAT'S NOT A HIGH SCORE, KID."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": [
+   "{count} MISSING AND IT'S DARK OUT. THE MATH IS NOT IN YOUR FAVOUR."
+  ]
+ },
+ "insight.classroomTodo": {
+  "afternoon": [
+   "AFTERNOON TO-DO CHECK. THE LIST GOT LONGER, DIDN'T IT."
+  ],
+  "any": [
+   "THE TO-DO LIST IS OPEN. THAT'S THE EASY PART. NOW DO ONE.",
+   "LOOKING AT THE TASKS ISN'T THE SAME AS DOING THE TASKS. NICE TRY."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": [
+   "OPENING THE TO-DO LIST AT NIGHT. THE PANIC ARRIVES RIGHT ON SCHEDULE."
+  ]
+ },
+ "insight.docsUntitled": {
+  "afternoon": [],
+  "any": [
+   "'UNTITLED DOCUMENT'. THE BLANK PAGE STARES BACK. STARE HARDER.",
+   "NOTHING WRITTEN YET. THE CURSOR IS BLINKING AT YOU ACCUSINGLY."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": []
+ },
+ "insight.duolingoLesson": {
+  "afternoon": [],
+  "any": [
+   "A LESSON. ACTUAL LEARNING. THE BIRD WILL BE INSUFFERABLE ABOUT IT."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": [
+   "THE OWL'S IN YOUR HOUSE NOW.",
+   "NINE PM LESSON. FEAR-BASED LEARNING AT ITS FINEST."
+  ]
+ },
+ "insight.githubIssue": {
+  "afternoon": [],
+  "any": [
+   "AN ISSUE. SOMEONE FOUND YOUR BUG BEFORE YOU DID. HUMILIATING."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": []
+ },
+ "insight.githubPR": {
+  "afternoon": [],
+  "any": [
+   "A PULL REQUEST. SOMEONE IS ABOUT TO HAVE OPINIONS ABOUT YOUR CODE."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": [
+   "REVIEWING CODE AFTER MIDNIGHT. APPROVE IT AND RUN."
+  ]
+ },
+ "insight.slidesUntitled": {
+  "afternoon": [],
+  "any": [
+   "'UNTITLED PRESENTATION'. OH, FORGOT YOUR PROJECT?",
+   "A BLANK DECK. THE MOST HONEST DOCUMENT YOU'VE EVER MADE."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": [
+   "UNTITLED, AT NIGHT, AND DUE TOMORROW. I'VE SEEN THIS EPISODE."
+  ]
+ },
+ "insight.youtubeShorts": {
+  "afternoon": [],
+  "any": [
+   "SHORTS. THE ATTENTION SPAN BLENDER. I'LL SEE YOU IN AN HOUR.",
+   "VERTICAL VIDEO. YOUR BRAIN IS BEING SANDED DOWN IN REAL TIME."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": [
+   "SHORTS. AT THIS HOUR. YOU'LL LOOK UP AND IT'LL BE 3AM."
+  ]
+ },
  "kinship": {
   "afternoon": [],
   "any": [

@@ -45,10 +45,20 @@ struct SettingsView: View {
                         Text("Chatty").font(.caption).foregroundStyle(.secondary)
                     }
                 }
-                Toggle("Let Bill ad-lib idle commentary through chat", isOn: $preferences.isAdLibEnabled)
-                Text("Ad-libbing routes occasional idle commentary through the chat bridge instead of local one-liners — off by default since it has real latency and isn't free.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                Divider()
+                Toggle("Let Bill read window titles", isOn: $preferences.isWindowAwarenessEnabled)
+                Text("Lets Bill tell \"Classroom\" from \"Classroom, the to-do list\". Needs the Accessibility permission — without it he simply says nothing extra.")
+                    .font(.caption).foregroundStyle(.secondary)
+                if preferences.isWindowAwarenessEnabled, !WindowTitleReader.isTrusted {
+                    Button("Grant Accessibility Permission…") { WindowTitleReader.requestTrust() }
+                }
+                Toggle("Also read window contents (screenshot + OCR)", isOn: $preferences.isScreenOCREnabled)
+                    .disabled(!preferences.isWindowAwarenessEnabled)
+                Text("Deeper awareness — periodically captures just the focused window and reads it on-device. Needs Screen Recording, which must be re-granted after every rebuild because this app is ad-hoc signed.")
+                    .font(.caption).foregroundStyle(.secondary)
+                if preferences.isScreenOCREnabled, !ScreenTextReader.hasPermission {
+                    Button("Grant Screen Recording Permission…") { ScreenTextReader.requestPermission() }
+                }
             }
 
             Section("Reactions") {

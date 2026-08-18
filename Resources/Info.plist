@@ -26,5 +26,9 @@
 	<string>NSApplication</string>
 	<key>NSSupportsAutomaticGraphicsSwitching</key>
 	<true/>
+	<key>NSAccessibilityUsageDescription</key>
+	<string>Bill reads the title of the window you have focused so he can react to what you are actually doing, not just which app is open.</string>
+	<key>NSScreenCaptureUsageDescription</key>
+	<string>Only if you turn it on in Settings: Bill captures just the window you have focused and reads it on-device so he can tell whether your assignments are done.</string>
 </dict>
 </plist>

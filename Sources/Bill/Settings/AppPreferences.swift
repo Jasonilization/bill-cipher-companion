@@ -11,8 +11,9 @@ final class AppPreferences: ObservableObject {
     private enum Keys {
         static let roaming = "billRoamingEnabled"
         static let disabledCategories = "billDisabledCategories"
-        static let adLib = "billAdLibEnabled"
         static let characterScale = "billCharacterScale"
+        static let windowAwareness = "billWindowAwareness"
+        static let screenOCR = "billScreenOCR"
         static let speakingFrequency = "billSpeakingFrequency"
     }
 
@@ -26,16 +27,27 @@ final class AppPreferences: ObservableObject {
         }
     }
 
-    /// Off by default: routing ambient commentary through the chat bridge
-    /// has real latency/cost, unlike the free, instant local bark lines.
-    @Published var isAdLibEnabled: Bool {
-        didSet { UserDefaults.standard.set(isAdLibEnabled, forKey: Keys.adLib) }
-    }
 
     /// Multiplies Bill's base on-screen size — `BillRigNode.displayScale`
     /// is the 1.0 baseline this scales from. Clamped to a sane range so a
     /// bad persisted value (or a stray slider drag) can't make him
     /// disappear to a pixel or take over the whole screen.
+    /// Lets Bill read the *title* of the window you are focused on, so he can
+    /// tell "Classroom" from "Classroom, the to-do list". Requires the
+    /// Accessibility permission; degrades to silence without it. Off until the
+    /// user turns it on, because it is a permission request.
+    @Published var isWindowAwarenessEnabled: Bool {
+        didSet { UserDefaults.standard.set(isWindowAwarenessEnabled, forKey: Keys.windowAwareness) }
+    }
+
+    /// The deeper, more expensive option: periodically capture the focused
+    /// window and OCR it. Needs Screen Recording, which — because this app is
+    /// ad-hoc signed — has to be re-granted after every rebuild. Off by
+    /// default and deliberately separate from the title toggle.
+    @Published var isScreenOCREnabled: Bool {
+        didSet { UserDefaults.standard.set(isScreenOCREnabled, forKey: Keys.screenOCR) }
+    }
+
     @Published var characterScale: Double {
         didSet {
             let clamped = min(max(characterScale, Self.characterScaleRange.lowerBound), Self.characterScaleRange.upperBound)
@@ -62,7 +74,8 @@ final class AppPreferences: ObservableObject {
     init() {
         let defaults = UserDefaults.standard
         isRoamingEnabled = (defaults.object(forKey: Keys.roaming) as? Bool) ?? true
-        isAdLibEnabled = (defaults.object(forKey: Keys.adLib) as? Bool) ?? false
+        isWindowAwarenessEnabled = (defaults.object(forKey: Keys.windowAwareness) as? Bool) ?? false
+        isScreenOCREnabled = (defaults.object(forKey: Keys.screenOCR) as? Bool) ?? false
         let disabledRaw = defaults.stringArray(forKey: Keys.disabledCategories) ?? []
         disabledCategories = Set(disabledRaw.compactMap(AppCategory.init(rawValue:)))
         let storedScale = (defaults.object(forKey: Keys.characterScale) as? Double) ?? 1.0

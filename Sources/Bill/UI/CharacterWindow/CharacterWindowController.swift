@@ -867,11 +867,30 @@ final class CharacterWindowController: NSObject {
     /// pass-through toggle, so this halves the wakeup rate from the
     /// original 20Hz with no perceptible responsiveness change.
     private var clickThroughTimer: Timer?
-    private static let clickThroughCheckInterval: TimeInterval = 0.1
+    /// Near Bill, where the answer can actually change, and 100ms of latency
+    /// on a binary pass-through toggle is imperceptible.
+    private static let clickThroughNearInterval: TimeInterval = 0.1
+    /// Far from Bill the answer is "pass everything through" and cannot flip
+    /// without the cursor first crossing `clickThroughNearRadius` — so polling
+    /// ten times a second there is pure waste. This is now the *usual* rate,
+    /// since the cursor is far from Bill the overwhelming majority of the time.
+    private static let clickThroughFarInterval: TimeInterval = 0.4
+    /// How close counts as "near". Generously larger than the fast interval's
+    /// worst-case cursor travel (a very fast flick is ~2000pt/s, i.e. ~200pt
+    /// in one far-tick), so the cursor cannot cross the whole band and reach
+    /// Bill between two slow ticks without at least one landing inside it.
+    private static let clickThroughNearRadius: CGFloat = 260
+    private var isClickThroughFast = false
 
     private func startClickThroughTracking() {
+        scheduleClickThrough(fast: false)
+    }
+
+    private func scheduleClickThrough(fast: Bool) {
         clickThroughTimer?.invalidate()
-        clickThroughTimer = Timer.scheduledTimer(withTimeInterval: Self.clickThroughCheckInterval, repeats: true) { [weak self] _ in
+        isClickThroughFast = fast
+        let interval = fast ? Self.clickThroughNearInterval : Self.clickThroughFarInterval
+        clickThroughTimer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
             Task { @MainActor in self?.updateClickThrough() }
         }
     }
@@ -883,6 +902,15 @@ final class CharacterWindowController: NSObject {
         // elsewhere and is just passing over the window).
         guard NSEvent.pressedMouseButtons == 0 else { return }
         let hitRegionOnScreen = hitView.hitRegion.offsetBy(dx: panel.frame.minX, dy: panel.frame.minY)
-        panel.ignoresMouseEvents = !hitRegionOnScreen.contains(NSEvent.mouseLocation)
+        let cursor = NSEvent.mouseLocation
+        panel.ignoresMouseEvents = !hitRegionOnScreen.contains(cursor)
+
+        // Step the poll rate to match how close the cursor actually is.
+        let shouldBeFast = hitRegionOnScreen
+            .insetBy(dx: -Self.clickThroughNearRadius, dy: -Self.clickThroughNearRadius)
+            .contains(cursor)
+        if shouldBeFast != isClickThroughFast {
+            scheduleClickThrough(fast: shouldBeFast)
+        }
     }
 }

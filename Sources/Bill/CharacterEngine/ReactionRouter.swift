@@ -23,6 +23,7 @@ final class ReactionRouter {
     private let preferences: AppPreferences
     private let memoryStore: MemoryStore
     private var dialogue: DialogueLibrary { .shared }
+    private let screenReader = ScreenTextReader()
 
     /// Sends Bill to physically stand on an app's window. Wired by
     /// `AppDelegate` to `CharacterWindowController.sendBillToApp`.
@@ -88,6 +89,9 @@ final class ReactionRouter {
     private static let clockStates: [BillState] = [
         .presenting, .dispatching, .watched, .smug, .zodiacVision, .caneTwist,
         .hookCane, .focused, .scanning, .conjuring,
+    ]
+    private static let insightStates: [BillState] = [
+        .watched, .scanning, .presenting, .dreading, .guilty, .smug, .focused,
     ]
     private static let nagStates: [BillState] = [
         .dreading, .guilty, .grumpEyes, .annoyed, .huffy, .stressed, .cultLeader,
@@ -190,6 +194,37 @@ final class ReactionRouter {
 
         previousFocusTag = tag
         previousBundleID = bundleID
+        observeWindowTitle(pid: pid, appName: name)
+    }
+
+    /// Looks at *what* you have open, not just which app.
+    ///
+    /// Fire-and-forget and fully optional: if Accessibility has not been
+    /// granted, or the app doesn't publish a title, or the read times out
+    /// because the app is hung, this produces nothing and the reaction Bill
+    /// already gave stands on its own. It never blocks the activation path.
+    private func observeWindowTitle(pid: pid_t, appName: String) {
+        guard preferences.isWindowAwarenessEnabled, WindowTitleReader.isTrusted else { return }
+        Task { [weak self] in
+            guard let title = await WindowTitleReader.focusedWindowTitle(pid: pid) else { return }
+            guard let self else { return }
+            var resolved = WindowTitleInsight.insight(appName: appName, title: title)
+            // The title got us the section; OCR gets us the numbers — "you
+            // have 3 missing" is not something a window title ever says. Only
+            // attempted when explicitly enabled, for a handful of apps, on a
+            // 20-minute per-app cooldown.
+            if self.preferences.isScreenOCREnabled,
+               let text = await self.screenReader.readFocusedWindow(pid: pid, appName: appName),
+               let deeper = ScreenTextInsight.insight(appName: appName, text: text) {
+                resolved = deeper
+            }
+            guard let insight = resolved else { return }
+            // Behind the app's own line, so the order reads as
+            // "oh, Classroom" then "...the to-do list, specifically".
+            var subs = insight.substitutions
+            subs["app"] = appName
+            self.play(Self.insightStates, keys: [insight.key], substitutions: subs)
+        }
     }
 
     /// The first time an app is activated in a session it always reacts, with
