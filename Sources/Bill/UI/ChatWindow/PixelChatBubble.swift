@@ -379,6 +379,18 @@ final class PixelChatBubble: NSObject, NSTextViewDelegate {
     /// re-opens the input for a follow-up — without this, the bubble went
     /// permanently read-only after the first reply, with no way to keep
     /// the conversation going short of closing and reopening it.
+    /// Re-anchors an already-visible bubble to Bill's current position.
+    ///
+    /// Bill moves — he roams, he gets dragged, and a window can shove him — so
+    /// a bubble placed once at open time drifts away from him. The bottom
+    /// anchor is deliberately reset here so it re-derives from where he is now
+    /// rather than where he was when the conversation started.
+    func reanchor(near anchorFrame: NSRect, on screen: NSScreen) {
+        guard isVisible else { return }
+        anchoredBottomY = nil
+        relayout(near: anchorFrame, on: screen, animated: true)
+    }
+
     func showResponse(_ text: String, near anchorFrame: NSRect, on screen: NSScreen) {
         thinkingTimer?.invalidate()
         thinkingBubbleView?.removeFromSuperview()
@@ -574,11 +586,16 @@ final class PixelChatBubble: NSObject, NSTextViewDelegate {
         if let anchoredBottomY {
             baseBottomY = anchoredBottomY
         } else {
-            // First layout of this session: start low enough that a
-            // modest conversation can grow upward without immediately
-            // hitting the screen's top edge, but still roughly level
-            // with Bill rather than pinned to the very bottom.
-            baseBottomY = min(anchorFrame.minY, screen.visibleFrame.minY + screen.visibleFrame.height * 0.35)
+            // Level with Bill, full stop.
+            //
+            // This used to be `min(anchorFrame.minY, 35% up the screen)`,
+            // written when Bill only ever stood near the bottom of the screen.
+            // Now that he climbs windows, that `min` pinned the bubble a third
+            // of the way up while he was perched near the top — the reported
+            // "it glitches to part of the screen". Anchoring to him and letting
+            // the on-screen clamp below handle the edges is both simpler and
+            // actually correct wherever he happens to be.
+            baseBottomY = anchorFrame.minY
             anchoredBottomY = baseBottomY
         }
 

@@ -377,6 +377,12 @@ final class RoamingController {
         let reachable = sim.solids
             .map(\.rect)
             .filter { rect in
+                // He cannot stand where his feet would be at (or above) the
+                // top of the working area — the ceiling clamp puts him there
+                // and the arc can never complete. A maximised-height window
+                // would otherwise be picked repeatedly and abandoned after
+                // five failed re-plans, wasting the whole beat.
+                guard rect.maxY < visible.maxY - 8 else { return false }
                 // Reachable by a direct leap onto the top edge, or by
                 // catching the side and climbing.
                 let landing = landingPoint(on: rect)
@@ -462,17 +468,38 @@ final class RoamingController {
     /// can manage, aimed so Bill is already descending when he makes contact
     /// (only a descending contact becomes a grab, never a walk-into).
     private func sideGrabTarget(for rect: CGRect) -> CGPoint? {
-        let approachingFromLeft = sim.feet.x < rect.midX
-        let wallX = approachingFromLeft ? rect.minX : rect.maxX
-        let x = approachingFromLeft ? wallX + 6 : wallX - 6
-        // Stay clear of the very top (that is the leap case) and of the very
-        // bottom (there is nothing to climb from down there).
+        // A wall is only caught by crossing it *inward* while descending (see
+        // `GravitySimulator.resolveHorizontal`). That means Bill has to start
+        // outside the window on the side he is aiming at.
+        //
+        // This used to pick the wall from `feet.x < rect.midX`, which is a
+        // different question entirely: standing *inside* a wide window's
+        // x-range, it happily aimed at the far side of the wall he was already
+        // past, so the arc crossed outward, no grab ever fired, and he sailed
+        // off the edge and fell. Observed as `LAUNCH to (53,429)` from x=321
+        // landing back on the floor at x=16.
+        let hw = sim.physics.bodyWidth * sim.scale / 2
+        let wallX: CGFloat
+        let aimX: CGFloat
+        if sim.feet.x <= rect.minX - hw {
+            wallX = rect.minX
+            aimX = wallX + 8                 // cross the left wall going right
+        } else if sim.feet.x >= rect.maxX + hw {
+            wallX = rect.maxX
+            aimX = wallX - 8                 // cross the right wall going left
+        } else {
+            // Already under/inside its span — there is no wall to catch from
+            // here. Walking out is handled by the approach fallback.
+            return nil
+        }
+        // As high up the wall as one leap manages, but clear of both ends.
         let ceiling = sim.feet.y + sim.maxReachableRise * 0.9
         let y = min(rect.maxY - 40, ceiling)
-        guard y > rect.minY + 24, y > sim.feet.y else { return nil }
-        let target = CGPoint(x: x, y: y)
+        guard y > rect.minY + 24, y > sim.feet.y + 40 else { return nil }
+        let target = CGPoint(x: aimX, y: y)
         guard let v = sim.solveJump(from: sim.feet, to: target),
               sim.isArcClear(from: sim.feet, velocity: v, to: target) else { return nil }
+        _ = wallX
         return target
     }
 

@@ -77,6 +77,10 @@ final class StatusItemController: NSObject {
         wanderItem.target = self
         menu.addItem(wanderItem)
 
+        let chatTestItem = NSMenuItem(title: "Debug: Test Chat Connection", action: #selector(testChat), keyEquivalent: "")
+        chatTestItem.target = self
+        menu.addItem(chatTestItem)
+
         let awarenessItem = NSMenuItem(title: "Debug: Test Screen Awareness Now", action: #selector(testAwareness), keyEquivalent: "")
         awarenessItem.target = self
         menu.addItem(awarenessItem)
@@ -107,6 +111,41 @@ final class StatusItemController: NSObject {
         } else {
             studyModeItem.title = "Study Mode (30 min)"
             studyModeItem.state = .off
+        }
+    }
+
+    /// Reports what Bill's embedded ChatGPT page actually is right now.
+    ///
+    /// Worth having its own button because the most likely failure is also the
+    /// least obvious: this WebView keeps its own cookies, so being signed in to
+    /// ChatGPT in your normal browser does nothing for it, and a login wall
+    /// looks exactly like a broken bridge from the outside.
+    @objc private func testChat() {
+        guard let delegate = appDelegate else { return }
+        Task { @MainActor in
+            let raw = await delegate.chatBridge.diagnose()
+            var pretty = raw
+            var signedOut = false
+            if let data = raw.data(using: .utf8),
+               let d = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+                signedOut = (d["looksLoggedOut"] as? Bool == true) || (d["hasComposer"] as? Bool == false)
+                pretty = d.keys.sorted().map { "\($0): \(d[$0] ?? "")" }.joined(separator: "\n")
+            }
+            print("=== chat bridge diagnostic ===\n\(pretty)")
+            let alert = NSAlert()
+            alert.messageText = signedOut ? "Bill is not signed in to ChatGPT" : "Chat connection looks healthy"
+            alert.informativeText = (signedOut
+                ? "Bill's chat view has its own cookies, separate from Safari or Brave — so signing in there doesn't sign him in. Open the full chat view and log in once.\n\n"
+                : "") + pretty
+            alert.addButton(withTitle: signedOut ? "Open Chat to Sign In" : "OK")
+            alert.addButton(withTitle: "Copy")
+            let choice = alert.runModal()
+            if choice == .alertFirstButtonReturn, signedOut {
+                delegate.showFullChat()
+            } else if choice == .alertSecondButtonReturn {
+                NSPasteboard.general.clearContents()
+                NSPasteboard.general.setString(pretty, forType: .string)
+            }
         }
     }
 

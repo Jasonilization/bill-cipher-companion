@@ -169,6 +169,60 @@ final class ChatBridge: ObservableObject {
 
     /// Sends without the conversational persona framing. Used only by the
     /// background dialogue refresh.
+    /// Whether the embedded page is actually usable, i.e. signed in with a
+    /// composer present.
+    ///
+    /// This WebView uses an app-scoped `websiteDataStore`, so it has its own
+    /// cookies: being signed in to ChatGPT in Safari or Brave does nothing for
+    /// it. Confirmed live — the page loaded fine and the bridge installed
+    /// correctly, but the body was a 412-character login wall with no
+    /// composer, so every send silently vanished. That is exactly the "it
+    /// never returns responses" symptom, and nothing in the app said so.
+    func checkSignedIn() async -> Bool {
+        prepareIfNeeded()
+        await waitUntilReadyToSend()
+        guard let page else { return false }
+        let js = """
+        return (!!(document.querySelector('#prompt-textarea') || document.querySelector('[contenteditable="true"]')))
+            ? "yes" : "no";
+        """
+        let result = try? await page.callJavaScript(js, contentWorld: Self.contentWorld)
+        return (result as? String) == "yes"
+    }
+
+    /// Reports what the embedded page actually *is* right now.
+    ///
+    /// Every failure in this bridge looks identical from outside — no reply.
+    /// A page that never loaded, a page showing a login wall, and changed
+    /// composer selectors are three completely different problems with the
+    /// same symptom, and the most likely one is easy to miss: this WebView has
+    /// its own app-scoped cookie jar, so being signed in to ChatGPT in Safari
+    /// or Brave does **not** sign in here. It needs its own login, once.
+    func diagnose() async -> String {
+        prepareIfNeeded()
+        await waitUntilReadyToSend()
+        guard let page else { return "no WebPage constructed" }
+        let js = """
+        var r = {};
+        r.url = location.href;
+        r.title = document.title;
+        r.hasComposer = !!(document.querySelector('#prompt-textarea') || document.querySelector('[contenteditable="true"]'));
+        r.hasSend = !!(document.querySelector('[data-testid="send-button"]') || document.querySelector('button[aria-label="Send prompt"]'));
+        r.assistantTurns = document.querySelectorAll('[data-message-author-role="assistant"]').length;
+        r.bridgeInstalled = (typeof window.billSendMessage === 'function');
+        var t = (document.body ? document.body.innerText : '') || '';
+        r.looksLoggedOut = /log in|sign up|welcome back|create an account/i.test(t.slice(0, 4000));
+        r.bodyChars = t.length;
+        return JSON.stringify(r);
+        """
+        do {
+            let result = try await page.callJavaScript(js, contentWorld: Self.contentWorld)
+            return (result as? String) ?? String(describing: result)
+        } catch {
+            return "callJavaScript failed: \(error)"
+        }
+    }
+
     func sendTask(_ text: String) {
         prepareIfNeeded()
         Task { [weak self] in

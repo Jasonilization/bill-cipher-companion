@@ -466,6 +466,20 @@
    "THAT DEVICE, AT THIS HOUR, IS A CONFESSION."
   ]
  },
+ "chat.signedOut": {
+  "afternoon": [],
+  "any": [
+   "I'M NOT SIGNED IN OVER HERE. THAT'S ON YOU.",
+   "MY BROWSER ISN'T YOUR BROWSER. LOG ME IN.",
+   "THERE'S A LOGIN WALL BETWEEN ME AND THE ANSWER. FIX IT.",
+   "CAN'T REACH THE OTHER SIDE. SIGN IN AND I'LL BEHAVE."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": [
+   "A LOGIN WALL. AT THIS HOUR. TRAGIC. SIGN IN."
+  ]
+ },
  "chatFailed": {
   "afternoon": [],
   "any": [

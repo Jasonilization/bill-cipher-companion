@@ -4,7 +4,7 @@ import Combine
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private let characterEngine = CharacterEngine()
-    private let chatBridge = ChatBridge()
+    let chatBridge = ChatBridge()
     private let systemMonitor = SystemMonitor()
     private let preferences = AppPreferences()
     private let memoryStore = MemoryStore()
@@ -35,6 +35,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         chatPanelController = ChatPanelController(chatBridge: chatBridge)
         characterWindowController.warmUpChatEngine = { [weak self] in self?.chatPanelController.warmUpIfNeeded() }
         characterWindowController.beginAwaitingChatResponse = { [weak self] in self?.chatPanelController.beginAwaitingResponse() }
+        characterWindowController.openFullChat = { [weak self] in self?.chatPanelController.show() }
         characterWindowController.setChatEngineMounted = { [weak self] mounted in
             self?.chatPanelController.keepMounted = mounted
         }
@@ -111,6 +112,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 self?.characterWindowController.refreshDialogueNow()
             }
         }
+        if ProcessInfo.processInfo.environment["BILL_CHAT_DIAGNOSTIC"] == "1" {
+            Task { @MainActor [weak self] in
+                self?.characterWindowController.warmUpChatEngine?()
+                self?.chatPanelController.keepMounted = true
+                try? await Task.sleep(nanoseconds: 12_000_000_000)
+                let report = await self?.chatBridge.diagnose() ?? "nil"
+                print("=== chat bridge diagnostic ===")
+                print(report)
+                print("=== end chat diagnostic ===")
+                self?.chatPanelController.keepMounted = false
+            }
+        }
         if ProcessInfo.processInfo.environment["BILL_AWARENESS_DIAGNOSTIC"] == "1" {
             Task { @MainActor [weak self] in
                 try? await Task.sleep(nanoseconds: 6_000_000_000)
@@ -150,6 +163,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         awarenessMonitor?.stop()
         characterEngine.coverage.flushNow()
         memoryStore.flushNow()
+    }
+
+    func showFullChat() {
+        chatPanelController.show()
     }
 
     @objc func quit() {

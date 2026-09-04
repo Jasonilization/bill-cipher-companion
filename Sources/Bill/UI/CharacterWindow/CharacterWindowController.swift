@@ -161,6 +161,14 @@ final class CharacterWindowController: NSObject {
             self?.setPanelExpanded(isShowing)
         }
 
+        // Keep the speech bubble glued to Bill wherever he ends up — roaming,
+        // a drag, or a window shoving him all move the panel.
+        NotificationCenter.default.addObserver(
+            forName: NSWindow.didMoveNotification, object: panel, queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor in self?.followBubbleToBill() }
+        }
+
         applyCharacterScale(preferences.characterScale, keepingCurrentPosition: false)
         preferences.$characterScale
             .sink { [weak self] scale in self?.applyCharacterScale(scale, keepingCurrentPosition: true) }
@@ -305,7 +313,7 @@ final class CharacterWindowController: NSObject {
             characterEngine.bark(BarkLines.random(from: BarkLines.stillThinking))
             return
         }
-        guard let screen = NSScreen.main else { return }
+        guard let screen = panel.screen ?? NSScreen.main else { return }
         wasWanderingBeforeChat = true
         roaming?.suspend()
         // Once per time chat is *opened*, not once ever — the user's recent
@@ -325,11 +333,47 @@ final class CharacterWindowController: NSObject {
     }
 
     private func handleChatSubmit(_ text: String) {
+        // Bail out loudly rather than sending into a login wall.
+        Task { @MainActor [weak self] in
+            guard let self else { return }
+            if await self.chatBridge.checkSignedIn() == false {
+                self.reportSignedOut()
+                return
+            }
+            self.reallySubmit(text)
+        }
+    }
+
+    /// Tells the user the one thing they need to know, and puts the login page
+    /// in front of them so it is one click to fix.
+    private func reportSignedOut() {
+        isAwaitingChatResponse = false
+        chatTimeoutWork?.cancel()
+        characterEngine.request(.confused, force: true)
+        characterEngine.bark(
+            DialogueLibrary.shared.line("chat.signedOut")
+                ?? "I'M NOT SIGNED IN OVER HERE. OPENING THE LOGIN — SORT IT OUT.",
+            importance: .always
+        )
+        if let screen = panel.screen ?? NSScreen.main {
+            chatBubble.showResponse(
+                "I have my own browser, and it isn't signed in to ChatGPT. Log in in the window I just opened — once is enough.",
+                near: panel.frame, on: screen
+            )
+        }
+        openFullChat?()
+    }
+
+    /// Set by `AppDelegate` — brings the full chat panel up so the user can
+    /// actually sign in.
+    var openFullChat: (() -> Void)?
+
+    private func reallySubmit(_ text: String) {
         isAwaitingChatResponse = true
         beginAwaitingChatResponse?()
         characterEngine.request(.thinking, force: true)
         chatBridge.send(contextualized(text))
-        if let screen = NSScreen.main {
+        if let screen = panel.screen ?? NSScreen.main {
             chatBubble.showWaiting(near: panel.frame, on: screen)
         }
         scheduleChatWatchdog(elapsed: 0)
@@ -598,6 +642,18 @@ final class CharacterWindowController: NSObject {
 
         activeRefreshID = dialogueRefreshStore.begin(trigger: trigger, prompt: prompt)
         isPerformingBackgroundChatWork = true
+        // Fail fast and legibly when the page is a login wall — otherwise this
+        // burns the full 150s watchdog and reports a timeout, which points at
+        // the wrong problem entirely.
+        Task { @MainActor [weak self] in
+            guard let self, self.isPerformingBackgroundChatWork else { return }
+            if await self.chatBridge.checkSignedIn() == false {
+                self.resolveRefresh(
+                    response: nil,
+                    failure: "Not signed in. Bill's chat view has its own cookies — open \"Open Full Chat View…\" and log in to ChatGPT there once."
+                )
+            }
+        }
 
         // Correct order, and the step that was missing entirely.
         //
@@ -781,6 +837,24 @@ final class CharacterWindowController: NSObject {
         }
         let key = pokeCount >= 5 ? "poked.furious" : pokeCount >= 3 ? "poked.annoyed" : "poked"
         characterEngine.bark(DialogueLibrary.shared.line(key) ?? "", importance: .always)
+    }
+
+    /// Coalesces the burst of move notifications a roaming beat produces —
+    /// re-laying out the bubble 60 times a second would be absurd.
+    private var bubbleFollowWork: DispatchWorkItem?
+
+    private func followBubbleToBill() {
+        guard chatBubble.isVisible else { return }
+        bubbleFollowWork?.cancel()
+        let work = DispatchWorkItem { [weak self] in
+            Task { @MainActor in
+                guard let self, self.chatBubble.isVisible,
+                      let screen = self.panel.screen ?? NSScreen.main else { return }
+                self.chatBubble.reanchor(near: self.panel.frame, on: screen)
+            }
+        }
+        bubbleFollowWork = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.12, execute: work)
     }
 
     private var pokeCount = 0
