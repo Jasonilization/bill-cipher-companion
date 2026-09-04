@@ -24,6 +24,9 @@ final class RoamingController {
         case platform(rect: CGRect)
         /// Back down to the screen floor.
         case ground(x: CGFloat)
+        /// Walk to the nearest edge of the current surface, look over it, and
+        /// step off on purpose.
+        case dropOff
     }
 
     /// The step of the plan currently being executed.
@@ -64,13 +67,23 @@ final class RoamingController {
     /// unreachable geometry, a display change mid-flight) — abandon it rather
     /// than tick forever.
     private static let beatTimeout: TimeInterval = 14
-    private static let restInterval: ClosedRange<TimeInterval> = 11...26
+    /// Short on purpose. Bill is meant to be *living* on the desktop, not
+    /// posing on it, so beats follow each other closely.
+    private static let restInterval: ClosedRange<TimeInterval> = 3...9
     /// Below this the goal is close enough that walking to it reads as
     /// fidgeting rather than travelling.
     private static let arrivalTolerance: CGFloat = 8
     /// Chance a beat targets a real window rather than strolling on the
     /// current surface. Kept high — climbing the desktop is the whole point.
-    private static let windowGoalChance = 0.62
+    /// Raised from 0.62. Climbing the desktop is the entire point of the
+    /// feature, and with only a couple of windows typically reachable a lower
+    /// number made jumps genuinely rare to witness.
+    private static let windowGoalChance = 0.85
+    /// While already up on a window, the chance a beat is a deliberate drop
+    /// rather than more climbing. Falling on purpose is half the fun of having
+    /// gravity, and without this he only ever came down by accidentally
+    /// walking off an edge.
+    private static let deliberateDropChance = 0.45
 
     /// Bill's feet sit this far above his window's own bottom edge, and his
     /// centreline this far from its left edge, both at `characterScale == 1`.
@@ -90,10 +103,108 @@ final class RoamingController {
 
     func start() {
         scheduleNextBeat()
+        startContactWatch()
+    }
+
+    private func startContactWatch() {
+        contactTimer?.invalidate()
+        let t = Timer(timeInterval: Self.contactInterval, repeats: true) { [weak self] _ in
+            Task { @MainActor in self?.checkContacts() }
+        }
+        RunLoop.main.add(t, forMode: .common)
+        contactTimer = t
+    }
+
+    /// Notices windows moving into Bill (and surfaces moving under him).
+    private func checkContacts() {
+        guard let panel, !isSuspended, preferences.isRoamingEnabled else { return }
+        guard let screen = screenForBill() else { return }
+        let scale = preferences.characterScale
+        let feet = feetPosition(panel: panel)
+        let hw = sim.physics.bodyWidth * scale / 2
+        let body = CGRect(x: feet.x - hw, y: feet.y, width: hw * 2, height: sim.physics.bodyHeight * scale)
+
+        let platforms = WindowTopology.platforms(excludingWindowNumber: panel.windowNumber, fresh: true)
+        var rects: [Int: CGRect] = [:]
+        var shove: CGVector?
+        var rideDX: CGFloat = 0
+
+        for p in platforms {
+            rects[p.windowNumber] = p.rect
+            guard let old = previousRects[p.windowNumber], old != p.rect else { continue }
+            let dx = p.rect.minX - old.minX
+            let dy = p.rect.minY - old.minY
+
+            // Standing on this ledge and it slid sideways: go with it.
+            if abs(feet.y - p.rect.maxY) < 3, feet.x > p.rect.minX, feet.x < p.rect.maxX, abs(dx) >= 1 {
+                rideDX += dx
+                continue
+            }
+
+            // Swept into him: it did not overlap before, and does now.
+            guard !old.intersects(body), p.rect.intersects(body) else { continue }
+            guard abs(dx) >= Self.minShoveDelta || abs(dy) >= Self.minShoveDelta else { continue }
+
+            // Push along the direction the window travelled, biased to send
+            // him out sideways rather than straight down through the floor.
+            let vx = max(-Self.maxShoveSpeed, min(Self.maxShoveSpeed, dx * Self.shoveGain / CGFloat(Self.contactInterval)))
+            let vy = max(0, dy * Self.shoveGain / CGFloat(Self.contactInterval))
+            shove = CGVector(dx: vx == 0 ? (feet.x < p.rect.midX ? -260 : 260) : vx,
+                             dy: max(vy, 300 * scale))
+        }
+        previousRects = rects
+
+        if rideDX != 0, tick == nil {
+            panel.setFrameOrigin(NSPoint(x: panel.frame.minX + rideDX, y: panel.frame.minY))
+        }
+
+        // Standing on nothing?
+        //
+        // The simulation only re-evaluates support during a beat, so anything
+        // that removes the surface *between* beats left Bill hanging in mid-air
+        // until the next one — up to fifteen seconds later. Closing the window
+        // he was perched on, moving it, switching Spaces, or simply dropping
+        // him mid-drag all do exactly that. Since this watcher already has
+        // fresh geometry in hand, it is the natural place to notice.
+        if tick == nil, shove == nil {
+            let floor = screen.visibleFrame.minY
+            let tolerance = sim.physics.surfaceTolerance * scale
+            let supported = abs(feet.y - floor) <= tolerance || platforms.contains { p in
+                abs(feet.y - p.rect.maxY) <= tolerance && feet.x > p.rect.minX - hw && feet.x < p.rect.maxX + hw
+            }
+            if !supported, feet.y > floor + tolerance {
+                log("UNSUPPORTED at (\(Int(feet.x)),\(Int(feet.y))) — falling")
+                buildWorld(on: screen, panel: panel)
+                sim.place(feetAt: feet, grounded: false)
+                goal = nil
+                step = .airborne
+                beatStartedAt = Date()
+                restTimer?.invalidate()
+                startTicking()
+                return
+            }
+        }
+
+        guard let impulse = shove, Date().timeIntervalSince(lastShoveAt) > Self.shoveCooldown else { return }
+        lastShoveAt = Date()
+        log("SHOVED by window  impulse=(\(Int(impulse.dx)),\(Int(impulse.dy)))")
+
+        // Re-seed the simulation from where he actually is, then launch him.
+        buildWorld(on: screen, panel: panel)
+        sim.place(feetAt: feet, grounded: false)
+        sim.shove(impulse)
+        goal = nil
+        step = .airborne
+        beatStartedAt = Date()
+        restTimer?.invalidate()
+        characterEngine.request(.surprised, force: true)
+        onEvent?(.shoved)
+        startTicking()
     }
 
     func stop() {
         tick?.invalidate(); tick = nil
+        contactTimer?.invalidate(); contactTimer = nil
         restTimer?.invalidate(); restTimer = nil
         step = .done
         goal = nil
@@ -113,6 +224,32 @@ final class RoamingController {
         guard isSuspended else { return }
         isSuspended = false
         scheduleNextBeat()
+        // Don't wait for the next contact tick: if he was let go in mid-air he
+        // should start falling on the same frame, not up to a fifth of a
+        // second later.
+        dropIfUnsupported()
+    }
+
+    /// Starts a fall immediately if nothing is under Bill's feet.
+    ///
+    /// Called the instant a drag ends, so releasing him over empty desktop
+    /// reads as dropping him rather than as him hovering until the simulation
+    /// next happens to look.
+    func dropIfUnsupported() {
+        guard let panel, !isSuspended, preferences.isRoamingEnabled, tick == nil else { return }
+        guard let screen = screenForBill() else { return }
+        buildWorld(on: screen, panel: panel)
+        let feet = feetPosition(panel: panel)
+        let tolerance = sim.physics.surfaceTolerance * preferences.characterScale
+        let supported = abs(feet.y - screen.visibleFrame.minY) <= tolerance
+            || sim.solids.contains { abs(feet.y - $0.rect.maxY) <= tolerance }
+        guard !supported else { return }
+        sim.place(feetAt: feet, grounded: false)
+        goal = nil
+        step = .airborne
+        beatStartedAt = Date()
+        restTimer?.invalidate()
+        startTicking()
     }
 
     /// Invalidates the cached window layout. Called when apps activate and
@@ -156,24 +293,56 @@ final class RoamingController {
         }
     }
 
+    /// Set `BILL_ROAM_DEBUG=1` to trace every beat decision to stdout.
+    static let debug = ProcessInfo.processInfo.environment["BILL_ROAM_DEBUG"] == "1"
+    private func log(_ m: @autoclosure () -> String) {
+        if Self.debug { print("[roam] \(m())") }
+    }
+
     private func beginBeat(goal explicitGoal: Goal?) {
         guard let panel else { return }
-        guard preferences.isRoamingEnabled else { scheduleNextBeat(); return }
+        guard preferences.isRoamingEnabled else { log("BAIL roaming disabled"); scheduleNextBeat(); return }
         // Only start from genuine rest — never yank Bill out of a reaction,
         // a rare Easter egg, or a chat exchange.
         if explicitGoal == nil {
             let current = characterEngine.stateMachine.currentState
-            guard current == .idle || current.isRoamingMotion else { scheduleNextBeat(); return }
+            guard current == .idle || current.isRoamingMotion else {
+                log("BAIL state=\(current) (not idle/roaming)")
+                scheduleNextBeat(); return
+            }
         }
-        guard let screen = screenForBill() else { scheduleNextBeat(); return }
+        guard let screen = screenForBill() else { log("BAIL no screen"); scheduleNextBeat(); return }
 
         buildWorld(on: screen, panel: panel)
         syncSimFromPanel(panel: panel, screen: screen)
+        log("begin feet=(\(Int(sim.feet.x)),\(Int(sim.feet.y))) grounded=\(sim.isGrounded) solids=\(sim.solids.count) visible=\(screen.visibleFrame)")
 
         guard let chosen = explicitGoal ?? pickGoal(on: screen, panel: panel) else {
+            log("BAIL no goal")
             scheduleNextBeat(); return
         }
+        switch chosen {
+        case .stroll(let x):    log("goal STROLL to x=\(Int(x))")
+        case .dropOff:          log("goal DROP OFF from y=\(Int(sim.feet.y))")
+        case .dropOff:
+            // Head for whichever end of this ledge is nearer, stopping just
+            // past it so the next tick has nothing underfoot.
+            guard let ledge = currentLedge() else {
+                step = .settle(until: Date().addingTimeInterval(0.3))
+                return
+            }
+            let leftGap = sim.feet.x - ledge.minX
+            let rightGap = ledge.maxX - sim.feet.x
+            let edgeX = leftGap < rightGap ? ledge.minX - 12 : ledge.maxX + 12
+            pendingDropX = edgeX
+            step = .approach(x: edgeX, running: false)
+
+        case .ground(let x):    log("goal GROUND to x=\(Int(x))")
+        case .platform(let r):  log("goal PLATFORM top=\(Int(r.maxY)) x=\(Int(r.minX))...\(Int(r.maxX))")
+        }
         goal = chosen
+        replanCount = 0
+        strollLegs = 0
         beatStartedAt = Date()
         planNextStep()
         startTicking()
@@ -210,19 +379,25 @@ final class RoamingController {
             .filter { rect in
                 // Reachable by a direct leap onto the top edge, or by
                 // catching the side and climbing.
-                let landing = CGPoint(x: rect.midX, y: rect.maxY)
-                if sim.solveJump(from: sim.feet, to: landing) != nil { return true }
+                let landing = landingPoint(on: rect)
+                if let v = sim.solveJump(from: sim.feet, to: landing),
+                   sim.isArcClear(from: sim.feet, velocity: v, to: landing) { return true }
                 return sideGrabTarget(for: rect) != nil
             }
 
+        let isElevated = sim.feet.y > visible.minY + 40
+
+        // Up high, a deliberate drop competes with climbing further.
+        if isElevated, Double.random(in: 0..<1) < Self.deliberateDropChance {
+            return .dropOff
+        }
         if !reachable.isEmpty, Double.random(in: 0..<1) < Self.windowGoalChance {
             return .platform(rect: reachable.randomElement()!)
         }
-        // Otherwise stroll along whatever he is standing on, or head home.
-        if sim.feet.y > visible.minY + 4, Double.random(in: 0..<1) < 0.3 {
+        if isElevated, Double.random(in: 0..<1) < 0.4 {
             return .ground(x: CGFloat.random(in: visible.minX + 80...visible.maxX - 80))
         }
-        let span = CGFloat.random(in: 90...260) * (Bool.random() ? 1 : -1)
+        let span = CGFloat.random(in: 160...460) * (Bool.random() ? 1 : -1)
         let x = min(max(sim.feet.x + span, visible.minX + 40), visible.maxX - 40)
         return .stroll(x: x)
     }
@@ -235,18 +410,35 @@ final class RoamingController {
         case .stroll(let x):
             step = .approach(x: x, running: abs(x - sim.feet.x) > 240)
 
+        case .dropOff:
+            // Head for whichever end of this ledge is nearer, stopping just
+            // past it so the next tick has nothing underfoot.
+            guard let ledge = currentLedge() else {
+                step = .settle(until: Date().addingTimeInterval(0.3))
+                return
+            }
+            let leftGap = sim.feet.x - ledge.minX
+            let rightGap = ledge.maxX - sim.feet.x
+            let edgeX = leftGap < rightGap ? ledge.minX - 12 : ledge.maxX + 12
+            pendingDropX = edgeX
+            step = .approach(x: edgeX, running: false)
+
         case .ground(let x):
             // Walk to the nearest edge of the current surface and drop off.
             step = .peek(until: Date().addingTimeInterval(0.55))
             pendingDropX = x
 
         case .platform(let rect):
-            let landing = CGPoint(x: rect.midX, y: rect.maxY)
-            if abs(sim.feet.y - rect.maxY) < 2, abs(sim.feet.x - rect.midX) < Self.arrivalTolerance {
+            let landing = landingPoint(on: rect)
+            // Already there, or the "jump" would barely move him — either way
+            // there is nothing worth watching. (Seen live: a LAUNCH with
+            // v=(0,514) that landed exactly where it started.)
+            if abs(sim.feet.y - landing.y) < 24, abs(sim.feet.x - landing.x) < 60 {
                 step = .settle(until: Date().addingTimeInterval(0.3))
                 return
             }
-            if sim.solveJump(from: sim.feet, to: landing) != nil {
+            if let v = sim.solveJump(from: sim.feet, to: landing),
+               sim.isArcClear(from: sim.feet, velocity: v, to: landing) {
                 step = .crouch(until: Date().addingTimeInterval(0.16), target: landing)
             } else if let grab = sideGrabTarget(for: rect) {
                 // The top edge is out of leap range — a tall or maximised
@@ -278,9 +470,61 @@ final class RoamingController {
         let ceiling = sim.feet.y + sim.maxReachableRise * 0.9
         let y = min(rect.maxY - 40, ceiling)
         guard y > rect.minY + 24, y > sim.feet.y else { return nil }
-        guard sim.solveJump(from: sim.feet, to: CGPoint(x: x, y: y)) != nil else { return nil }
-        return CGPoint(x: x, y: y)
+        let target = CGPoint(x: x, y: y)
+        guard let v = sim.solveJump(from: sim.feet, to: target),
+              sim.isArcClear(from: sim.feet, velocity: v, to: target) else { return nil }
+        return target
     }
+
+    /// The surface Bill is currently standing on, if it is a window rather
+    /// than the screen floor.
+    private func currentLedge() -> CGRect? {
+        sim.solids
+            .map(\.rect)
+            .first { abs($0.maxY - sim.feet.y) < 3 && sim.feet.x >= $0.minX - 40 && sim.feet.x <= $0.maxX + 40 }
+    }
+
+    /// The closest landing spot on a ledge, rather than its centre.
+    ///
+    /// Aiming at `rect.midX` made wide windows unreachable for no good reason:
+    /// a window spanning x=84...1007 was measured as 1117pt away from Bill at
+    /// x=1663, well past the horizontal launch envelope, when its near edge was
+    /// only 656pt away. Two of the four windows on screen were rejected purely
+    /// because of this. He lands on the near end and can walk along afterwards.
+    private func landingPoint(on rect: CGRect) -> CGPoint {
+        let inset = min(40, rect.width / 3)
+        let x = min(max(sim.feet.x, rect.minX + inset), rect.maxX - inset)
+        return CGPoint(x: x, y: rect.maxY)
+    }
+
+    /// Guards against re-planning the same unreachable goal every tick.
+    ///
+    /// `.approach` re-plans on arrival, and if the platform still cannot be
+    /// solved from the new position the planner hands back the *same* approach
+    /// point — so the beat span until `beatTimeout` doing nothing visible.
+    private var replanCount = 0
+    private var strollLegs = 0
+    private static let maxReplans = 4
+
+    // MARK: - Contact with moving windows
+    //
+    // Windows are solid, so a window that *moves into Bill* should knock him
+    // out of the way rather than passing through him. That needs geometry
+    // sampled often enough to catch the motion, which the 1.5s topology cache
+    // deliberately does not provide — so this keeps its own fresh, small poll.
+
+    private var contactTimer: Timer?
+    private var previousRects: [Int: CGRect] = [:]
+    /// ~5.5Hz. Fast enough that a dragged window visibly shoves him, slow
+    /// enough to stay a rounding error next to the render loop.
+    private static let contactInterval: TimeInterval = 0.18
+    /// How hard a shove throws him, per point of window movement.
+    private static let shoveGain: CGFloat = 7.5
+    private static let maxShoveSpeed: CGFloat = 900
+    /// Below this a window "move" is a resize jitter, not a shove.
+    private static let minShoveDelta: CGFloat = 3
+    private var lastShoveAt = Date.distantPast
+    private static let shoveCooldown: TimeInterval = 0.9
 
     private var pendingDropX: CGFloat?
 
@@ -298,6 +542,7 @@ final class RoamingController {
     }
 
     private func endBeat() {
+        log("end feet=(\(Int(sim.feet.x)),\(Int(sim.feet.y))) grounded=\(sim.isGrounded)")
         tick?.invalidate(); tick = nil
         step = .done
         goal = nil
@@ -321,6 +566,7 @@ final class RoamingController {
         writeBack(panel: panel)
 
         for event in events {
+            log("event \(event) at (\(Int(sim.feet.x)),\(Int(sim.feet.y)))")
             handle(event)
             onEvent?(event)
         }
@@ -335,10 +581,38 @@ final class RoamingController {
             if abs(delta) <= Self.arrivalTolerance || !sim.isGrounded {
                 if sim.isGrounded {
                     sim.stop()
+                    // Reached the lip of a deliberate drop: lean out and look
+                    // down before committing, then let gravity do the rest.
+                    if case .dropOff = goal {
+                        step = .peek(until: Date().addingTimeInterval(0.7))
+                        return
+                    }
                     // Re-plan: either we have arrived, or we walked close
                     // enough that the jump is now solvable.
-                    if case .stroll = goal { step = .settle(until: Date().addingTimeInterval(0.4)) }
-                    else { planNextStep() }
+                    if case .stroll = goal {
+                        // Chain another leg rather than stopping dead at the
+                        // first target — one short hop reads as a twitch, a
+                        // few in sequence read as pacing around.
+                        strollLegs += 1
+                        if strollLegs < Int.random(in: 2...4),
+                           let screen = screenForBill() {
+                            let visible = screen.visibleFrame
+                            let span = CGFloat.random(in: 120...380) * (Bool.random() ? 1 : -1)
+                            let nextX = min(max(sim.feet.x + span, visible.minX + 40), visible.maxX - 40)
+                            goal = .stroll(x: nextX)
+                            step = .approach(x: nextX, running: abs(span) > 300)
+                        } else {
+                            step = .settle(until: Date().addingTimeInterval(0.4))
+                        }
+                    } else {
+                        replanCount += 1
+                        if replanCount > Self.maxReplans {
+                            log("giving up on goal after \(replanCount) replans")
+                            step = .settle(until: Date().addingTimeInterval(0.3))
+                        } else {
+                            planNextStep()
+                        }
+                    }
                 }
                 return
             }
@@ -350,8 +624,10 @@ final class RoamingController {
 
         case .launch(let target):
             if sim.jump(to: target) {
+                log("LAUNCH to (\(Int(target.x)),\(Int(target.y))) v=(\(Int(sim.velocity.dx)),\(Int(sim.velocity.dy)))")
                 step = .airborne
             } else {
+                log("launch FAILED (target moved or unreachable) - replanning")
                 // The window moved or closed between planning and launching.
                 planNextStep()
             }
@@ -361,13 +637,21 @@ final class RoamingController {
 
         case .peek(let until):
             sim.stop()
-            if Date() >= until {
-                if let x = pendingDropX {
-                    step = .approach(x: x, running: false)
-                    pendingDropX = nil
-                } else {
-                    step = .settle(until: Date().addingTimeInterval(0.3))
-                }
+            applyState(.edgePeek)
+            guard Date() >= until else { return }
+            if case .dropOff = goal {
+                // Commit. Releasing sets him falling from exactly here.
+                sim.release()
+                step = .airborne
+                pendingDropX = nil
+                log("DROP from (\(Int(sim.feet.x)),\(Int(sim.feet.y)))")
+                return
+            }
+            if let x = pendingDropX {
+                step = .approach(x: x, running: false)
+                pendingDropX = nil
+            } else {
+                step = .settle(until: Date().addingTimeInterval(0.3))
             }
 
         case .climb(let direction):
@@ -396,6 +680,10 @@ final class RoamingController {
             step = .airborne
         case .bonkedHead:
             break
+        case .shoved:
+            // The contact watcher has already put him in flight; the beat just
+            // needs to let gravity finish the job.
+            step = .airborne
         case .fellOffWorld, .reachedGoal:
             step = .done
         }

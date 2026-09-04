@@ -62,8 +62,11 @@ enum WindowTopology {
 
     /// All solid platforms, front-to-back. `excluding` is our own panel's
     /// window number, which must never become something Bill stands on.
-    static func platforms(excludingWindowNumber ownWindowNumber: Int) -> [Platform] {
-        if Date().timeIntervalSince(cachedAt) < cacheLifetime {
+    /// `fresh: true` bypasses the cache. Used by the contact watcher, which
+    /// exists specifically to notice windows *moving* and so cannot be served
+    /// stale geometry.
+    static func platforms(excludingWindowNumber ownWindowNumber: Int, fresh: Bool = false) -> [Platform] {
+        if !fresh, Date().timeIntervalSince(cachedAt) < cacheLifetime {
             return cached
         }
         cached = build(excludingWindowNumber: ownWindowNumber)
@@ -104,7 +107,17 @@ enum WindowTopology {
             // Must actually be visible on some display, and must not be a
             // screen-sized backdrop (whose top edge duplicates the screen's).
             guard let host = screenRects.first(where: { $0.intersects(rect) }) else { continue }
-            if rect.width >= host.width * maxScreenCoverage, rect.height >= host.height * maxScreenCoverage { continue }
+            // Compared against the *visible* frame, not the raw screen frame.
+            //
+            // A maximised window is exactly `visibleFrame`-sized, so measuring
+            // against the full screen frame (which includes the menu bar and
+            // Dock strips) let it through: the roaming trace picked a goal of
+            // `top=1074 x=0...1710`, i.e. the entire working area. Jumping
+            // "onto" that is jumping at the ceiling, and it also hides every
+            // other window behind it.
+            let visible = NSScreen.screens.first(where: { $0.frame == host })?.visibleFrame ?? host
+            if rect.width >= visible.width * maxScreenCoverage,
+               rect.height >= visible.height * maxScreenCoverage { continue }
 
             result.append(Platform(rect: rect, ownerPID: pid, windowNumber: number, depth: index))
         }

@@ -10,6 +10,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let memoryStore = MemoryStore()
     let studyMode = StudyMode()
     private var habitNagger: HabitNagger?
+    var awarenessMonitor: AwarenessMonitor!
     private var reactionRouter: ReactionRouter!
     private var statusItemController: StatusItemController!
     private var characterWindowController: CharacterWindowController!
@@ -34,6 +35,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         chatPanelController = ChatPanelController(chatBridge: chatBridge)
         characterWindowController.warmUpChatEngine = { [weak self] in self?.chatPanelController.warmUpIfNeeded() }
         characterWindowController.beginAwaitingChatResponse = { [weak self] in self?.chatPanelController.beginAwaitingResponse() }
+        characterWindowController.setChatEngineMounted = { [weak self] mounted in
+            self?.chatPanelController.keepMounted = mounted
+        }
         characterWindowController.endAwaitingChatResponse = { [weak self] in self?.chatPanelController.endAwaitingResponse() }
         settingsWindowController = SettingsWindowController(
             preferences: preferences,
@@ -88,6 +92,42 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         studyMode.announce = { [weak self] keys, states, substitutions in
             self?.reactionRouter.announceStudy(keys: keys, states: states, substitutions: substitutions)
         }
+        awarenessMonitor = AwarenessMonitor(preferences: preferences)
+        awarenessMonitor.onInsight = { [weak self] insight in
+            self?.reactionRouter.reportInsight(insight)
+        }
+        awarenessMonitor.start()
+        // `BILL_AWARENESS_DIAGNOSTIC=1` runs the same report the debug menu
+        // shows, shortly after launch, so the pipeline can be verified from a
+        // terminal without clicking through the menu bar.
+        // `BILL_REFRESH_ON_LAUNCH=1` forces a dialogue refresh shortly after
+        // launch. This is the only end-to-end exercise of the whole ChatGPT
+        // bridge — WebView warm-up, page load, script injection, send, response
+        // extraction and parsing — so it is how that path gets tested without
+        // clicking through the menu bar.
+        if ProcessInfo.processInfo.environment["BILL_REFRESH_ON_LAUNCH"] == "1" {
+            Task { @MainActor [weak self] in
+                try? await Task.sleep(nanoseconds: 4_000_000_000)
+                self?.characterWindowController.refreshDialogueNow()
+            }
+        }
+        if ProcessInfo.processInfo.environment["BILL_AWARENESS_DIAGNOSTIC"] == "1" {
+            Task { @MainActor [weak self] in
+                try? await Task.sleep(nanoseconds: 6_000_000_000)
+                guard let report = await self?.awarenessMonitor.diagnose() else { return }
+                print("=== screen awareness diagnostic ===")
+                print(report)
+                print("=== end diagnostic ===")
+            }
+        }
+        // Start/stop the periodic sampler when the toggle changes, rather than
+        // only at launch.
+        preferences.$isWindowAwarenessEnabled
+            .sink { [weak self] _ in
+                Task { @MainActor in self?.awarenessMonitor.refresh() }
+            }
+            .store(in: &cancellables)
+
         let nagger = HabitNagger(memoryStore: memoryStore)
         nagger.onNag = { [weak self] key in self?.reactionRouter.nag(key) }
         reactionRouter.habitNagger = nagger
@@ -107,6 +147,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationWillTerminate(_ notification: Notification) {
         systemMonitor.stop()
         characterEngine.stop()
+        awarenessMonitor?.stop()
         characterEngine.coverage.flushNow()
         memoryStore.flushNow()
     }

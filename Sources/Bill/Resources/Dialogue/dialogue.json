@@ -1004,6 +1004,19 @@
    "DUE AT MIDNIGHT? THE CLOCK IS NOT ON YOUR SIDE. I AM, MARGINALLY."
   ]
  },
+ "dropped": {
+  "afternoon": [],
+  "any": [
+   "AND HE STICKS THE LANDING. BARELY.",
+   "RUDE. EFFECTIVE, BUT RUDE.",
+   "I MEANT TO END UP HERE. OBVIOUSLY.",
+   "NEXT TIME, WARN ME.",
+   "OKAY. WE'RE DOING THIS HERE NOW. FINE."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": []
+ },
  "finder": {
   "afternoon": [
    "THE AFTERNOON FILE HUNT. A NOBLE AND DOOMED TRADITION."
@@ -1157,6 +1170,21 @@
   "morning": [],
   "night": [
    "SPINNING UP VMS AFTER MIDNIGHT. NOTHING WILL BREAK. NOTHING."
+  ]
+ },
+ "grabbed": {
+  "afternoon": [],
+  "any": [
+   "PUT ME DOWN.",
+   "WHOA — HEY! NOT THE HAT!",
+   "I AM BEING ABDUCTED. AGAIN.",
+   "THIS IS THE SECOND WORST THING A HUMAN HAS DONE TO ME.",
+   "UNHAND ME, FLESH CREATURE."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": [
+   "GRABBING ME AT THIS HOUR. WE NEED TO TALK ABOUT BOUNDARIES."
   ]
  },
  "grooving": {
@@ -1586,30 +1614,50 @@
   ]
  },
  "poked": {
-  "afternoon": [
-   "POKED. AGAIN. THE AFTERNOON MAKES YOU BOLD."
-  ],
+  "afternoon": [],
   "any": [
-   "RUDE.",
-   "Do that again and I'm haunting your dreams. Again.",
-   "Was that supposed to hurt? I'm a triangle.",
-   "Hey! I was doing very important nothing.",
-   "Poke me again. I dare you.",
-   "One more time. I mean it. I'm keeping score.",
-   "That's assault, in at least four dimensions.",
-   "Touch me again and find out what happens. (Nothing happens. I have no hands.)"
+   "HEY. HANDS OFF THE DREAM DEMON.",
+   "DID YOU JUST *BOOP* ME?",
+   "TOUCH ME AGAIN. I DARE YOU. ACTUALLY DON'T.",
+   "I FELT THAT. I FEEL EVERYTHING. IT'S EXHAUSTING.",
+   "POKING AN ANCIENT BEING. GREAT INSTINCTS.",
+   "THAT'S MY GOOD SIDE. THEY'RE ALL MY GOOD SIDE.",
+   "OW. METAPHORICALLY. I HAVE NO NERVES.",
+   "A LESSER ENTITY WOULD HAVE SMITED YOU BY NOW."
   ],
-  "midday": [
-   "A MIDDAY POKE. WE'RE DOING THIS NOW, APPARENTLY."
-  ],
+  "midday": [],
   "morning": [
-   "POKING ME BEFORE COFFEE. BRAVE.",
-   "IT IS TOO EARLY FOR PHYSICAL CONTACT."
+   "TOO EARLY FOR PHYSICAL CONTACT. PUT IT BACK."
   ],
   "night": [
-   "POKING A DREAM DEMON AFTER DARK. HISTORICALLY UNWISE.",
-   "IT'S NIGHT. THIS IS MY JURISDICTION. RECONSIDER."
+   "POKING ME IN THE DARK. BOLD, EVEN FOR YOU."
   ]
+ },
+ "poked.annoyed": {
+  "afternoon": [],
+  "any": [
+   "OKAY. THAT'S THREE. I'M COUNTING NOW.",
+   "STOP. IT. I'M A COSMIC HORROR, NOT A STRESS TOY.",
+   "YOU'RE ENJOYING THIS AND I RESENT IT.",
+   "IS THIS WHAT PASSES FOR AFFECTION IN YOUR SPECIES?",
+   "EVERY POKE IS BEING RECORDED. FOR LATER."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": []
+ },
+ "poked.furious": {
+  "afternoon": [],
+  "any": [
+   "THAT'S IT. I'M REARRANGING YOUR DESKTOP OUT OF SPITE.",
+   "YOU HAVE POKED THE TRIANGLE ONE TIME TOO MANY.",
+   "I HAVE SEEN GALAXIES DIE WITH MORE DIGNITY THAN THIS.",
+   "FINE. FINE! WHAT DO YOU WANT.",
+   "I'M PUTTING YOU IN THE ZODIAC. THE BAD PART."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": []
  },
  "powerSurge": {
   "afternoon": [],

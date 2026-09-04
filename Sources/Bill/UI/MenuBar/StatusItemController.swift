@@ -77,6 +77,10 @@ final class StatusItemController: NSObject {
         wanderItem.target = self
         menu.addItem(wanderItem)
 
+        let awarenessItem = NSMenuItem(title: "Debug: Test Screen Awareness Now", action: #selector(testAwareness), keyEquivalent: "")
+        awarenessItem.target = self
+        menu.addItem(awarenessItem)
+
         let dialogueLogItem = NSMenuItem(title: "Debug: Show Dialogue Refresh Log", action: #selector(showDialogueRefreshLog), keyEquivalent: "")
         dialogueLogItem.target = self
         menu.addItem(dialogueLogItem)
@@ -103,6 +107,41 @@ final class StatusItemController: NSObject {
         } else {
             studyModeItem.title = "Study Mode (30 min)"
             studyModeItem.state = .off
+        }
+    }
+
+    /// Runs the whole window-awareness pipeline against whatever is frontmost
+    /// and shows exactly what each stage produced.
+    ///
+    /// Every stage of awareness fails silently by design — a missing
+    /// permission, an unreadable window and a title that matches no rule all
+    /// look the same from outside (Bill just says nothing). This makes the
+    /// difference visible.
+    @objc private func testAwareness() {
+        guard let monitor = appDelegate?.awarenessMonitor else { return }
+        Task { @MainActor in
+            // Give the user a moment to switch to the app they want tested —
+            // otherwise the frontmost app is always Bill's own menu.
+            let countdown = NSAlert()
+            countdown.messageText = "Test screen awareness"
+            countdown.informativeText = "Click Start, then bring the app you want to test to the front. Bill will look at it in 4 seconds."
+            countdown.addButton(withTitle: "Start")
+            countdown.addButton(withTitle: "Cancel")
+            guard countdown.runModal() == .alertFirstButtonReturn else { return }
+
+            try? await Task.sleep(nanoseconds: 4_000_000_000)
+            let report = await monitor.diagnose()
+            print("=== screen awareness diagnostic ===\n\(report)")
+
+            let result = NSAlert()
+            result.messageText = "Screen awareness diagnostic"
+            result.informativeText = report
+            result.addButton(withTitle: "OK")
+            result.addButton(withTitle: "Copy")
+            if result.runModal() == .alertSecondButtonReturn {
+                NSPasteboard.general.clearContents()
+                NSPasteboard.general.setString(report, forType: .string)
+            }
         }
     }
 

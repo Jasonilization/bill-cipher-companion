@@ -1,3 +1,4 @@
+import AppKit
 import CoreGraphics
 import Foundation
 import ScreenCaptureKit
@@ -30,6 +31,17 @@ final class ScreenTextReader {
     /// Only apps where reading the contents tells Bill something he cannot get
     /// from the title alone. Everything else is not worth the cost.
     private static let interestingApps = ["classroom", "slides", "docs", "duolingo", "gmail"]
+    /// Capture is downscaled to this long edge before recognition.
+    ///
+    /// Measured on this machine, and the numbers are stark:
+    ///   full-screen native + `.fast`      →  9.7s
+    ///   ~1000pt window native + `.accurate` → 85.7s  (!)
+    /// `.accurate` reads UI text far better ("Apple Account" vs "APPL Y
+    /// IHANGES?"), but nearly a minute and a half of a saturated core for a
+    /// background nicety is indefensible. The fix is to make the *image*
+    /// small enough that `.fast` is sufficient, rather than to pay for
+    /// `.accurate` on a large one.
+    private static let maxCaptureLongEdge: CGFloat = 1000
 
     static var hasPermission: Bool {
         CGPreflightScreenCaptureAccess()
@@ -47,9 +59,9 @@ final class ScreenTextReader {
 
     /// Recognised text from the frontmost window of `pid`, or `nil` if capture
     /// is unavailable, on cooldown, or produced nothing.
-    func readFocusedWindow(pid: pid_t, appName: String) async -> String? {
-        guard Self.hasPermission, Self.isInteresting(appName: appName) else { return nil }
-        if let last = lastCapture[pid], Date().timeIntervalSince(last) < Self.perAppCooldown { return nil }
+    func readFocusedWindow(pid: pid_t, appName: String, force: Bool = false) async -> String? {
+        guard Self.hasPermission, force || Self.isInteresting(appName: appName) else { return nil }
+        if !force, let last = lastCapture[pid], Date().timeIntervalSince(last) < Self.perAppCooldown { return nil }
         lastCapture[pid] = Date()
 
         guard let image = await Self.capture(pid: pid) else { return nil }
@@ -66,10 +78,26 @@ final class ScreenTextReader {
             }) else { return nil }
 
             let config = SCStreamConfiguration()
-            config.width = Int(window.frame.width)
-            config.height = Int(window.frame.height)
-            // Text recognition does not benefit from Retina resolution here and
-            // it doubles the pixels Vision has to chew through.
+            // Cap the long edge.
+            //
+            // Measured: capturing a full-screen window at native size and
+            // running Vision over it took **9.7 seconds**. `SCStreamConfiguration`
+            // sizes are in *pixels*, so a Retina full-screen window is ~7.6M
+            // pixels — far more than text recognition needs. Downscaling to a
+            // 1400px long edge cuts that by roughly an order of magnitude while
+            // leaving UI text comfortably legible.
+            // `window.frame` is in points; `SCStreamConfiguration` sizes are
+            // in *pixels*, and on a Retina display the native capture is 2x.
+            // Sizing from points alone therefore silently captured a
+            // double-resolution image — which is why the first cap barely
+            // helped. Scale down from the true pixel size.
+            let pixelScale = NSScreen.main?.backingScaleFactor ?? 2
+            let pixelWidth = window.frame.width * pixelScale
+            let pixelHeight = window.frame.height * pixelScale
+            let longEdge = max(pixelWidth, pixelHeight)
+            let factor = min(1.0, Self.maxCaptureLongEdge / max(longEdge, 1))
+            config.width = max(1, Int(pixelWidth * factor))
+            config.height = max(1, Int(pixelHeight * factor))
             config.scalesToFit = true
             config.showsCursor = false
 
@@ -85,12 +113,22 @@ final class ScreenTextReader {
         await withCheckedContinuation { continuation in
             // Off the main actor entirely — Vision on a full window is the
             // single most expensive thing this app can do.
-            DispatchQueue.global(qos: .utility).async {
+            // `.userInitiated`, not `.utility`: at utility QoS this work is
+            // aggressively descheduled whenever the main thread is busy (which,
+            // during a roaming beat, it is), stretching an already slow pass out
+            // even further.
+            DispatchQueue.global(qos: .userInitiated).async {
                 let request = VNRecognizeTextRequest()
-                // `.fast` deliberately: we are looking for the presence of
-                // words like "missing" or a due date, not transcribing prose.
                 request.recognitionLevel = .fast
-                request.usesLanguageCorrection = false
+                // Correction stays ON even at `.fast` — it is cheap at this
+                // level and it is what turns "APPL Y IHANGES" into something
+                // the keyword rules can match.
+                request.usesLanguageCorrection = true
+                request.recognitionLanguages = ["en-US"]
+                // Skip text smaller than ~1.5% of the image height. UI labels
+                // and counts are well above that, and ignoring the fine print
+                // removes most of the work.
+                request.minimumTextHeight = 0.015
                 let handler = VNImageRequestHandler(cgImage: image, options: [:])
                 do {
                     try handler.perform([request])

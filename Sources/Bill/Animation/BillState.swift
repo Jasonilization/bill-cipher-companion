@@ -181,6 +181,46 @@ enum BillState: String, CaseIterable, Sendable {
         }
     }
 
+    /// How long a continuous state may hold before settling back to idle by
+    /// itself. `nil` means "hold until something explicitly ends it".
+    ///
+    /// This exists because continuous states were latching permanently. A
+    /// single app activation could put Bill into `.glitching` (or `.coding`,
+    /// `.sneaking`, `.browsingStore`…), and nothing ever requested `.idle`
+    /// afterwards — there is no "app deactivated" event. While latched,
+    /// *everything* gated on `currentState == .idle` stopped: roaming, idle
+    /// beats, rare Easter eggs and the daily coverage sweep. Observed live in
+    /// the roaming trace as `BAIL state=glitching` repeating forever, and it
+    /// is the main reason wandering looked absent.
+    ///
+    /// These are *reactions*, not conditions — the point is made after a few
+    /// seconds. The genuine conditions (asleep, charging, hot) keep `nil`
+    /// because they have real events that end them.
+    var maxHoldDuration: TimeInterval? {
+        guard isContinuous else { return nil }
+        switch self {
+        // Genuinely asleep: a sleeping pet should not wander off, and
+        // `.userReturned` reliably wakes him.
+        case .sleeping: return nil
+        // These two *are* machine conditions, but their exit events can be a
+        // very long time coming — the CPU stays above the hot threshold for as
+        // long as a game is running, and a plugged-in laptop stays plugged in
+        // all evening. Holding the state that whole time froze Bill in place:
+        // observed live as `BAIL state=heatingUp` repeating for as long as a
+        // game was open, with no roaming at all. The steam/spark FX has already
+        // made the point after a few seconds; the condition does not need to
+        // own his body indefinitely.
+        case .heatingUp: return 12
+        case .charging: return 10
+        // Driven frame-by-frame by the simulation / chat, which owns the exit.
+        case .walking, .running, .rising, .falling,
+             .climbingUp, .climbingDown, .hangingIdle,
+             .talking, .thinking: return nil
+        // Everything else is an app reaction.
+        default: return 9
+        }
+    }
+
     /// True for the states the roaming simulation drives directly. The
     /// roaming controller owns Bill's animation completely while one of
     /// these is current, so ambient behaviour (idle beats, rare Easter eggs,

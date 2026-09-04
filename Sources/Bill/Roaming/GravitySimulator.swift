@@ -40,6 +40,16 @@ struct RoamPhysics {
     var ledgeGrabReach: CGFloat = 14
     /// A landing from higher than this plays the hard-landing beat.
     var hardLandingSpeed: CGFloat = 780
+    /// How far from a surface still counts as standing on it.
+    ///
+    /// This has to be the *same* number everywhere. It was not: `place(feetAt:)`
+    /// accepted "within 2pt of the floor" as grounded, while the swept landing
+    /// test required `previous.y >= ledge - 0.5`. Bill's panel origin rounds to
+    /// whole points, so he routinely started a beat 1pt below the floor line:
+    /// grounded by one test, in mid-air by the other. The observed result was
+    /// `walkedOffEdge` immediately followed by `fellOffWorld` on the very first
+    /// tick — the beat aborted before he took a step, every time.
+    var surfaceTolerance: CGFloat = 2.5
     /// Bill's collision box, in points at `characterScale == 1`. Narrower
     /// than his widest walk-cycle silhouette on purpose: a collision box the
     /// size of his flailing limbs makes him refuse to fit through gaps he
@@ -72,6 +82,8 @@ enum RoamEvent: Equatable {
     case walkedOffEdge
     case reachedGoal
     case fellOffWorld
+    /// A window moved into him and knocked him flying.
+    case shoved
 }
 
 /// A solid the simulation can collide with, reduced to just its geometry.
@@ -113,6 +125,15 @@ final class GravitySimulator {
 
     func place(feetAt point: CGPoint, grounded: Bool) {
         feet = point
+        // Snap exactly onto the surface being stood on, so the landing test
+        // and the grounded test cannot disagree by a rounding error.
+        if grounded {
+            let surfaces = solids.map(\.rect.maxY) + [worldBounds.minY]
+            if let nearest = surfaces.min(by: { abs($0 - point.y) < abs($1 - point.y) }),
+               abs(nearest - point.y) <= physics.surfaceTolerance * scale {
+                feet.y = nearest
+            }
+        }
         velocity = .zero
         isGrounded = grounded
         motion = grounded ? .resting : .falling
@@ -154,6 +175,49 @@ final class GravitySimulator {
         fallStartY = feet.y
         grabbedSolid = nil
         return true
+    }
+
+    /// Traces the solved arc and reports whether anything is in the way.
+    ///
+    /// Without this the planner happily solved a mathematically valid arc that
+    /// ran straight through the underside of the very window it was aiming at:
+    /// observed live as `LAUNCH to (1060,982)` immediately followed by
+    /// `bonkedHead at (1486,219)` and a fall back to the floor. The arc was
+    /// correct; the route was not. Windows are solid, so reaching a ledge you
+    /// are standing underneath means going around, not through.
+    func isArcClear(from start: CGPoint, velocity v: CGVector, to target: CGPoint) -> Bool {
+        let g = physics.gravity * scale
+        let dt = CGFloat(Self.timestep)
+        let hw = halfWidth
+        let h = height
+
+        // Anything he is already overlapping is something he is standing in
+        // front of, not an obstacle. Only solids entered from outside can
+        // block the arc.
+        let startBox = CGRect(x: start.x - hw, y: start.y, width: hw * 2, height: h)
+        let obstacles = solids.filter { !$0.isWorldBounds && !$0.rect.intersects(startBox) }
+
+        var p = start
+        var vy = v.dy
+        var head = p.y + h
+        for _ in 0..<Self.maxSolverSteps {
+            let previousHead = head
+            vy -= g * dt
+            p.x += v.dx * dt
+            p.y += vy * dt
+            head = p.y + h
+            if vy <= 0, p.y <= target.y + 1 { return true }
+            if p.y >= worldBounds.maxY { return false }
+            for solid in obstacles {
+                let r = solid.rect
+                guard p.x + hw > r.minX, p.x - hw < r.maxX else { continue }
+                // Rising into an underside is the only thing that stops a jump
+                // — mirrors `resolveRising`, so the prediction matches what the
+                // integrator will actually do.
+                if previousHead <= r.minY, head >= r.minY { return false }
+            }
+        }
+        return false
     }
 
     /// The highest a single leap can climb, given the launch envelope. Above
@@ -220,6 +284,21 @@ final class GravitySimulator {
         guard grabbedSolid != nil else { return }
         velocity = CGVector(dx: 0, dy: direction * physics.climbSpeed * scale)
         motion = .climbing(dy: velocity.dy)
+    }
+
+    /// Knocks Bill off his feet with an impulse — a window sweeping into him.
+    func shove(_ impulse: CGVector) {
+        grabbedSolid = nil
+        isGrounded = false
+        velocity = impulse
+        motion = impulse.dy > 0 ? .rising : .falling
+        fallStartY = feet.y
+        timeSinceGrounded = 0
+    }
+
+    /// Carries Bill along with a surface that moved under him.
+    func ride(dx: CGFloat) {
+        feet.x += dx
     }
 
     /// Let go of a wall or overhang and fall.
@@ -293,14 +372,26 @@ final class GravitySimulator {
         if velocity.dy == 0 { motion = .hanging }
     }
 
-    /// Blocks horizontal movement into a solid's side, and converts a
-    /// wall-contact while falling into a ledge grab.
+    /// Catches a window's side on the way past it.
+    ///
+    /// Walls deliberately do **not** block a grounded Bill. He is drawn in a
+    /// floating-level panel, i.e. visually *in front of* every window, so a
+    /// window whose lower half happens to be beside him is not something he
+    /// should walk into — from the user's point of view he would stop dead in
+    /// the middle of empty desktop for no visible reason. Worse, most windows
+    /// extend down to near the Dock, so on the ground floor he is "inside"
+    /// several of them at once and could barely move at all. Observed live:
+    /// every jump target was rejected as blocked because the arc started
+    /// inside the window it was leaving.
+    ///
+    /// So a side is only ever a *grab*, never a barrier: it matters when he is
+    /// airborne and descending past it, which is exactly the ledge-catch the
+    /// solid-rect model exists for.
     private func resolveHorizontal(from previous: CGPoint, to next: CGPoint) -> CGFloat {
-        guard next.x != previous.x else { return next.x }
+        guard next.x != previous.x, !isGrounded, velocity.dy < 0 else { return next.x }
         let top = previous.y + height
         for solid in solids where !solid.isWorldBounds {
             let r = solid.rect
-            // Only walls we vertically overlap can block us.
             guard previous.y < r.maxY, top > r.minY else { continue }
             let movingRight = next.x > previous.x
             let leadingBefore = movingRight ? previous.x + halfWidth : previous.x - halfWidth
@@ -309,14 +400,10 @@ final class GravitySimulator {
             let crossed = movingRight ? (leadingBefore <= wall && leadingAfter >= wall)
                                       : (leadingBefore >= wall && leadingAfter <= wall)
             guard crossed else { continue }
-
-            // Falling into a wall catches it; walking into one just stops.
-            if !isGrounded, velocity.dy < 0 {
-                grabbedSolid = r
-                velocity = .zero
-                motion = .ledgeGrab
-                pendingEvents.append(.grabbedLedge)
-            }
+            grabbedSolid = r
+            velocity = .zero
+            motion = .ledgeGrab
+            pendingEvents.append(.grabbedLedge)
             return movingRight ? wall - halfWidth : wall + halfWidth
         }
         return next.x
@@ -330,12 +417,13 @@ final class GravitySimulator {
             let r = solid.rect
             guard next.x + halfWidth > r.minX, next.x - halfWidth < r.maxX else { continue }
             let ledge = r.maxY
-            guard previous.y >= ledge - 0.5, next.y <= ledge else { continue }
+            let slack = physics.surfaceTolerance * scale
+            guard previous.y >= ledge - slack, next.y <= ledge else { continue }
             if landingY == nil || ledge > landingY! { landingY = ledge }
         }
         let floor = worldBounds.minY
         if next.x + halfWidth > worldBounds.minX, next.x - halfWidth < worldBounds.maxX,
-           previous.y >= floor - 0.5, next.y <= floor {
+           previous.y >= floor - physics.surfaceTolerance * scale, next.y <= floor {
             if landingY == nil || floor > landingY! { landingY = floor }
         }
 
@@ -367,14 +455,26 @@ final class GravitySimulator {
         for solid in solids where !solid.isWorldBounds {
             let r = solid.rect
             guard next.x + halfWidth > r.minX, next.x - halfWidth < r.maxX else { continue }
+            // `headBefore <= r.minY` already means he was fully underneath it,
+            // so a window he is merely standing in front of can never bonk him.
             guard headBefore <= r.minY, headAfter >= r.minY else { continue }
             next.y = r.minY - height
             velocity.dy = 0
             pendingEvents.append(.bonkedHead)
             return
         }
-        if headAfter >= worldBounds.maxY {
-            next.y = worldBounds.maxY - height
+        // The ceiling constrains his FEET, not his head.
+        //
+        // Clamping the head to `visibleFrame.maxY` made every high window
+        // unreachable: standing on a ledge at y=982 puts his hat at 1128,
+        // above the 1074 working-area top, so the arc was rejected as hitting
+        // the ceiling before it ever got there. Bill's window is explicitly
+        // allowed to hang off the screen edges (see `BillPanel`, which
+        // overrides `constrainFrameRect`), and his hat poking above the menu
+        // bar is exactly the look that already permits. What must stay on
+        // screen is the part he stands on.
+        if next.y >= worldBounds.maxY {
+            next.y = worldBounds.maxY
             velocity.dy = 0
             pendingEvents.append(.bonkedHead)
         }

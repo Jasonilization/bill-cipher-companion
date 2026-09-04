@@ -29,6 +29,10 @@ final class CharacterWindowController: NSObject {
     /// short window while it's actually awaited, and why leaving it that
     /// way permanently isn't worth what it costs.
     var beginAwaitingChatResponse: (() -> Void)?
+    /// Keeps the (invisible) chat WebView mounted for as long as Bill's own
+    /// speech-bubble chat is open, so the page stays live across the whole
+    /// exchange instead of only while a reply is outstanding.
+    var setChatEngineMounted: ((Bool) -> Void)?
     var endAwaitingChatResponse: (() -> Void)?
 
     /// True while a *silent* background chat request (the daily dialogue
@@ -63,7 +67,19 @@ final class CharacterWindowController: NSObject {
     /// against the window's own edges. Growing the window, hit region, and
     /// rig anchor by the same factor keeps everything in the same relative
     /// proportion at any scale, not just 1.0.
-    private static let baseWindowSize = NSSize(width: 260, height: 700)
+    /// Normal size: just Bill, with a little headroom for his hat.
+    ///
+    /// The window used to be 260x700 at all times — roughly 500pt of empty,
+    /// invisible window sitting directly above him. Click-through hides most
+    /// of that, but only on a poll, so a click landing in that column within a
+    /// tick of the cursor being near him was still swallowed by an invisible
+    /// window. Shrinking to what he actually occupies removes the problem
+    /// rather than papering over it: there is simply no window there to eat
+    /// anything.
+    private static let baseWindowSize = NSSize(width: 260, height: 250)
+    /// Grown to this only while a speech bubble is on screen, which is the one
+    /// time the headroom is genuinely needed.
+    private static let barkWindowHeight: CGFloat = 700
     private static let baseHitRegion = CGRect(x: 60, y: 25, width: 140, height: 195)
     private static let baseBodyAnchorY: CGFloat = 110
 
@@ -78,17 +94,9 @@ final class CharacterWindowController: NSObject {
         self.preferences = preferences
         self.chatBridge = chatBridge
         self.memoryStore = memoryStore
-        // Taller than Bill's own footprint to leave headroom above his hat
-        // for the speech-bubble bark text — 360 wasn't enough once the bark
-        // bubble moved to the chunkier pixel-font design (bigger per-line
-        // height), which visibly clipped the top of anything past ~2 lines
-        // against the view's own bounds. Grown again from 500 to 700
-        // alongside raising `BarkBubble.maxLines` — idle/ambient text (up to
-        // and including the longer ChatGPT-generated dialogue lines) should
-        // always display in full rather than truncating with "…", and that
-        // needs real headroom for a much taller bubble to not just move the
-        // same clipping problem further up.
-        let size = NSSize(width: 260, height: 700)
+        // Starts compact. The tall form (`barkWindowHeight`) is only adopted
+        // while a speech bubble is on screen — see `setPanelExpanded`.
+        let size = Self.baseWindowSize
         // `BillPanel`, not a plain `NSPanel` — see its doc comment: the
         // stock frame constraint pins this (deliberately headroom-heavy)
         // window's top to the menu bar, which is what stopped Bill being
@@ -147,6 +155,11 @@ final class CharacterWindowController: NSObject {
                 ? Self.activeFramesPerSecond
                 : Self.ambientFramesPerSecond
         }
+        // The tall window exists only for speech bubbles, so it only exists
+        // while one is showing.
+        characterEngine.stateMachine.onBarkVisibilityChanged = { [weak self] isShowing in
+            self?.setPanelExpanded(isShowing)
+        }
 
         applyCharacterScale(preferences.characterScale, keepingCurrentPosition: false)
         preferences.$characterScale
@@ -166,8 +179,30 @@ final class CharacterWindowController: NSObject {
     /// current horizontal center and bottom edge fixed, so adjusting scale
     /// grows/shrinks him in place rather than snapping him back to that
     /// corner from wherever he'd wandered to.
+    /// True while a bark bubble needs the tall window.
+    private var isPanelExpanded = false
+
+    /// Grows/shrinks the window around Bill without moving him.
+    ///
+    /// The window is bottom-left anchored and Bill sits a fixed distance above
+    /// its bottom edge, so changing only the height (and leaving `origin.y`
+    /// alone) adds or removes space purely at the top. The scene is
+    /// `.resizeFill` and the rig is anchored from the bottom, so nothing about
+    /// Bill's own position or scale changes.
+    private func setPanelExpanded(_ expanded: Bool) {
+        guard expanded != isPanelExpanded else { return }
+        isPanelExpanded = expanded
+        let scale = preferences.characterScale
+        let height = (expanded ? Self.barkWindowHeight : Self.baseWindowSize.height) * scale
+        let width = Self.baseWindowSize.width * scale
+        let origin = panel.frame.origin
+        panel.setFrame(NSRect(x: origin.x, y: origin.y, width: width, height: height), display: false)
+        hitView.frame = NSRect(origin: .zero, size: NSSize(width: width, height: height))
+    }
+
     private func applyCharacterScale(_ scale: CGFloat, keepingCurrentPosition: Bool) {
-        let newSize = NSSize(width: Self.baseWindowSize.width * scale, height: Self.baseWindowSize.height * scale)
+        let baseHeight = isPanelExpanded ? Self.barkWindowHeight : Self.baseWindowSize.height
+        let newSize = NSSize(width: Self.baseWindowSize.width * scale, height: baseHeight * scale)
         let newHitRegion = CGRect(
             x: Self.baseHitRegion.minX * scale,
             y: Self.baseHitRegion.minY * scale,
@@ -233,6 +268,7 @@ final class CharacterWindowController: NSObject {
             // `.thinking` if the bubble closes mid-exchange — idempotent
             // when he's already idle.
             characterEngine.request(.idle)
+            setChatEngineMounted?(false)
             if wasWanderingBeforeChat {
                 wasWanderingBeforeChat = false
                 roaming?.resume()
@@ -284,6 +320,7 @@ final class CharacterWindowController: NSObject {
         // alone only constructs the `WebPage` model object, which never
         // loads/executes anything on its own.
         warmUpChatEngine?()
+        setChatEngineMounted?(true)
         chatBubble.showCompose(near: panel.frame, on: screen)
     }
 
@@ -730,15 +767,30 @@ final class CharacterWindowController: NSObject {
         return (pools, descriptions)
     }
 
+    /// Being clicked. Escalates: prodding him repeatedly should get a
+    /// different response than the first tap.
     private func handleClick() {
-        characterEngine.request(.poked, force: true)
-        characterEngine.bark(BarkLines.random(from: BarkLines.poked))
+        pokeCount += 1
+        if Date().timeIntervalSince(lastPokeAt) > 25 { pokeCount = 1 }
+        lastPokeAt = Date()
+        let states: [BillState] = pokeCount >= 5 ? [.rampaging, .meltdown, .grumpEyes, .shadowHands]
+                                : pokeCount >= 3 ? [.annoyed, .huffy, .grumpEyes]
+                                                 : [.poked, .surprised, .flinching, .dazed]
+        if let state = characterEngine.coverage.pick(from: states) {
+            characterEngine.request(state, force: true)
+        }
+        let key = pokeCount >= 5 ? "poked.furious" : pokeCount >= 3 ? "poked.annoyed" : "poked"
+        characterEngine.bark(DialogueLibrary.shared.line(key) ?? "", importance: .always)
     }
+
+    private var pokeCount = 0
+    private var lastPokeAt = Date.distantPast
 
     private func handleDragStarted() {
         // The simulation must not fight the user for the window's position.
         roaming?.suspend()
         characterEngine.request(.surprised, force: true)
+        characterEngine.bark(DialogueLibrary.shared.line("grabbed") ?? "")
     }
 
     private func handleDragEnded() {
@@ -748,6 +800,7 @@ final class CharacterWindowController: NSObject {
         // and it settles back to idle on its own afterward since it's a
         // one-shot state.
         characterEngine.request(.dazed, force: true)
+        characterEngine.bark(DialogueLibrary.shared.line("dropped") ?? "")
         // Dropped mid-air, Bill should fall to whatever is beneath him rather
         // than hang there — resuming re-seeds the simulation from wherever the
         // user actually let go, and gravity takes it from there.
@@ -821,6 +874,8 @@ final class CharacterWindowController: NSObject {
             characterEngine.bark(BarkLines.random(from: BarkLines.roamLedgeGrab))
         case .fellOffWorld:
             characterEngine.bark(BarkLines.random(from: BarkLines.roamFellOffWorld))
+        case .shoved:
+            characterEngine.bark(BarkLines.random(from: BarkLines.roamShoved))
         case .bonkedHead, .walkedOffEdge, .reachedGoal:
             break
         }

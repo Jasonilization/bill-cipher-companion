@@ -111,12 +111,55 @@ final class ChatPanelController: NSObject {
         guard chatBridge.page == nil else { return }
         chatBridge.prepareIfNeeded()
         positionTopRight()
+        panel.alphaValue = 0.01
+        panel.ignoresMouseEvents = true
         panel.orderFrontRegardless()
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
-            guard let self, !self.isExplicitlyShown else { return }
+        waitForLoadThenHide(deadline: Date().addingTimeInterval(Self.warmUpTimeout))
+    }
+
+    /// Stays mounted until the page has genuinely finished loading.
+    ///
+    /// This used to order the panel back out after a flat **0.3 seconds**,
+    /// which is nowhere near enough for chatgpt.com — a cold SPA load takes
+    /// seconds. Ordering the window out mid-load lets WebKit throttle and
+    /// effectively suspend it, so the page never finished, `billSendMessage`
+    /// was never defined, and talking to Bill through his own speech bubble
+    /// produced nothing at all. The only way to get a reply was to open the
+    /// full chat window, which is exactly the complaint. Now it waits for the
+    /// real signal instead of guessing at a duration.
+    private func waitForLoadThenHide(deadline: Date) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) { [weak self] in
+            guard let self else { return }
+            // Never yank it away while the user is actually using chat.
+            if self.isExplicitlyShown || self.keepMounted { return }
+            if self.chatBridge.isLoading, Date() < deadline {
+                self.waitForLoadThenHide(deadline: deadline)
+                return
+            }
             self.panel.orderOut(nil)
         }
     }
+
+    /// Set while Bill's speech-bubble chat is open, so the page stays live for
+    /// the whole exchange rather than only while a reply is outstanding.
+    var keepMounted = false {
+        didSet {
+            guard keepMounted != oldValue else { return }
+            if keepMounted {
+                guard chatBridge.page != nil, !isExplicitlyShown else { return }
+                positionTopRight()
+                panel.alphaValue = 0.01
+                panel.ignoresMouseEvents = true
+                panel.orderFrontRegardless()
+            } else if !isExplicitlyShown {
+                panel.orderOut(nil)
+            }
+        }
+    }
+
+    /// Generous: a cold first load of chatgpt.com in an app-private data store
+    /// genuinely can take this long.
+    private static let warmUpTimeout: TimeInterval = 30
 
     /// Call right after sending a message Bill is now awaiting a reply to.
     /// Briefly brings this panel's `WebView` back to a genuinely on-screen

@@ -345,6 +345,13 @@ final class ReactionRouter {
         speak([wasAsleep ? "waking" : "userReturned"])
     }
 
+    /// An observation about what is on screen, from `AwarenessMonitor`.
+    func reportInsight(_ insight: WindowTitleInsight.Insight) {
+        var subs = insight.substitutions
+        if let app = NSWorkspace.shared.frontmostApplication?.localizedName { subs["app"] = app }
+        play(Self.insightStates, keys: [insight.key], substitutions: subs)
+    }
+
     /// Study Mode's announcements. Always spoken — the user turned this on
     /// deliberately and being told what it is doing is the whole point, so it
     /// is not subject to the speaking-frequency gate.

@@ -12,6 +12,7 @@ final class BillStateMachine {
     private var currentPropNode: SKNode?
     private var currentFXNodes: [SKNode] = []
     private var pendingWork: DispatchWorkItem?
+    private var holdWork: DispatchWorkItem?
     private static let actionKey = "billClip"
 
     private var barkQueue: [String] = []
@@ -31,8 +32,6 @@ final class BillStateMachine {
     private var isClipActive = false
     private var isBarkActive = false
 
-    /// Fires whenever animation starts (`true`) or fully settles (`false`),
-    /// so the host `SKView` can be paused/unpaused accordingly.
     /// `true` when Bill needs the full frame rate, `false` when only the
     /// ambient idle bob is running.
     ///
@@ -49,6 +48,9 @@ final class BillStateMachine {
     /// Called every time a clip actually begins playing, with the state that
     /// started it. `CharacterEngine` wires this to `AnimationCoverage`.
     var onClipStarted: ((BillState) -> Void)?
+    /// Fires when a speech bubble appears/disappears, so the host window can
+    /// grow to make room for it and shrink back afterwards.
+    var onBarkVisibilityChanged: ((Bool) -> Void)?
 
     init(rig: BillRigNode) {
         self.rig = rig
@@ -100,10 +102,9 @@ final class BillStateMachine {
         setAmbientOnly()
     }
 
-    /// Shows a short-lived speech bubble above Bill's head with a bark line.
-    /// Independent of `currentState` — a bark can show up whether Bill's
-    /// idle, coding, celebrating, whatever.
-    /// Queues a short-lived speech bubble above Bill's head.
+    /// Queues a short-lived speech bubble above Bill's head. Independent of
+    /// `currentState` — a bark can show up whether Bill's idle, coding,
+    /// celebrating, whatever.
     ///
     /// **Queued, not stomped.** This used to `removeFromParent()` the previous
     /// bubble instantly, with no fade and no minimum on-screen time. Two barks
@@ -138,6 +139,10 @@ final class BillStateMachine {
     }
 
     private func present(bark text: String) {
+        // Ask for the room *before* the bubble is measured and placed,
+        // otherwise `nudgeBarkOnScreen` clamps it against a window that is
+        // about to grow.
+        onBarkVisibilityChanged?(true)
         barkNode?.removeFromParent()
         barkDismissWork?.cancel()
 
@@ -173,6 +178,7 @@ final class BillStateMachine {
         isBarkShowing = false
         if barkQueue.isEmpty {
             setBarkActive(false)
+            onBarkVisibilityChanged?(false)
         } else {
             drainBarkQueue()
         }
@@ -249,8 +255,20 @@ final class BillStateMachine {
         equipProp(AnimationClipLibrary.prop(for: state))
         applyFX(AnimationClipLibrary.fx(for: state))
         let clip = AnimationClipLibrary.clip(for: state)
+        holdWork?.cancel()
+        holdWork = nil
         if state.isContinuous {
             runClip(clip, completion: nil)
+            // A continuous *reaction* releases itself so it cannot block
+            // roaming and idle behaviour forever — see `maxHoldDuration`.
+            if let hold = state.maxHoldDuration {
+                let work = DispatchWorkItem { [weak self] in
+                    guard let self, self.currentState == state else { return }
+                    self.settleToIdle()
+                }
+                holdWork = work
+                DispatchQueue.main.asyncAfter(deadline: .now() + hold, execute: work)
+            }
         } else {
             runClip(clip) { [weak self] in
                 self?.settleToIdle()
@@ -280,6 +298,8 @@ final class BillStateMachine {
     /// transform. Used both for natural beat completion and forced
     /// interruption, so a part frozen mid-gesture never gets stuck there.
     private func settleToIdle() {
+        holdWork?.cancel()
+        holdWork = nil
         pendingWork?.cancel()
         currentState = .idle
         equipProp(.none)

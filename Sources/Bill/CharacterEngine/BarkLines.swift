@@ -425,6 +425,15 @@ enum BarkLines {
         "DON'T CLOSE THIS ONE. I'M USING IT.",
     ]
 
+    static let roamShoved = [
+        "HEY! WATCH WHERE YOU'RE PUTTING THAT.",
+        "RUDE. I WAS STANDING THERE.",
+        "DID YOU JUST HIT ME WITH A WINDOW?",
+        "OW. THAT'S ASSAULT IN SOME DIMENSIONS.",
+        "MOVE THAT AGAIN AND SEE WHAT HAPPENS.",
+        "I'M TELLING THE ZODIAC ABOUT THIS.",
+    ]
+
     static let roamFellOffWorld = [
         "WHOA. WHERE'D THE FLOOR GO?",
         "SOMETHING JUST DELETED THE GROUND. RUDE.",

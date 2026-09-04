@@ -103,19 +103,42 @@ struct AnimationClip {
         var bodyActions: [SKAction] = []
 
         if let texAction = textureAction() {
+            // A one-texture clip has no sequence to cycle — `textureAction()`
+            // returns `setTexture`, which is *instantaneous*.
+            //
+            // Wrapping an instantaneous action in `repeatForever` is a hard
+            // hang, not a waste: SpriteKit runs the inner action as many times
+            // as fit in the elapsed frame, and with a zero-length action that
+            // never terminates. The main thread pins at 100% inside
+            // `SKCRepeat`/`SKCAnimate` and the whole app stops responding —
+            // observed live, and diagnosed from a `sample` of the frozen
+            // process. Two of the new roaming clips (`rising`, `hangingIdle`)
+            // hit exactly this.
+            //
+            // So a single-frame clip sets its texture once and lets the
+            // transform track do any looping; there is nothing else it could
+            // meaningfully animate.
+            let isInstantaneous = textures.count == 1
             switch loop {
             case .once:
                 bodyActions.append(texAction)
             case .loop:
-                bodyActions.append(SKAction.repeatForever(texAction))
+                bodyActions.append(isInstantaneous ? texAction : SKAction.repeatForever(texAction))
             case .pingpong:
-                let reversed = SKAction.animate(with: Array(textures.reversed()), timePerFrame: frameDuration, resize: false, restore: false)
-                bodyActions.append(SKAction.repeatForever(SKAction.sequence([texAction, reversed])))
+                if isInstantaneous {
+                    bodyActions.append(texAction)
+                } else {
+                    let reversed = SKAction.animate(with: Array(textures.reversed()), timePerFrame: frameDuration, resize: false, restore: false)
+                    bodyActions.append(SKAction.repeatForever(SKAction.sequence([texAction, reversed])))
+                }
             }
         }
 
         for (part, keyframes) in transform {
             guard !keyframes.isEmpty else { continue }
+            // Same trap as the texture track above: a keyframe set that adds
+            // up to no time at all must never be repeated forever.
+            guard keyframes.reduce(0, { $0 + $1.duration }) > 0 else { continue }
             let home = homes[part] ?? PartHome()
             let forward = transformAction(for: keyframes, home: home)
             let wrapped: SKAction
