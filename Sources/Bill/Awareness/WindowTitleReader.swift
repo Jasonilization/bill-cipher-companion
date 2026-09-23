@@ -36,8 +36,8 @@ final class WindowTitleReader {
     /// Explicitly asks for permission. Only ever called from a Settings
     /// button, never automatically.
     ///
-    /// Worth knowing: `Scripts/bundle.sh` signs ad-hoc (`codesign -s -`), and
-    /// macOS keys the Accessibility grant to the code signature. The signature
+    /// Worth knowing: `Scripts/bundle.sh` signs ad-hoc (`codesign -s -`),
+    /// and macOS keys the Accessibility grant to the code signature. The signature
     /// changes on every rebuild, so a rebuilt Bill has to be re-granted (and
     /// old entries pile up in the Privacy list). That is a property of ad-hoc
     /// signing, not something this code can work around.
@@ -48,6 +48,52 @@ final class WindowTitleReader {
         // concurrency-clean.
         let options = ["AXTrustedCheckOptionPrompt": true] as CFDictionary
         _ = AXIsProcessTrustedWithOptions(options)
+    }
+
+    /// Presses the *minimize* button of the window occupying `rect` (in
+    /// bottom-left-origin screen coordinates) — the prank's payload.
+    ///
+    /// Rather than assuming traffic-light geometry, this asks the AX system
+    /// what is actually at a few candidate points along the window's
+    /// titlebar strip and presses only an element whose subrole is exactly
+    /// `AXMinimizeButton` — so it can never click close (or anything else)
+    /// by mistake, and simply no-ops on windows with no standard traffic
+    /// lights. Runs off the main actor with a short messaging timeout for
+    /// the same hung-process reasons as every other AX call here.
+    static func pressMinimizeButton(ofWindowWithFrame rect: CGRect) async -> Bool {
+        guard isTrusted else { return false }
+        // AX global coordinates are top-left-origin, AppKit's are
+        // bottom-left-origin.
+        guard let screen = NSScreen.screens.first(where: { $0.frame.intersects(rect) }) else {
+            return false
+        }
+        let axTopY = screen.frame.maxY - (rect.maxY - 14)
+        let systemWide = AXUIElementCreateSystemWide()
+        return await Task.detached(priority: .utility) { () -> Bool in
+            AXUIElementSetMessagingTimeout(systemWide, 0.4)
+            // The yellow light sits between the red and the green; sample
+            // across the left end of the titlebar until AX hands back the
+            // element actually at that spot. The subrole/action constants
+            // below are their documented literal values rather than the
+            // imported globals — those are shared-mutable-state hazards in
+            // Swift 6 (see `requestTrust` for the same reasoning).
+            for dx in stride(from: CGFloat(44), through: 72, by: 8) {
+                var element: AXUIElement?
+                let point = CGPoint(x: rect.minX + dx, y: axTopY)
+                guard
+                    AXUIElementCopyElementAtPosition(systemWide, Float(point.x), Float(point.y), &element) == .success,
+                    let button = element
+                else { continue }
+                var subrole: CFTypeRef?
+                guard
+                    AXUIElementCopyAttributeValue(button, "AXSubrole" as CFString, &subrole) == .success,
+                    let value = subrole as? String,
+                    value == "AXMinimizeButton"
+                else { continue }
+                return AXUIElementPerformAction(button, "AXPress" as CFString) == .success
+            }
+            return false
+        }.value
     }
 
     /// The focused window title of `pid`, or `nil` if unavailable for any

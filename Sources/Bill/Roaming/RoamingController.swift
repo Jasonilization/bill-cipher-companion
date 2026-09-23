@@ -27,6 +27,10 @@ final class RoamingController {
         /// Walk to the nearest edge of the current surface, look over it, and
         /// step off on purpose.
         case dropOff
+        /// Onto a window's traffic-light zone with prank intent: land on
+        /// the minimize button, play the press beat, and actually press it.
+        /// Rarest goal by far (see `minimizePrankChance`).
+        case trafficLight(rect: CGRect)
     }
 
     /// The step of the plan currently being executed.
@@ -339,6 +343,7 @@ final class RoamingController {
 
         case .ground(let x):    log("goal GROUND to x=\(Int(x))")
         case .platform(let r):  log("goal PLATFORM top=\(Int(r.maxY)) x=\(Int(r.minX))...\(Int(r.maxX))")
+        case .trafficLight(let r): log("goal TRAFFIC LIGHT top=\(Int(r.maxY)) x=\(Int(r.minX)) (prank)")
         }
         goal = chosen
         replanCount = 0
@@ -388,6 +393,15 @@ final class RoamingController {
 
     private func pickGoal(on screen: NSScreen, panel: NSPanel) -> Goal? {
         let visible = screen.visibleFrame
+
+        // The prank: leap onto a non-frontmost window's minimize button and
+        // actually press it. Gated hard — enabled in Settings, Accessibility
+        // granted, a real cooldown so it stays a surprise rather than a
+        // menace, and only a window the frontmost user isn't typing in.
+        if let target = pickMinimizePrankTarget(visible: visible, panel: panel) {
+            return .trafficLight(rect: target)
+        }
+
         let reachable = sim.solids
             .map(\.rect)
             .filter { rect in
@@ -423,6 +437,55 @@ final class RoamingController {
     }
 
     // MARK: - Planning
+
+    /// The window rect Bill aims his minimize prank at, or `nil` when the
+    /// beat isn't a prank. Held so the landing can hand the right window to
+    /// the press path even after several airborne ticks.
+    private var pendingPrankWindow: CGRect?
+    private var lastMinimizePrankAt: Date?
+    /// How rare the prank is: one chance roll per beat behind a cooldown of
+    /// several minutes. Rare enough to be a delightful surprise, frequent
+    /// enough to actually be witnessed.
+    private static let minimizePrankChance = 0.10
+    private static let minimizePrankCooldown: TimeInterval = 25 * 60
+    /// Where the yellow light sits inside a standard traffic-light cluster,
+    /// from the window's left edge.
+    private static let trafficLightInsetX: CGFloat = 40
+
+    /// Candidate windows for the prank: never the frontmost (minimizing
+    /// what the user is actively typing in would be hostile, not playful),
+    /// never one whose top is pinned at the ceiling, and only one a direct,
+    /// *clear* leap can land precisely on the button.
+    private func pickMinimizePrankTarget(visible: CGRect, panel: NSPanel) -> CGRect? {
+        guard
+            preferences.isMinimizeMischiefEnabled,
+            WindowTitleReader.isTrusted,
+            Date().timeIntervalSince(lastMinimizePrankAt ?? .distantPast) > Self.minimizePrankCooldown,
+            Double.random(in: 0..<1) < Self.minimizePrankChance
+        else { return nil }
+
+        // `platforms` is front-to-back; `dropFirst` skips the frontmost —
+        // minimizing the window the user is actively typing in would be
+        // hostile, not playful.
+        let candidates = WindowTopology
+            .platforms(excludingWindowNumber: panel.windowNumber, fresh: true)
+            .dropFirst()
+            .map(\.rect)
+            .filter { rect in
+                rect.width >= 260
+                    && rect.maxY < visible.maxY - 8
+                    && rect.maxY > sim.feet.y + 60
+            }
+        for rect in candidates.shuffled() {
+            let button = CGPoint(x: rect.minX + Self.trafficLightInsetX, y: rect.maxY)
+            if let v = sim.solveJump(from: sim.feet, to: button),
+               sim.isArcClear(from: sim.feet, velocity: v, to: button) {
+                lastMinimizePrankAt = Date()
+                return rect
+            }
+        }
+        return nil
+    }
 
     private func planNextStep() {
         guard let goal else { step = .done; return }
@@ -474,6 +537,30 @@ final class RoamingController {
                 // then re-plan and try again from the new position.
                 let approachX = rect.midX < sim.feet.x ? rect.maxX + 30 : rect.minX - 30
                 step = .approach(x: approachX, running: true)
+            }
+
+        case .trafficLight(let rect):
+            // Land *exactly* on the yellow light — the accuracy is the
+            // joke. Falls back to the plain platform plan if the window
+            // moved away mid-approach.
+            let button = CGPoint(x: rect.minX + Self.trafficLightInsetX, y: rect.maxY)
+            if abs(sim.feet.y - button.y) < 24, abs(sim.feet.x - button.x) < 24 {
+                // Already standing on the light — go straight to the beat.
+                pendingPrankWindow = rect
+                onEvent?(.minimizePrankArrived(window: rect))
+                step = .settle(until: Date().addingTimeInterval(0.5))
+                return
+            }
+            if let v = sim.solveJump(from: sim.feet, to: button),
+               sim.isArcClear(from: sim.feet, velocity: v, to: button) {
+                pendingPrankWindow = rect
+                step = .crouch(until: Date().addingTimeInterval(0.16), target: button)
+            } else {
+                // The prank needs a precise direct leap; from here there
+                // isn't one, so this window gets skipped entirely rather
+                // than degraded into a plain climb.
+                pendingPrankWindow = nil
+                step = .settle(until: Date().addingTimeInterval(0.3))
             }
         }
     }
@@ -713,10 +800,21 @@ final class RoamingController {
             if case .airborne = step {
                 // Arrived. Give the landing beat a moment to read before the
                 // beat ends and ambient idle takes back over.
-                step = .settle(until: Date().addingTimeInterval(0.45))
+                if let prankWindow = pendingPrankWindow {
+                    // The landing is the prank: he is standing on the yellow
+                    // light. Hand the beat to the press sequence.
+                    pendingPrankWindow = nil
+                    onEvent?(.minimizePrankArrived(window: prankWindow))
+                    step = .settle(until: Date().addingTimeInterval(0.5))
+                } else {
+                    step = .settle(until: Date().addingTimeInterval(0.45))
+                }
             }
         case .grabbedLedge:
             step = .climb(direction: 1)
+        case .minimizePrankArrived:
+            // Fired outward only — the sim itself has nothing to do here.
+            break
         case .walkedOffEdge:
             step = .airborne
         case .bonkedHead:

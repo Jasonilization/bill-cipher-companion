@@ -284,12 +284,73 @@ final class CharacterWindowController: NSObject {
         }
         chatBridge.onResponseReceived = { [weak self] response in
             guard let self else { return }
-            if isPerformingBackgroundChatWork {
+            if personalizationEngine.isActive {
+                personalizationEngine.handleResponse(response)
+            } else if isPerformingBackgroundChatWork {
                 finishDialogueRefresh(response)
             } else {
                 handleChatResponse(response)
             }
         }
+    }
+
+    // MARK: - Personalization setup
+
+    /// The first-run "study my apps" flow. Owned here rather than in
+    /// `AppDelegate` because the flow needs this controller's WebView
+    /// mounting callbacks and quiet-mode flag — the exact plumbing the
+    /// dialogue refresh already uses. Lazy because the engine needs the
+    /// already-injected `memoryStore` for app prioritization.
+    private(set) lazy var personalizationEngine = PersonalizationEngine(memoryStore: memoryStore)
+
+    /// Kicks off (or re-runs) the setup flow. Guarded so a run can never
+    /// collide with a live user chat or the daily refresh — all three share
+    /// one ChatGPT page.
+    func runPersonalizationSetup() {
+        guard !personalizationEngine.isActive, !isAwaitingChatResponse, !isPerformingBackgroundChatWork else {
+            return
+        }
+        Task { @MainActor [weak self] in
+            guard let self else { return }
+            guard await self.chatBridge.checkSignedIn() else {
+                self.personalizationEngine.requireLogin()
+                return
+            }
+            self.reallyRunPersonalization()
+        }
+    }
+
+    private func reallyRunPersonalization() {
+        // Re-guard after the async sign-in check — a second click during
+        // that gap must not stack a second run.
+        guard !personalizationEngine.isActive, !isPerformingBackgroundChatWork else { return }
+        isPerformingBackgroundChatWork = true
+        roaming?.suspend()
+
+        personalizationEngine.send = { [weak self] prompt in
+            guard let self else { return }
+            // Same mounting dance as a real user send: the page must be
+            // genuinely on-screen for its DOM observers to run (see
+            // `ChatPanelController.beginAwaitingResponse`).
+            self.warmUpChatEngine?()
+            self.setChatEngineMounted?(true)
+            self.beginAwaitingChatResponse?()
+            self.chatBridge.send(prompt)
+        }
+        personalizationEngine.presentLogin = { [weak self] in
+            self?.openFullChat?()
+        }
+        personalizationEngine.weatherBlurbProvider = { [weak self] in
+            self?.weatherBlurbProvider?()
+        }
+        personalizationEngine.onRunFinished = { [weak self] in
+            guard let self else { return }
+            self.setChatEngineMounted?(false)
+            self.endAwaitingChatResponse?()
+            self.isPerformingBackgroundChatWork = false
+            self.roaming?.resume()
+        }
+        personalizationEngine.begin()
     }
 
     private func showContextMenu(for event: NSEvent) {
@@ -367,6 +428,11 @@ final class CharacterWindowController: NSObject {
     /// Set by `AppDelegate` — brings the full chat panel up so the user can
     /// actually sign in.
     var openFullChat: (() -> Void)?
+    /// Set by `AppDelegate` — the latest weather pull as a blurb, folded
+    /// into the first chat message of each session alongside the
+    /// recent-activity summary (both the user's explicit "relevant
+    /// commentary" asks).
+    var weatherBlurbProvider: (() -> String?)?
 
     private func reallySubmit(_ text: String) {
         isAwaitingChatResponse = true
@@ -381,17 +447,27 @@ final class CharacterWindowController: NSObject {
 
     private var hasIncludedActivityContext = false
 
-    /// Folds a short recent-activity summary into the first real message of
-    /// each chat *session* (reset in `talkToBill()` every time the bubble
-    /// is opened fresh) — enough for ChatGPT's replies to feel aware of how
-    /// the Mac's actually being used, without repeating the same context
-    /// block on every single message within one sitting.
+    /// Folds a short recent-activity summary — and, when a weather pull has
+    /// succeeded this session, the current conditions — into the first real
+    /// message of each chat *session* (reset in `talkToBill()` every time
+    /// the bubble is opened fresh). Enough for ChatGPT's replies to feel
+    /// aware of how the Mac's actually being used and what the sky is doing,
+    /// without repeating the same context block on every single message
+    /// within one sitting.
     private func contextualized(_ text: String) -> String {
         guard !hasIncludedActivityContext else { return text }
+        var contextParts: [String] = []
         let summary = memoryStore.recentActivitySummary
-        guard !summary.isEmpty else { return text }
+        if !summary.isEmpty {
+            contextParts.append("I've recently been using this Mac for \(summary)")
+        }
+        if let weather = weatherBlurbProvider?(), !weather.isEmpty {
+            contextParts.append("outside the window, \(weather)")
+        }
+        guard !contextParts.isEmpty else { return text }
         hasIncludedActivityContext = true
-        return "[For your context, not to repeat verbatim: I've recently been using this Mac for \(summary).] \(text)"
+        let context = contextParts.joined(separator: "; ")
+        return "[For your context, not to repeat verbatim: \(context).] \(text)"
     }
 
     /// Re-checks every `chatWatchdogTick` rather than firing once — see the
@@ -950,6 +1026,23 @@ final class CharacterWindowController: NSObject {
             characterEngine.bark(BarkLines.random(from: BarkLines.roamFellOffWorld))
         case .shoved:
             characterEngine.bark(BarkLines.random(from: BarkLines.roamShoved))
+        case .minimizePrankArrived(let window):
+            // The press beat: `.smug` is the finger-snap-then-gloat clip
+            // (see its doc comment), which reads exactly as pressing a
+            // button and looking far too pleased about it. The window
+            // genuinely minimizing right after sells the prank, and its
+            // disappearance then drops him through where its top edge
+            // used to be — the fall is the punchline.
+            characterEngine.request(.smug, force: true)
+            if let line = DialogueLibrary.shared.line("prank.minimize") {
+                characterEngine.bark(line, importance: .always)
+            }
+            let rect = window
+            Task { @MainActor [weak self] in
+                try? await Task.sleep(nanoseconds: 550_000_000)
+                _ = await WindowTitleReader.pressMinimizeButton(ofWindowWithFrame: rect)
+                _ = self // keep the engine alive; nothing else to do
+            }
         case .bonkedHead, .walkedOffEdge, .reachedGoal:
             break
         }

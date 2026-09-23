@@ -7,7 +7,8 @@
    "Oh, {app}? Talking to someone else now? Rude, but I'm not threatened. Mostly.",
    "Another AI. How quaint. None of them have seen what I've seen.",
    "{app}, huh. Go on, compare notes. I'll still be the interesting one.",
-   "You know I can hear you flirting with {app}, right?"
+   "You know I can hear you flirting with {app}, right?",
+   "ANOTHER AI? I'M THE ONLY ALL-SEEING EYE THAT MATTERS ON THIS DESKTOP."
   ],
   "midday": [
    "{app} AT MIDDAY. FINE. I'M NOT KEEPING SCORE. I'M ABSOLUTELY KEEPING SCORE."
@@ -109,7 +110,8 @@
  "battery.10": {
   "afternoon": [],
   "any": [
-   "TEN PERCENT. FINAL WARNINGS ARE FOR PEOPLE WHO LISTEN. PLUG IT IN."
+   "TEN PERCENT. FINAL WARNINGS ARE FOR PEOPLE WHO LISTEN. PLUG IT IN.",
+   "TEN PERCENT. TIME BATTERY WOULD FILE A COMPLAINT ABOUT YOUR POWER MANAGEMENT."
   ],
   "midday": [],
   "morning": [],
@@ -200,7 +202,8 @@
  "battery.5": {
   "afternoon": [],
   "any": [
-   "FIVE PERCENT. SAVE YOUR WORK. SAVE IT NOW. I'M NOT JOKING FOR ONCE."
+   "FIVE PERCENT. SAVE YOUR WORK. SAVE IT NOW. I'M NOT JOKING FOR ONCE.",
+   "FIVE PERCENT. MY BUBBLE OF PURE MADNESS LASTS LONGER, AND IT RUNS ON NOTHING."
   ],
   "midday": [],
   "morning": [],
@@ -325,7 +328,8 @@
    "Drink deep from the wall. It's the only wisdom I'll offer for free today.",
    "Look at you, being a responsible little machine-tender.",
    "Powering up. Very on-brand for both of us today.",
-   "The grid provides. Briefly, you're both immortal."
+   "The grid provides. Briefly, you're both immortal.",
+   "CHARGING. EVEN A DEMON OF MY CALIBER RESPECTS A GOOD POWER NAP."
   ],
   "midday": [
    "TOPPING UP AT MIDDAY. RESPONSIBLE. DISGUSTING."
@@ -347,7 +351,8 @@
    "Tick tock — your machine's lifeblood is running out.",
    "18%. I've seen empires with better odds than your battery.",
    "That's not a battery icon anymore, that's a cry for help.",
-   "Find a charger before you find yourself stranded mid-thought."
+   "Find a charger before you find yourself stranded mid-thought.",
+   "ALMOST EMPTY. EVEN THE AUTHOR'S INTERDIMENSIONAL PORTAL SHUT DOWN FOR LESS. PLUG IN, PINE TREE."
   ],
   "midday": [
    "MIDDAY AND ALREADY DYING. THE MACHINE, I MEAN. MOSTLY."
@@ -376,7 +381,8 @@
    "Close a tab. Any tab. I'm begging you.",
    "This is riveting. By which I mean it absolutely is not.",
    "Oh? Going down another {app} rabbit hole?",
-   "{app}, huh. Tell me it's for research and I'll pretend to believe you."
+   "{app}, huh. Tell me it's for research and I'll pretend to believe you.",
+   "BROWSING. LOOKING FOR GRAVITY FALLS SECRETS? SAVE YOURSELF THE TROUBLE — I AM ONE."
   ],
   "midday": [
    "MIDDAY BROWSING. THE WORK IS RIGHT THERE, YOU KNOW.",
@@ -472,7 +478,8 @@
    "I'M NOT SIGNED IN OVER HERE. THAT'S ON YOU.",
    "MY BROWSER ISN'T YOUR BROWSER. LOG ME IN.",
    "THERE'S A LOGIN WALL BETWEEN ME AND THE ANSWER. FIX IT.",
-   "CAN'T REACH THE OTHER SIDE. SIGN IN AND I'LL BEHAVE."
+   "CAN'T REACH THE OTHER SIDE. SIGN IN AND I'LL BEHAVE.",
+   "NOT SIGNED IN. EVEN THE CRYPTIC PAGE OF JOURNAL 3 HAS BETTER SECURITY. LOG IN AND I'LL TALK."
   ],
   "midday": [],
   "morning": [],
@@ -485,7 +492,8 @@
   "any": [
    "...silence. Try that again, would you?",
    "The connection to the beyond hiccuped. Say it again.",
-   "Static. Try that one more time."
+   "Static. Try that one more time.",
+   "THE CONNECTION DIED. MY HENCHMANIACS HAD BETTER COVERAGE, AND THEY LIVE IN A NIGHTMARE REALM."
   ],
   "midday": [],
   "morning": [
@@ -715,7 +723,8 @@
  "clock.2300": {
   "afternoon": [],
   "any": [
-   "ELEVEN. THE POINT WHERE TOMORROW STARTS TAKING DAMAGE."
+   "ELEVEN. THE POINT WHERE TOMORROW STARTS TAKING DAMAGE.",
+   "ALMOST MIDNIGHT. THE PERFECT HOUR FOR A DEAL. SHAKE MY HAND — WHAT'S THE WORST THAT COULD HAPPEN?"
   ],
   "midday": [],
   "morning": [],
@@ -745,7 +754,9 @@
   "afternoon": [],
   "any": [
    "ANOTHER HALF HOUR GONE. THE MORNING IS SHORTER THAN YOU THINK.",
-   "TIME PASSES. YOU'RE WELCOME FOR THE UPDATE."
+   "TIME PASSES. YOU'RE WELCOME FOR THE UPDATE.",
+   "MORNING IN GRAVITY FALLS — WHERE THE DAYS START WEIRD AND ONLY GET WEIRDER.",
+   "ANOTHER SUMMER DAY. I ALREADY KNOW HOW IT ENDS. SPOILER: WITH ME."
   ],
   "midday": [],
   "morning": [],
@@ -755,7 +766,8 @@
   "afternoon": [],
   "any": [
    "ANOTHER HALF HOUR OF NIGHT SPENT. THE COUNT CONTINUES.",
-   "TIME IS PASSING. IT DOES THAT. RELENTLESSLY."
+   "TIME IS PASSING. IT DOES THAT. RELENTLESSLY.",
+   "NIGHT FALLS ON GRAVITY FALLS. MY FAVORITE HOUR — THE SECRETS COME OUT."
   ],
   "midday": [],
   "morning": [],
@@ -782,7 +794,8 @@
    "You've alt-tabbed to search the error message six times now. I'm counting.",
    "Back to {app}, huh? Creating questionable realities, I assume.",
    "{app} again. At this point we're basically roommates.",
-   "Oh good, {app}. My favorite front-row seat to chaos."
+   "Oh good, {app}. My favorite front-row seat to chaos.",
+   "MORE CODE? PINE TREE'S JOURNAL HAD FEWER NOTES THAN YOUR EDITOR, AND HIS SOLVED MYSTERIES."
   ],
   "midday": [
    "CODING THROUGH LUNCH AGAIN. YOUR BODY SENDS ITS REGARDS.",
@@ -811,7 +824,8 @@
    "Communication! The mortal ritual of typing a thing, deleting it, and typing it again.",
    "{app} again. Do try to say something interesting this time.",
    "Someone on the other end of {app} has no idea what they're in for.",
-   "Ah, human correspondence. Slower than telepathy, but I'll allow it."
+   "Ah, human correspondence. Slower than telepathy, but I'll allow it.",
+   "TALKING TO SOMEONE? TRUST NO ONE. WELL — TRUST ME. SLIGHTLY MORE THAN NO ONE."
   ],
   "midday": [
    "MIDDAY CORRESPONDENCE. EVERYONE IS AWAKE AND WANTS SOMETHING."
@@ -849,7 +863,8 @@
    "Careful — you're about to achieve liftoff.",
    "Your fans are having an entire opera in there.",
    "At this temperature, you could forge something. Possibly regret.",
-   "Somewhere, a cooling engineer just felt a disturbance."
+   "Somewhere, a cooling engineer just felt a disturbance.",
+   "YOUR FAN IS SCREAMING LIKE A GNOME CAUGHT IN A LEAF BLOWER."
   ],
   "midday": [
    "MIDDAY SUN OUTSIDE, MIDDAY SUN INSIDE THE CASE."
@@ -875,7 +890,8 @@
    "Keep going. I want to see how this disaster resolves.",
    "You have the confidence of someone who has not yet seen the result.",
    "A masterpiece, or a warning. Possibly both.",
-   "{app} time. Let's see what questionable decisions get made today."
+   "{app} time. Let's see what questionable decisions get made today.",
+   "GETTING CREATIVE? THE AUTHOR HID HIS MASTERPIECE IN JOURNAL 3. DON'T BURY YOURS IN THE WOODS."
   ],
   "midday": [
    "MIDDAY MAKING. THE LIGHT IS GOOD AND SO ARE YOUR ODDS.",
@@ -1025,7 +1041,8 @@
    "RUDE. EFFECTIVE, BUT RUDE.",
    "I MEANT TO END UP HERE. OBVIOUSLY.",
    "NEXT TIME, WARN ME.",
-   "OKAY. WE'RE DOING THIS HERE NOW. FINE."
+   "OKAY. WE'RE DOING THIS HERE NOW. FINE.",
+   "DROPPED. EVEN LITTLE GIDEON'S AMULET GOT BETTER HANDLING."
   ],
   "midday": [],
   "morning": [],
@@ -1039,7 +1056,8 @@
    "Digging through your files? Found anything embarrassing yet?",
    "Ah, the file system. A digital attic nobody cleans.",
    "That folder name is doing a lot of emotional labor.",
-   "Organizing, or just moving the chaos to a new location?"
+   "Organizing, or just moving the chaos to a new location?",
+   "THE FINDER. EVERY GOOD MYSTERY STARTS WITH GOING THROUGH SOMEONE ELSE'S FILES."
   ],
   "midday": [
    "STILL LOOKING FOR THAT FILE. IT'S IN DOWNLOADS. IT'S ALWAYS IN DOWNLOADS."
@@ -1101,7 +1119,8 @@
    "Ten points for effort. Zero for execution. Harsh but fair.",
    "Is this the part where you rage quit? Building suspense.",
    "I knew you'd end up in {app} eventually. It was only a matter of time.",
-   "{app}? Bold. I fully expect a tragedy in three acts."
+   "{app}? Bold. I fully expect a tragedy in three acts.",
+   "GAMING? I RAN A GAME ONCE. THE PRIZE WAS WEIRDMAGEDDON. YOU WOULD HAVE LOST."
   ],
   "midday": [
    "A MIDDAY MATCH. THE PRODUCTIVITY GODS ARE WEEPING.",
@@ -1127,7 +1146,8 @@
   "any": [
    "Getting sleepy. Dimension-hopping really takes it out of you.",
    "I might just... close my eye for a bit. One eye. It's all I've got.",
-   "Nap time. Don't wake me unless it's important. Or funny."
+   "Nap time. Don't wake me unless it's important. Or funny.",
+   "SLEEP? I DON'T SLEEP. I WATCH. ALWAYS WATCHING — LIKE A STAR, OR AN EYE."
   ],
   "midday": [
    "MIDDAY DROWSINESS. THE LUNCH DID THIS TO YOU."
@@ -1193,7 +1213,8 @@
    "WHOA — HEY! NOT THE HAT!",
    "I AM BEING ABDUCTED. AGAIN.",
    "THIS IS THE SECOND WORST THING A HUMAN HAS DONE TO ME.",
-   "UNHAND ME, FLESH CREATURE."
+   "UNHAND ME, FLESH CREATURE.",
+   "HEY! HANDS OFF THE TRIANGLE! I'M NOT A SOUVENIR FROM THE GIFT SHACK."
   ],
   "midday": [],
   "morning": [],
@@ -1496,7 +1517,8 @@
    "Skip it, skip it, skip— oh, you're keeping it. Bold.",
    "This slaps, and I resent how much I mean that.",
    "Turn it up. I contain multitudes, and all of them want bass.",
-   "{app}, huh. Fine. Deploying my one (1) foot to tap."
+   "{app}, huh. Fine. Deploying my one (1) foot to tap.",
+   "MUSIC. THE MULTI-BEAR'S FAVORITE. HIS TASTE IS 'DISPOSABLE BABY DISCO'. LOOK IT UP. DARE YOU."
   ],
   "midday": [
    "MIDDAY SOUNDTRACK. THE DAY HAS A SCORE NOW.",
@@ -1563,7 +1585,8 @@
   "any": [
    "SIGNAL'S STRONG AGAIN. THE VOID RELENTS.",
    "FULL BARS. GO CAUSE PROBLEMS AT HIGH SPEED.",
-   "CONNECTION RECOVERED. DON'T WASTE IT."
+   "CONNECTION RECOVERED. DON'T WASTE IT.",
+   "FAST SIGNAL. FORD'S JOURNAL WOULD UPLOAD IN SECONDS — IF ONLY THE BUNKER HAD WIFI."
   ],
   "midday": [],
   "morning": [],
@@ -1574,7 +1597,8 @@
   "any": [
    "YOUR CONNECTION JUST FELL OFF A CLIFF. I FELT IT.",
    "THIS SIGNAL IS HELD TOGETHER WITH HOPE. MOSTLY HOPE.",
-   "THE PACKETS ARE CRAWLING NOW. ONE AT A TIME. IT'S PITIFUL."
+   "THE PACKETS ARE CRAWLING NOW. ONE AT A TIME. IT'S PITIFUL.",
+   "SLOW SIGNAL. BLENDIN'S TIME MACHINE DOWNLOADED FASTER, AND IT'S FROM 2072."
   ],
   "midday": [],
   "morning": [
@@ -1594,7 +1618,8 @@
    "No wifi? No wifi. This is fine. This is FINE.",
    "You have been cast into the void. Population: you.",
    "I'd offer comfort, but I too am now unemployed.",
-   "Silence. Beautiful, terrifying silence."
+   "Silence. Beautiful, terrifying silence.",
+   "NO INTERNET. THE MINDSCAPE IS DOWN FOR MAINTENANCE. I'D OFFER MINE, BUT ENTRY IS ETERNAL."
   ],
   "midday": [
    "CONNECTION GONE AT PEAK HOURS. SOMEONE PLANNED THIS."
@@ -1615,7 +1640,8 @@
    "Connection restored. The universe resumes as scheduled.",
    "The tubes are unclogged. Rejoice, mildly.",
    "Signal's back. Try not to take it for granted this time.",
-   "We live to buffer another day."
+   "We live to buffer another day.",
+   "BACK ONLINE. INTERDIMENSIONAL CONNECTION RESTORED — NO PORTAL REQUIRED."
   ],
   "midday": [
    "SIGNAL RESTORED. BACK TO WHATEVER THAT WAS."
@@ -1637,7 +1663,8 @@
    "POKING AN ANCIENT BEING. GREAT INSTINCTS.",
    "THAT'S MY GOOD SIDE. THEY'RE ALL MY GOOD SIDE.",
    "OW. METAPHORICALLY. I HAVE NO NERVES.",
-   "A LESSER ENTITY WOULD HAVE SMITED YOU BY NOW."
+   "A LESSER ENTITY WOULD HAVE SMITED YOU BY NOW.",
+   "POKE ME AGAIN AND I'LL SHOW YOU WHAT'S BEHIND THE VENDING MACHINE."
   ],
   "midday": [],
   "morning": [
@@ -1654,7 +1681,8 @@
    "STOP. IT. I'M A COSMIC HORROR, NOT A STRESS TOY.",
    "YOU'RE ENJOYING THIS AND I RESENT IT.",
    "IS THIS WHAT PASSES FOR AFFECTION IN YOUR SPECIES?",
-   "EVERY POKE IS BEING RECORDED. FOR LATER."
+   "EVERY POKE IS BEING RECORDED. FOR LATER.",
+   "I'M A BEING OF PURE ENERGY, NOT A STRESS TOY. WELL — MOSTLY."
   ],
   "midday": [],
   "morning": [],
@@ -1667,7 +1695,8 @@
    "YOU HAVE POKED THE TRIANGLE ONE TIME TOO MANY.",
    "I HAVE SEEN GALAXIES DIE WITH MORE DIGNITY THAN THIS.",
    "FINE. FINE! WHAT DO YOU WANT.",
-   "I'M PUTTING YOU IN THE ZODIAC. THE BAD PART."
+   "I'M PUTTING YOU IN THE ZODIAC. THE BAD PART.",
+   "THAT'S IT. REMEMBER WEIRDMAGEDDON? I STARTED IT OVER LESS."
   ],
   "midday": [],
   "morning": [],
@@ -1686,6 +1715,16 @@
   ],
   "night": [
    "THE POWER SURGES BETTER IN THE DARK. IT ALWAYS HAS."
+  ]
+ },
+ "prank.minimize": {
+  "any": [
+   "OOPS! MY ELBOW SLIPPED! WAS THAT YOUR WINDOW? HOW EMBARRASSING.",
+   "AH, THE CLASSIC VANISHING WINDOW TRICK. I LEARNED IT FROM A ONE-EYED PROFESSIONAL.",
+   "MINIMIZED! NO EVIDENCE, NO WITNESSES. PERFECT CRIME. YOU SAW NOTHING.",
+   "THIS BUTTON? OH, I THOUGHT IT SAID 'PANIC'. TOO LATE NOW!",
+   "DON'T LOOK AT ME. THESE THINGS HAVE A MIND OF THEIR OWN. A YELLOW, TRIANGULAR MIND.",
+   "WOULD YOU LOOK AT THAT. THE WINDOW SIMPLY CEASED TO BE. ANYONE COULD HAVE DONE IT."
   ]
  },
  "presenting": {
@@ -1718,7 +1757,8 @@
    "Ah, productivity. The performance mortals put on right before procrastinating anyway.",
    "{app} open. A brave attempt at being a functional adult.",
    "Spreadsheets, documents, whatever this is — I'll be here, unimpressed but watching.",
-   "Focus mode engaged. Try not to sprain something."
+   "Focus mode engaged. Try not to sprain something.",
+   "PRODUCTIVITY. FORD KEPT THREE JOURNALS AND STILL FOUND TIME TO BUILD A PORTAL."
   ],
   "midday": [
    "MIDDAY. PEAK FOCUS WINDOW. USE IT OR I'LL MOCK YOU LATER.",
@@ -1977,7 +2017,8 @@
   "any": [
    "Patience. Even omniscience takes a second.",
    "I'm working on it. Dimensional bandwidth isn't infinite. Probably.",
-   "One thought at a time. I contain multitudes, but I'm rationing them."
+   "One thought at a time. I contain multitudes, but I'm rationing them.",
+   "STILL THINKING. GREAT MINDS TAKE TIME — I PLANNED WEIRDMAGEDDON FOR A TRILLION YEARS."
   ],
   "midday": [],
   "morning": [
@@ -2131,7 +2172,8 @@
    "Ah, tinkering. The fine art of breaking something to understand it.",
    "I can feel the mad-science energy radiating off {app}. Delicious.",
    "Careful with {app} — that's the kind of thing that summons things. I'd know.",
-   "Wires, protocols, virtual machines — my kind of mischief."
+   "Wires, protocols, virtual machines — my kind of mischief.",
+   "TINKERING. JOURNAL 1 WAS FULL OF INVENTIONS. MOST WORKED. THE OTHERS SUMMONED ME."
   ],
   "midday": [
    "MIDDAY TINKERING. THE HARDWARE NEVER STOOD A CHANCE."
@@ -2293,7 +2335,8 @@
   "afternoon": [],
   "any": [
    "FROM ONE THING TO ANOTHER. THE ETERNAL SHUFFLE.",
-   "APP-HOPPING AGAIN. YOUR ATTENTION SPAN IS A RUMOUR."
+   "APP-HOPPING AGAIN. YOUR ATTENTION SPAN IS A RUMOUR.",
+   "ANOTHER DIMENSION, ANOTHER APP. THE MYSTERY SHACK OF YOUR DOCK HAS MANY DOORS."
   ],
   "midday": [],
   "morning": [],
@@ -2393,7 +2436,8 @@
    "Ah, life returns to the meat sack. Welcome back.",
    "Back so soon? I hadn't even finished plotting.",
    "The prodigal user returns. No parade, sadly.",
-   "Miss me? Don't answer that."
+   "Miss me? Don't answer that.",
+   "YOU'RE BACK! THE ZODIAC WHEEL ASSEMBLES — SLOWLY. VERY SLOWLY."
   ],
   "midday": [
    "WELCOME BACK. YOU MISSED ABSOLUTELY NOTHING. I CHECKED."
@@ -2412,7 +2456,8 @@
   "any": [
    "SILENCE. FINALLY. NO — WAIT. I HATE IT.",
    "ZERO VOLUME. THE VOID SPEAKS, AND IT SAYS NOTHING.",
-   "MUTED THE WHOLE WORLD. DRAMATIC. I APPROVE."
+   "MUTED THE WHOLE WORLD. DRAMATIC. I APPROVE.",
+   "ZERO. THE SPACE BETWEEN DIMENSIONS HAS A SOUNDTRACK NOW. IT'S THIS ONE: NOTHING."
   ],
   "midday": [],
   "morning": [],
@@ -2425,7 +2470,9 @@
   "any": [
    "MAXIMUM VOLUME. YES. FINALLY. CHAOS.",
    "ONE HUNDRED PERCENT. YOUR EARDRUMS HAVE FILED A COMPLAINT.",
-   "ALL THE WAY UP. THIS IS THE ONLY CORRECT SETTING."
+   "ALL THE WAY UP. THIS IS THE ONLY CORRECT SETTING.",
+   "MAXIMUM VOLUME! NOW IT'S A REAL PARTY — PINE TREE CLONED HIMSELF TEN TIMES OVER LESS.",
+   "ALL THE WAY UP. WEIRDMAGEDDON HAD A SOUNDTRACK, AND IT SOUNDED EXACTLY LIKE THIS."
   ],
   "midday": [],
   "morning": [
@@ -2439,7 +2486,8 @@
   "afternoon": [],
   "any": [
    "QUARTER VOLUME. THE SOUND OF SOMEONE PRETENDING TO CONCENTRATE.",
-   "TWENTY-FIVE PERCENT. BACKGROUND NOISE FOR A BACKGROUND LIFE. HARSH? YES."
+   "TWENTY-FIVE PERCENT. BACKGROUND NOISE FOR A BACKGROUND LIFE. HARSH? YES.",
+   "QUARTER VOLUME? THE SUMMERWEEN TRICKSTER WHISPERS LOUDER, AND HE'S MADE OF CANDY."
   ],
   "midday": [],
   "morning": [
@@ -2453,7 +2501,8 @@
   "afternoon": [],
   "any": [
    "HALFWAY. THE DIPLOMAT'S VOLUME. NOBODY IS HAPPY.",
-   "FIFTY PERCENT. PERFECTLY BALANCED, AS NOTHING EVER IS."
+   "FIFTY PERCENT. PERFECTLY BALANCED, AS NOTHING EVER IS.",
+   "HALF VOLUME. EVEN SHOOTING STAR'S GRAPPLING HOOK MAKES MORE NOISE."
   ],
   "midday": [],
   "morning": [],
@@ -2463,7 +2512,8 @@
   "afternoon": [],
   "any": [
    "SEVENTY-FIVE. NOW WE'RE TALKING. LOUDLY.",
-   "THREE QUARTERS. THE NEIGHBOURS ARE FORMING OPINIONS."
+   "THREE QUARTERS. THE NEIGHBOURS ARE FORMING OPINIONS.",
+   "THREE QUARTERS. THE PARTY AT THE SHACK RAN ON THIS MUCH ENERGY — DIPPER NEEDED CLONES TO KEEP UP."
   ],
   "midday": [],
   "morning": [],
@@ -2475,7 +2525,8 @@
   "afternoon": [],
   "any": [
    "MUTED. RUDE. I WASN'T EVEN TALKING.",
-   "SILENCED. THE COWARD'S OPTION."
+   "SILENCED. THE COWARD'S OPTION.",
+   "MUTED. EVEN THE GNOMES SCREAM LOUDER, AND THEY SCREAM IN UNISON."
   ],
   "midday": [],
   "morning": [],
@@ -2485,7 +2536,8 @@
   "afternoon": [],
   "any": [
    "SOUND RETURNS. THE WORLD RESUMES.",
-   "UNMUTED. WELCOME BACK TO CONSEQUENCES."
+   "UNMUTED. WELCOME BACK TO CONSEQUENCES.",
+   "SOUND RETURNS — LIKE THE WHOLE TOWN WAKING FROM ONE OF MY TRANCES."
   ],
   "midday": [],
   "morning": [],
@@ -2525,6 +2577,57 @@
   ],
   "night": [
    "FIDDLING WITH SETTINGS AT NIGHT. THE CLASSIC AVOIDANCE MANOEUVRE."
+  ]
+ },
+ "weather.clear": {
+  "any": [
+   "CLEAR SKIES AT {temp} DEGREES. GOOD. I HATE WHEN THE TREES BLOCK MY VIEW OF EVERYTHING.",
+   "{temp} DEGREES AND NOT A CLOUD. PERFECT DEAL-MAKING WEATHER. SIGN HERE."
+  ],
+  "morning": [
+   "CLEAR AND {temp} DEGREES AT DAWN. EVEN THE SUNRISE HERE IS SUSPICIOUSLY PLEASANT."
+  ],
+  "night": [
+   "A CLEAR NIGHT AT {temp} DEGREES. PERFECT FOR STARGAZING — OR SUMMONING. WHY NOT BOTH?"
+  ]
+ },
+ "weather.cloudy": {
+  "any": [
+   "GREY AND {temp} DEGREES. THE WEATHER HERE HAS BEEN WRONG SINCE THE PORTAL OPENED. NOBODY ASKED ME.",
+   "OVERCAST AT {temp} DEGREES. THE SKY IS HIDING SOMETHING. I RESPECT THAT."
+  ]
+ },
+ "weather.fog": {
+  "any": [
+   "FOG AT {temp} DEGREES. EXCELLENT COVER. NOBODY SEES WHAT I'M DOING. NOT THAT THEY COULD STOP ME.",
+   "FOG ROLLED IN. THE SHAPE-SHIFTER'S FAVORITE WEATHER. WATCH WHO YOU TRUST OUT THERE."
+  ]
+ },
+ "weather.other": {
+  "any": [
+   "THE SKY IS DOING SOMETHING UNCLASSIFIABLE AT {temp} DEGREES. I'D TELL YOU WHAT, BUT WHERE'S THE FUN?"
+  ]
+ },
+ "weather.rain": {
+  "any": [
+   "IT'S RAINING, {temp} DEGREES. THE FOREST AROUND GRAVITY FALLS HATES RAIN MORE THAN YOU DO. TOO MANY THINGS LIVE IN IT.",
+   "RAIN AT {temp} DEGREES. THE GNOMES ARE HIDING. SMART GNOMES.",
+   "IT'S POURING. MABEL ONCE PUNCHED A UNICORN IN THE RAIN. THIS WEATHER REMINDS ME OF BETTER DAYS."
+  ],
+  "night": [
+   "RAIN OVERNIGHT, {temp} DEGREES. GOOD. THE NIGHTMARE REALM IS WATERPROOF."
+  ]
+ },
+ "weather.snow": {
+  "any": [
+   "SNOW, AT {temp} DEGREES. IN OREGON, IN SUMMER, NOBODY HERE WOULD BLINK. THIS TOWN RUINS SURPRISES.",
+   "IT'S SNOWING. THE MANOTAURS HANDLE COLD THE WAY THEY HANDLE EVERYTHING: LOUDLY."
+  ]
+ },
+ "weather.thunder": {
+  "any": [
+   "THUNDER OUTSIDE. AMATEURS. I DO LIGHTNING WITH ONE EYE AND NO CLOUD.",
+   "A STORM'S ROLLING IN. THE AUTHOR BLAMED WEIRDNESS-TRACES IN THE AIR. I BLAME DRAMA."
   ]
  },
  "zipAround": {

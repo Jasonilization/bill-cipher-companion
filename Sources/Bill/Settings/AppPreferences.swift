@@ -15,10 +15,19 @@ final class AppPreferences: ObservableObject {
         static let windowAwareness = "billWindowAwareness"
         static let screenOCR = "billScreenOCR"
         static let speakingFrequency = "billSpeakingFrequency"
+        static let minimizeMischief = "billMinimizeMischief"
     }
 
     @Published var isRoamingEnabled: Bool {
         didSet { UserDefaults.standard.set(isRoamingEnabled, forKey: Keys.roaming) }
+    }
+
+    /// Bill's occasional prank: leap up and press a window's minimize
+    /// button — actually minimizing it — to play with you. On by default
+    /// (it is rare and harmless); the user explicitly asked for a way to
+    /// disable the mode, and this is that switch.
+    @Published var isMinimizeMischiefEnabled: Bool {
+        didSet { UserDefaults.standard.set(isMinimizeMischiefEnabled, forKey: Keys.minimizeMischief) }
     }
 
     @Published var disabledCategories: Set<AppCategory> {
@@ -74,6 +83,7 @@ final class AppPreferences: ObservableObject {
     init() {
         let defaults = UserDefaults.standard
         isRoamingEnabled = (defaults.object(forKey: Keys.roaming) as? Bool) ?? true
+        isMinimizeMischiefEnabled = (defaults.object(forKey: Keys.minimizeMischief) as? Bool) ?? true
         isWindowAwarenessEnabled = (defaults.object(forKey: Keys.windowAwareness) as? Bool) ?? false
         isScreenOCREnabled = (defaults.object(forKey: Keys.screenOCR) as? Bool) ?? false
         let disabledRaw = defaults.stringArray(forKey: Keys.disabledCategories) ?? []
