@@ -62,7 +62,52 @@ final class ChatBridge: ObservableObject {
 
     @Published private(set) var isGenerating = false
     @Published private(set) var isLoading = false
-    @Published private(set) var page: WebPage?
+
+    /// The modern `WebPage` engine, boxed: stored properties can't carry
+    /// availability annotations and the `WebPage` type is 26+ (its async
+    /// `load` even later, per the SDK), so the box is a 26+-annotated
+    /// nested class *stored as plain `NSObject?`* — the one shape the
+    /// compiler accepts on a lower deployment target.
+    @available(macOS 26, *)
+    @MainActor
+    private final class ModernEngine: NSObject {
+        let page: WebPage
+        var loadTask: Task<Void, Never>?
+
+        init(configuration: WebPage.Configuration) {
+            page = WebPage(configuration: configuration)
+            super.init()
+        }
+    }
+
+    private var modernEngineBox: NSObject?
+    @available(macOS 26, *)
+    private var engine: ModernEngine? {
+        modernEngineBox as? ModernEngine
+    }
+
+    /// SwiftUI (`ChatPanelView`) reads this to render `WebView(page)` on
+    /// systems that have it. 27-gated to match the async `load` API it
+    /// depends on (see `prepareModernEngineIfNeeded`).
+    @available(macOS 27, *)
+    var page: WebPage? { engine?.page }
+
+    /// Mirrors "modern engine constructed" without touching the 26-only
+    /// type, so non-annotated code (`hasEngine`, `signOut`) can ask
+    /// "is an engine up" freely.
+    private var hasModernEngine = false
+
+    /// The pre-macOS-26 engine. `WebPage`/`WebView(page:)` are 26-only, so
+    /// below that this bridge drives a classic `WKWebView` instead — same
+    /// injected scripts, same message relay, same content world, so the
+    /// DOM heuristics behave identically. The ChatPanelController's mount
+    /// dance guards on `hasEngine`, which covers both.
+    private(set) var legacyWebView: WKWebView?
+
+    /// Whether *an* engine exists yet — either one. Replaces direct
+    /// `page != nil` checks outside this type so both engines get the
+    /// same warm-up treatment.
+    var hasEngine: Bool { hasModernEngine || legacyWebView != nil }
 
     /// Fires with the extracted reply text once a generation cycle
     /// (isGenerating true → false) completes. `nil` if extraction failed —
@@ -70,9 +115,31 @@ final class ChatBridge: ObservableObject {
     var onResponseReceived: ((String?) -> Void)?
 
     private let messageRelay = ScriptMessageRelay()
-    private var loadTask: Task<Void, Never>?
     private var hasInjectedPersona = false
     private var wasGenerating = false
+    /// Navigation-settled → `isLoading = false` for the legacy engine
+    /// (the modern one gets that from `page.load`'s event stream).
+    private lazy var legacyNavigationDelegate: LegacyNavigationDelegate = {
+        let delegate = LegacyNavigationDelegate()
+        delegate.onSettled = { [weak self] in
+            Task { @MainActor in
+                self?.isLoading = false
+            }
+        }
+        return delegate
+    }()
+
+    /// Plain delegate object: `WKNavigationDelegate` isn't MainActor, so a
+    /// tiny non-isolated NSObject bridges the callbacks back.
+    final class LegacyNavigationDelegate: NSObject, WKNavigationDelegate {
+        var onSettled: (() -> Void)?
+        nonisolated func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+            onSettled?()
+        }
+        nonisolated func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
+            onSettled?()
+        }
+    }
 
     /// Creates the WebPage and starts loading chatgpt.com. Deliberately not
     /// called until the user first tries to talk to Bill — an idle
@@ -92,8 +159,17 @@ final class ChatBridge: ObservableObject {
     /// isn't just timing or geometry, so this reuses that exact path instead
     /// of a second, parallel one.
     func prepareIfNeeded() {
-        guard page == nil else { return }
+        if #available(macOS 27, *) {
+            prepareModernEngineIfNeeded()
+        } else {
+            prepareLegacyEngineIfNeeded()
+        }
+    }
 
+    /// The shared half of either engine: content controller, message relay,
+    /// CSS + injected scripts — identical bytes on both paths (all the
+    /// APIs used here predate macOS 26).
+    private func makeContentController() -> WKUserContentController {
         let controller = WKUserContentController()
         messageRelay.onMessage = { [weak self] value in
             self?.handleBridgeMessage(value)
@@ -120,19 +196,23 @@ final class ChatBridge: ObservableObject {
             forMainFrameOnly: true,
             in: Self.contentWorld
         ))
+        return controller
+    }
 
+    @available(macOS 27, *)
+    private func prepareModernEngineIfNeeded() {
+        guard engine == nil else { return }
         var configuration = WebPage.Configuration()
         configuration.websiteDataStore = .default()
-        configuration.userContentController = controller
-
-        let newPage = WebPage(configuration: configuration)
-        page = newPage
+        configuration.userContentController = makeContentController()
+        let box = ModernEngine(configuration: configuration)
+        modernEngineBox = box
+        hasModernEngine = true
         isLoading = true
 
-        loadTask?.cancel()
-        loadTask = Task { [weak self] in
+        box.loadTask = Task { [weak self] in
             do {
-                for try await event in newPage.load(Self.chatURL) {
+                for try await event in box.page.load(Self.chatURL) {
                     if event == .committed || event == .finished {
                         self?.isLoading = false
                     }
@@ -142,6 +222,40 @@ final class ChatBridge: ObservableObject {
                 self?.isLoading = false
             }
         }
+    }
+
+    /// The macOS 14/15 fallback UI's engine (see `legacyWebView`). This
+    /// type owns the view outright — the "old macOS fallback" has no
+    /// `WebView(page)` to render a `WebPage` model object, so the classic
+    /// WKWebView *is* the engine; `ChatPanelView` merely hosts it inside
+    /// the same glass panel.
+    private func prepareLegacyEngineIfNeeded() {
+        guard legacyWebView == nil else { return }
+        let configuration = WKWebViewConfiguration()
+        configuration.userContentController = makeContentController()
+        configuration.websiteDataStore = .default()
+        let view = WKWebView(frame: .zero, configuration: configuration)
+        view.navigationDelegate = legacyNavigationDelegate
+        legacyWebView = view
+        isLoading = true
+        view.load(URLRequest(url: Self.chatURL))
+    }
+
+    /// Routes a `callJavaScript`-shaped invocation to whichever engine
+    /// exists. `callAsyncJavaScript` is the direct pre-26 analog of
+    /// `WebPage.callJavaScript`: same function-body semantics (`return`
+    /// works), same `arguments:` passing, same content world.
+    private func callJS(_ body: String, arguments: [String: Any] = [:]) async throws -> Any? {
+        if #available(macOS 27, *), let page {
+            return try await page.callJavaScript(body, arguments: arguments, contentWorld: Self.contentWorld)
+        }
+        guard let legacyWebView else { return nil }
+        return try await legacyWebView.callAsyncJavaScript(
+            body,
+            arguments: arguments,
+            in: nil,
+            contentWorld: Self.contentWorld
+        )
     }
 
 
@@ -181,12 +295,12 @@ final class ChatBridge: ObservableObject {
     func checkSignedIn() async -> Bool {
         prepareIfNeeded()
         await waitUntilReadyToSend()
-        guard let page else { return false }
+        guard hasEngine else { return false }
         let js = """
         return (!!(document.querySelector('#prompt-textarea') || document.querySelector('[contenteditable="true"]')))
             ? "yes" : "no";
         """
-        let result = try? await page.callJavaScript(js, contentWorld: Self.contentWorld)
+        let result = try? await callJS(js)
         return (result as? String) == "yes"
     }
 
@@ -201,7 +315,7 @@ final class ChatBridge: ObservableObject {
     func diagnose() async -> String {
         prepareIfNeeded()
         await waitUntilReadyToSend()
-        guard let page else { return "no WebPage constructed" }
+        guard hasEngine else { return "no chat engine constructed" }
         let js = """
         var r = {};
         r.url = location.href;
@@ -216,7 +330,7 @@ final class ChatBridge: ObservableObject {
         return JSON.stringify(r);
         """
         do {
-            let result = try await page.callJavaScript(js, contentWorld: Self.contentWorld)
+            let result = try await callJS(js)
             return (result as? String) ?? String(describing: result)
         } catch {
             return "callJavaScript failed: \(error)"
@@ -228,13 +342,12 @@ final class ChatBridge: ObservableObject {
         Task { [weak self] in
             guard let self else { return }
             await self.waitUntilReadyToSend()
-            guard let page = self.page else { return }
+            guard self.hasEngine else { return }
             let outgoing = "\(Self.taskPreamble)\n\n\(text)"
             do {
-                _ = try await page.callJavaScript(
+                _ = try await self.callJS(
                     "return window.billSendMessage ? window.billSendMessage(text) : false;",
-                    arguments: ["text": outgoing],
-                    contentWorld: Self.contentWorld
+                    arguments: ["text": outgoing]
                 )
             } catch {
                 print("ChatBridge: task send failed: \(error)")
@@ -247,7 +360,7 @@ final class ChatBridge: ObservableObject {
         Task { [weak self] in
             guard let self else { return }
             await self.waitUntilReadyToSend()
-            guard let page = self.page else { return }
+            guard self.hasEngine else { return }
 
             let outgoing: String
             if self.hasInjectedPersona {
@@ -258,10 +371,9 @@ final class ChatBridge: ObservableObject {
             }
 
             do {
-                _ = try await page.callJavaScript(
+                _ = try await self.callJS(
                     "return window.billSendMessage ? window.billSendMessage(text) : false;",
-                    arguments: ["text": outgoing],
-                    contentWorld: Self.contentWorld
+                    arguments: ["text": outgoing]
                 )
             } catch {
                 print("ChatBridge: send failed: \(error)")
@@ -308,13 +420,12 @@ final class ChatBridge: ObservableObject {
     /// deciding when a request has genuinely gone nowhere, and does so on a
     /// timescale no real page-load noise plausibly spans.
     private func extractLatestResponse() {
-        guard let page else { return }
+        guard hasEngine else { return }
         Task { [weak self] in
             guard let self else { return }
             do {
-                let result = try await page.callJavaScript(
-                    "return window.billGetLastResponse ? window.billGetLastResponse() : null;",
-                    contentWorld: Self.contentWorld
+                let result = try await self.callJS(
+                    "return window.billGetLastResponse ? window.billGetLastResponse() : null;"
                 )
                 if let text = result as? String, !text.isEmpty {
                     self.onResponseReceived?(text)
@@ -328,8 +439,13 @@ final class ChatBridge: ObservableObject {
     /// Signs out of ChatGPT by clearing all persisted site data for this
     /// app. Next `prepareIfNeeded()` will show the normal chatgpt.com login.
     func signOut() {
-        loadTask?.cancel()
-        page = nil
+        if #available(macOS 27, *) {
+            engine?.loadTask?.cancel()
+        }
+        modernEngineBox = nil
+        hasModernEngine = false
+        legacyWebView?.stopLoading()
+        legacyWebView = nil
         isLoading = false
         isGenerating = false
         hasInjectedPersona = false
