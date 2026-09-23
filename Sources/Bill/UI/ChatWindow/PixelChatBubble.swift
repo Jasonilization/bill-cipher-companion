@@ -110,7 +110,9 @@ private final class PixelInputBubbleView: NSView {
     var onFocusRequest: (() -> Void)?
 
     private static let pixelScale: CGFloat = PixelMessageBubbleView.pixelScale
-    private static let cornerRadius = 3
+    /// Matches the message bubbles' properly-rounded corner (see
+    /// `PixelMessageBubbleView.cornerRadius` for the reasoning).
+    private static let cornerRadius = 6
     private static let borderThickness = 1
     private static let accentThickness = 1
     private static let closeButtonSize: CGFloat = 14

@@ -46,7 +46,12 @@ final class PixelMessageBubbleView: NSView {
     static let pixelScale: CGFloat = 2
     private static let paddingX: CGFloat = 10
     private static let paddingY: CGFloat = 8
-    private static let cornerRadius = 3
+    /// Reads as genuinely rounded rather than a small chamfer — the user
+    /// flag was "make it look properly rounded," and at radius 3 the
+    /// staircase was too short to register as a curve. Six units gives the
+    /// corner quarter-circle enough steps to look intentional at this
+    /// bubble's size while staying pixel-art.
+    private static let cornerRadius = 6
     private static let borderThickness = 1
     private static let accentThickness = 1
     /// Wide enough that a normal ChatGPT paragraph spreads across most of

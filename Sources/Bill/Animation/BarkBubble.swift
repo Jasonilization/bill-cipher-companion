@@ -37,7 +37,10 @@ enum BarkBubble {
 
     private static let paddingX: CGFloat = 7
     private static let paddingY: CGFloat = 6
-    private static let cornerRadius = 3
+    /// Properly rounded rather than a near-chamfer — same reasoning as
+    /// `PixelMessageBubbleView.cornerRadius`; five units reads as a real
+    /// curve at the bark bubble's larger 3x scale.
+    private static let cornerRadius = 5
     private static let borderThickness = 1
     private static let accentThickness = 1
     private static let tailHeight: CGFloat = 5
