@@ -74,8 +74,10 @@ final class PixelCloseButton: NSView {
 /// y=0 is the top: the oldest message sits at y=0 and each newer one is
 /// placed further down, which puts the newest message at the highest y —
 /// i.e. right above the input row, matching "new messages push the older
-/// ones upward." Never clipped/scrolled — sized to its full natural height
-/// so every message stays visible without needing to scroll to find it.
+/// ones upward." Lives inside the scroll view, so once the stack outgrows
+/// the screen the oldest messages scroll away instead of clipping the
+/// panel off-screen; the document is always its full natural height so
+/// scrolling reaches every message.
 private final class MessageStackView: NSView {
     override var isFlipped: Bool { true }
 }
@@ -99,6 +101,13 @@ private final class PixelInputBubbleView: NSView {
     private var bodyHeightUnits: CGFloat = 0
     private let maxTextWidth: CGFloat
     let closeButton = PixelCloseButton()
+    /// Drawn under the (transparent) text view while it's empty, so the box
+    /// reads as a place to type into instead of a blank white lozenge.
+    var placeholderText: String? { didSet { needsDisplay = true } }
+    /// Clicking the box's frame (the padding/border area outside the text
+    /// view itself) should still land the caret — routing it through this
+    /// hook lets the owner make the text view first responder.
+    var onFocusRequest: (() -> Void)?
 
     private static let pixelScale: CGFloat = PixelMessageBubbleView.pixelScale
     private static let cornerRadius = 3
@@ -139,7 +148,13 @@ private final class PixelInputBubbleView: NSView {
     func updateSize(for text: String) -> Bool {
         let oldSize = frame.size
         let sample = text.isEmpty ? " " : text
-        let attributed = NSAttributedString(string: sample, attributes: [.font: Self.font])
+        // Char-wrapping measurement so a pasted URL/token wider than the
+        // box wraps inside it instead of overflowing the bubble's edge
+        // (see `PixelMessageBubbleView.attributedString` for the full
+        // reasoning — measurement and layout must share the same style).
+        let paragraphStyle = NSMutableParagraphStyle()
+        paragraphStyle.lineBreakMode = .byCharWrapping
+        let attributed = NSAttributedString(string: sample, attributes: [.font: Self.font, .paragraphStyle: paragraphStyle])
 
         let wideBounding = attributed.boundingRect(
             with: NSSize(width: maxTextWidth, height: .greatestFiniteMagnitude),
@@ -179,8 +194,13 @@ private final class PixelInputBubbleView: NSView {
         return NSRect(x: inset, y: inset, width: bodyWidthUnits * Self.pixelScale - inset * 2, height: bodyHeightUnits * Self.pixelScale - inset * 2)
     }
 
+    override func mouseDown(with event: NSEvent) {
+        onFocusRequest?()
+    }
+
     override func draw(_ dirtyRect: NSRect) {
         guard let ctx = NSGraphicsContext.current?.cgContext else { return }
+
         ctx.saveGState()
         ctx.setShouldAntialias(false)
         ctx.setAllowsAntialiasing(false)
@@ -205,6 +225,24 @@ private final class PixelInputBubbleView: NSView {
             ctx.fill([CGRect(x: bodyRect.width - 1, y: midY - 2, width: 2, height: 4)])
         }
         ctx.restoreGState()
+
+        // Placeholder last, in plain point space (so the font renders at
+        // its real size, crisp) and *after* the body fill — drawn before
+        // the fill it would be painted over and never visible. Sits exactly
+        // where the first typed glyph will land: the text view's content
+        // rect (border inset + 2), plus its 5pt default line-fragment
+        // padding and 2pt container inset.
+        if let placeholderText {
+            let attributes: [NSAttributedString.Key: Any] = [
+                .font: Self.font,
+                .foregroundColor: NSColor.darkGray,
+            ]
+            let origin = NSPoint(
+                x: Self.borderInsetPoints + 2 + 5,
+                y: Self.borderInsetPoints + 2 + 2
+            )
+            (placeholderText as NSString).draw(at: origin, withAttributes: attributes)
+        }
     }
 }
 
@@ -217,13 +255,15 @@ private final class PixelInputBubbleView: NSView {
 /// input bubble — a loose group of Bill's own speech bubbles floating
 /// beside him, not one big panel with a text box glued to it. User and Bill
 /// messages are distinguished by accent color and side (Bill left, user
-/// right), the same convention as most chat UIs. Every message stays
-/// visible — the stack grows upward as new ones arrive (each popping in)
-/// rather than scrolling older ones out of view.
+/// right), the same convention as most chat UIs. The stack grows upward as
+/// new messages arrive (each popping in); once it would outgrow the
+/// screen, the *stack* scrolls inside a bounded panel instead of the panel
+/// growing off-screen and clipping older messages for good.
 @MainActor
 final class PixelChatBubble: NSObject, NSTextViewDelegate {
     private let panel: KeyableBorderlessPanel
     private let container: NSView
+    private let scrollView: NSScrollView
     private let stackView: MessageStackView
     private let inputBubble: PixelInputBubbleView
     private let textView: NSTextView
@@ -246,6 +286,15 @@ final class PixelChatBubble: NSObject, NSTextViewDelegate {
     private static let bubbleSpacing: CGFloat = 8
     private static let thinkingFrames = ["THINKING.", "THINKING..", "THINKING..."]
     private static let resizeAnimationDuration: TimeInterval = 0.22
+    private static let placeholderText = "Talk to Bill…"
+    /// The slice of the screen the conversation may ever take — beyond this
+    /// the stack scrolls instead of letting the panel run off the top or
+    /// bottom of the screen (which left older messages unreachable, i.e.
+    /// genuinely clipped, once a conversation got long).
+    private static let maxStackHeightFraction: CGFloat = 0.72
+    /// Fraction of `maxStackHeightFraction` used while no screen is known
+    /// yet (first layout before an anchor arrives).
+    private static let fallbackScreenHeight: CGFloat = 800
 
     private var messages: [ChatMessage] = []
     private var isComposing = true
@@ -260,6 +309,13 @@ final class PixelChatBubble: NSObject, NSTextViewDelegate {
     /// arrive, rather than re-centering (and drifting both up and down)
     /// around Bill's frame on every single resize.
     private var anchoredBottomY: CGFloat?
+    /// Set whenever something arrives that the user should see immediately
+    /// (reopening the bubble, a sent message, the thinking placeholder, a
+    /// reply): the next layout pins the scroll to the newest message.
+    /// Deliberately *not* set by pure relayouts (typing, a thinking-dots
+    /// tick, a dismissal), so the view never yanks the user back down
+    /// while they've scrolled up to re-read.
+    private var needsScrollToBottom = false
 
     override init() {
         panel = KeyableBorderlessPanel(
@@ -269,6 +325,7 @@ final class PixelChatBubble: NSObject, NSTextViewDelegate {
             defer: false
         )
         container = NSView(frame: NSRect(origin: .zero, size: panel.frame.size))
+        scrollView = NSScrollView()
         stackView = MessageStackView()
         textView = NSTextView()
         // Matches PixelMessageBubbleView.maxTextWidth exactly (520) — same
@@ -296,6 +353,12 @@ final class PixelChatBubble: NSObject, NSTextViewDelegate {
         textView.isRichText = false
         textView.delegate = self
         textView.textContainerInset = NSSize(width: 0, height: 2)
+        // Match the measurement style in `updateSize`: without this the
+        // text view word-wraps while sizing char-wraps, so a long pasted
+        // token measured as "3 lines" renders as 1 overflowing line.
+        let paragraphStyle = NSMutableParagraphStyle()
+        paragraphStyle.lineBreakMode = .byCharWrapping
+        textView.defaultParagraphStyle = paragraphStyle
         textView.isVerticallyResizable = false
         textView.isHorizontallyResizable = false
         textView.autoresizingMask = [.width]
@@ -307,9 +370,28 @@ final class PixelChatBubble: NSObject, NSTextViewDelegate {
         textView.textContainer?.heightTracksTextView = false
 
         inputBubble.closeButton.onClick = { [weak self] in self?.hide() }
+        inputBubble.onFocusRequest = { [weak self] in
+            guard let self else { return }
+            panel.makeFirstResponder(textView)
+        }
+        inputBubble.placeholderText = Self.placeholderText
         inputBubble.addSubview(textView)
 
-        container.addSubview(stackView)
+        // The stack scrolls once it outgrows its share of the screen rather
+        // than growing the panel past the screen edge. Borderless, no
+        // background, overlay scroller that hides while idle — visible only
+        // when there's genuinely more conversation than fits, so short
+        // exchanges look exactly like they did before.
+        scrollView.borderType = .noBorder
+        scrollView.drawsBackground = false
+        scrollView.backgroundColor = .clear
+        scrollView.hasVerticalScroller = true
+        scrollView.hasHorizontalScroller = false
+        scrollView.scrollerStyle = .overlay
+        scrollView.autohidesScrollers = true
+        scrollView.documentView = stackView
+
+        container.addSubview(scrollView)
         container.addSubview(inputBubble)
         panel.contentView = container
     }
@@ -325,6 +407,8 @@ final class PixelChatBubble: NSObject, NSTextViewDelegate {
         thinkingTimer?.invalidate()
         beginComposing()
         anchoredBottomY = nil
+        // Reopening lands on the latest exchange, not the oldest.
+        needsScrollToBottom = true
         relayout(near: anchorFrame, on: screen, animated: false)
         panel.makeKeyAndOrderFront(nil)
         panel.makeFirstResponder(textView)
@@ -336,6 +420,7 @@ final class PixelChatBubble: NSObject, NSTextViewDelegate {
         textView.isEditable = true
         textView.isSelectable = true
         textView.textColor = .black
+        inputBubble.placeholderText = textView.string.isEmpty ? Self.placeholderText : nil
     }
 
     /// Appends an animated "Thinking…" placeholder bubble from Bill — called
@@ -350,6 +435,7 @@ final class PixelChatBubble: NSObject, NSTextViewDelegate {
         thinkingTimer?.invalidate()
         thinkingFrameIndex = 0
         setThinkingBubble(text: Self.thinkingFrames[0])
+        needsScrollToBottom = true
         relayout(near: anchorFrame, on: screen, animated: true)
         thinkingTimer = Timer.scheduledTimer(withTimeInterval: 0.45, repeats: true) { [weak self] _ in
             Task { @MainActor in self?.advanceThinkingAnimation() }
@@ -415,6 +501,7 @@ final class PixelChatBubble: NSObject, NSTextViewDelegate {
 
     private func appendMessage(_ message: ChatMessage, near anchorFrame: NSRect, on screen: NSScreen) {
         messages.append(message)
+        needsScrollToBottom = true
         relayout(near: anchorFrame, on: screen, animated: true)
     }
 
@@ -466,8 +553,11 @@ final class PixelChatBubble: NSObject, NSTextViewDelegate {
             bubbleViewsByID.removeValue(forKey: id)
         }
         if let thinkingBubbleView {
-            let x = contentWidth - thinkingBubbleView.frame.width
-            thinkingBubbleView.frame.origin = CGPoint(x: x, y: y)
+            // Bill's side — the thinking placeholder is his, and his
+            // messages all sit at x:0. Pinning it to the right (the old
+            // behaviour) made the placeholder visible-jump across the
+            // panel the moment the real reply replaced it.
+            thinkingBubbleView.frame.origin = CGPoint(x: 0, y: y)
             y += thinkingBubbleView.frame.height + Self.bubbleSpacing
         }
         return max(0, y - Self.bubbleSpacing)
@@ -513,11 +603,37 @@ final class PixelChatBubble: NSObject, NSTextViewDelegate {
         let naturalStackHeight = rebuildMessageStack(contentWidth: contentWidth, animated: animated)
         let hasStackContent = naturalStackHeight > 0
 
+        // The stack gets a bounded slice of the screen and scrolls past it,
+        // so the panel itself never outgrows the visible frame no matter
+        // how long the conversation runs.
+        let screenHeight = lastScreen?.visibleFrame.height
+            ?? NSScreen.main?.visibleFrame.height
+            ?? Self.fallbackScreenHeight
+        let maxStackHeight = max(
+            160,
+            screenHeight * Self.maxStackHeightFraction
+                - inputBubble.frame.height
+                - Self.bubbleSpacing
+                - Self.panelPadding
+        )
+        let stackHeight = min(naturalStackHeight, maxStackHeight)
+
         let totalHeight = inputBubble.frame.height
             + (hasStackContent ? Self.bubbleSpacing : 0)
-            + naturalStackHeight
+            + stackHeight
             + Self.panelPadding
         let size = NSSize(width: Self.maxWidth, height: totalHeight)
+
+        // Decide where the panel lands *before* positioning anything
+        // inside: `frame(for:)` picks the tail side (and now clamps into
+        // the screen, which can flip it), and the input bubble anchors to
+        // that same side so it always grows away from Bill.
+        let targetFrame: NSRect?
+        if let anchorFrame = lastAnchorFrame, let screen = lastScreen {
+            targetFrame = frame(for: size, near: anchorFrame, on: screen)
+        } else {
+            targetFrame = nil
+        }
 
         // Anchored to whichever edge is closer to Bill (matching `tailSide`)
         // so typing more text grows the bubble *away* from him instead of
@@ -533,32 +649,43 @@ final class PixelChatBubble: NSObject, NSTextViewDelegate {
             inputX = contentWidth + Self.panelPadding - inputBubble.frame.width
         }
         inputBubble.frame.origin = CGPoint(x: inputX, y: 0)
-        let scrollY = inputBubble.frame.height + (hasStackContent ? Self.bubbleSpacing : 0)
-        stackView.frame = NSRect(x: Self.panelPadding, y: scrollY, width: contentWidth, height: naturalStackHeight)
+        let stackY = inputBubble.frame.height + (hasStackContent ? Self.bubbleSpacing : 0)
+        scrollView.frame = NSRect(x: Self.panelPadding, y: stackY, width: contentWidth, height: stackHeight)
+        stackView.frame = NSRect(x: 0, y: 0, width: contentWidth, height: max(naturalStackHeight, 1))
 
-        guard let anchorFrame = lastAnchorFrame, let screen = lastScreen else {
-            panel.setContentSize(size)
-            container.frame = NSRect(origin: .zero, size: size)
-            return
-        }
-        let targetFrame = frame(for: size, near: anchorFrame, on: screen)
         let containerFrame = NSRect(origin: .zero, size: size)
-
-        if animated {
-            NSAnimationContext.runAnimationGroup { ctx in
-                ctx.duration = Self.resizeAnimationDuration
-                ctx.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
-                panel.animator().setFrame(targetFrame, display: true)
-                container.animator().frame = containerFrame
+        if let targetFrame {
+            if animated {
+                NSAnimationContext.runAnimationGroup { ctx in
+                    ctx.duration = Self.resizeAnimationDuration
+                    ctx.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+                    panel.animator().setFrame(targetFrame, display: true)
+                    container.animator().frame = containerFrame
+                }
+            } else {
+                panel.setFrame(targetFrame, display: true)
+                container.frame = containerFrame
             }
         } else {
-            panel.setFrame(targetFrame, display: true)
+            panel.setContentSize(size)
             container.frame = containerFrame
         }
 
         let content = inputBubble.contentRect
         textView.frame = content
         textView.textContainer?.containerSize = NSSize(width: content.width, height: .greatestFiniteMagnitude)
+
+        // Only ever *forward* the scroll to the newest message when
+        // something new arrived — never as a side effect of relayout, so
+        // re-reading further up is never fought (see `needsScrollToBottom`).
+        if needsScrollToBottom {
+            needsScrollToBottom = false
+            let overflow = stackView.frame.height - scrollView.contentView.bounds.height
+            if overflow > 0.5 {
+                scrollView.contentView.scroll(to: NSPoint(x: 0, y: overflow))
+                scrollView.reflectScrolledClipView(scrollView.contentView)
+            }
+        }
     }
 
     /// Computes the panel's target frame and which side the input bubble's
@@ -568,19 +695,30 @@ final class PixelChatBubble: NSObject, NSTextViewDelegate {
     /// down — around his frame on every single message.
     private func frame(for size: NSSize, near anchorFrame: NSRect, on screen: NSScreen) -> NSRect {
         let gap: CGFloat = 14
-        let spaceRight = screen.visibleFrame.maxX - anchorFrame.maxX
-        let spaceLeft = anchorFrame.minX - screen.visibleFrame.minX
+        let visible = screen.visibleFrame
+        let spaceRight = visible.maxX - anchorFrame.maxX
+        let spaceLeft = anchorFrame.minX - visible.minX
 
-        let x: CGFloat
-        let tailSide: PixelInputBubbleView.TailSide
+        // Prefer Bill's right, fall back to his left — then clamp hard into
+        // the visible frame either way. The clamp used to be missing: with
+        // Bill near a screen edge and neither flank wide enough for the
+        // panel, whichever side "won" simply placed the panel partially
+        // off-screen, clipping the conversation. Overlapping Bill's window
+        // a little is far better than a chat window you can't fully see.
+        var x: CGFloat
         if spaceRight >= size.width + gap || spaceRight >= spaceLeft {
             x = anchorFrame.maxX + gap
-            tailSide = .left
         } else {
             x = anchorFrame.minX - gap - size.width
-            tailSide = .right
         }
-        inputBubble.tailSide = tailSide
+        let minX = visible.minX + 8
+        let maxX = max(minX, visible.maxX - size.width - 8)
+        x = min(max(x, minX), maxX)
+        // Re-derive the tail from where the panel *actually* landed — after
+        // clamping it may sit on the opposite side of Bill than the raw
+        // space check picked, and a tail pointing away from him looks
+        // broken even though the panel is correctly on screen.
+        inputBubble.tailSide = (x + size.width / 2) >= anchorFrame.midX ? .left : .right
 
         let baseBottomY: CGFloat
         if let anchoredBottomY {
@@ -602,20 +740,30 @@ final class PixelChatBubble: NSObject, NSTextViewDelegate {
         // Keep the *top* on screen even if the stack has grown tall — only
         // ever shifts the bottom edge down from its anchor to make room,
         // never up, so it doesn't undo the "grows upward" feel.
-        let y = min(baseBottomY, screen.visibleFrame.maxY - size.height - 8)
-        return NSRect(x: x, y: max(y, screen.visibleFrame.minY + 8), width: size.width, height: size.height)
+        let y = min(baseBottomY, visible.maxY - size.height - 8)
+        return NSRect(x: x, y: max(y, visible.minY + 8), width: size.width, height: size.height)
     }
 
     // MARK: - NSTextViewDelegate
 
     func textView(_ textView: NSTextView, doCommandBy commandSelector: Selector) -> Bool {
-        guard isComposing else { return false }
-        if commandSelector == #selector(NSResponder.insertNewline(_:)) {
-            submit()
-            return true
-        }
+        // Escape closes the bubble whether or not it's composing — needing
+        // to be in the right "mode" for Escape to work made the window
+        // feel stuck once a reply was being awaited.
         if commandSelector == #selector(NSResponder.cancelOperation(_:)) {
             hide()
+            return true
+        }
+        guard isComposing else { return false }
+        if commandSelector == #selector(NSResponder.insertNewline(_:)) {
+            // Return sends; Shift+Return is a real newline. Without the
+            // Shift path there was no way to write a multi-line message at
+            // all, even though the input bubble visibly grows for one.
+            if NSApp.currentEvent?.modifierFlags.contains(.shift) == true {
+                textView.insertNewlineIgnoringFieldEditor(nil)
+            } else {
+                submit()
+            }
             return true
         }
         return false
@@ -625,7 +773,9 @@ final class PixelChatBubble: NSObject, NSTextViewDelegate {
     /// `textView.string` directly (as `submit()` does to clear it) doesn't
     /// post this notification, so that path resizes explicitly instead.
     func textDidChange(_ notification: Notification) {
-        guard isComposing, inputBubble.updateSize(for: textView.string) else { return }
+        guard isComposing else { return }
+        inputBubble.placeholderText = textView.string.isEmpty ? Self.placeholderText : nil
+        guard inputBubble.updateSize(for: textView.string) else { return }
         relayoutStack(animated: false)
     }
 
@@ -633,6 +783,7 @@ final class PixelChatBubble: NSObject, NSTextViewDelegate {
         let text = textView.string.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty else { return }
         textView.string = ""
+        inputBubble.placeholderText = Self.placeholderText
         inputBubble.updateSize(for: "")
         if let anchorFrame = lastAnchorFrame, let screen = lastScreen {
             appendMessage(ChatMessage(text: text, isFromUser: true), near: anchorFrame, on: screen)

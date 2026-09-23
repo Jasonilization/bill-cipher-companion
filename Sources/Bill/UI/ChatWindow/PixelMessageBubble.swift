@@ -185,7 +185,16 @@ final class PixelMessageBubbleView: NSView {
         // which was flagged directly as a readability problem.
         let paragraphStyle = NSMutableParagraphStyle()
         paragraphStyle.alignment = .left
-        paragraphStyle.lineBreakMode = .byWordWrapping
+        // Char- rather than word-wrapping: a ChatGPT reply routinely carries
+        // a URL or code token wider than the whole bubble, and by-word
+        // wrapping cannot break it — it overflows the line and gets cut off
+        // by the bubble's own edge (the "text clips off at edges" report).
+        // byCharWrapping still prefers whole words; it splits a word only
+        // when nothing else fits, and the two-pass measurement below
+        // (`boundingRect` honors this same style) stays in agreement with
+        // the text view's layout, so the bubble sizes to what actually
+        // renders.
+        paragraphStyle.lineBreakMode = .byCharWrapping
         let result = NSMutableAttributedString(string: text, attributes: [.font: font, .foregroundColor: NSColor.black, .paragraphStyle: paragraphStyle])
         if let detector = try? NSDataDetector(types: NSTextCheckingResult.CheckingType.link.rawValue) {
             let fullRange = NSRange(text.startIndex..., in: text)
