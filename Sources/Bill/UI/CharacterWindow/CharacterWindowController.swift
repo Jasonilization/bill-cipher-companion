@@ -343,6 +343,9 @@ final class CharacterWindowController: NSObject {
         personalizationEngine.weatherBlurbProvider = { [weak self] in
             self?.weatherBlurbProvider?()
         }
+        personalizationEngine.extraInstructionsProvider = { [weak self] in
+            self?.preferences.promptExtraInstructions
+        }
         personalizationEngine.onRunFinished = { [weak self] in
             guard let self else { return }
             self.setChatEngineMounted?(false)
@@ -463,6 +466,10 @@ final class CharacterWindowController: NSObject {
         }
         if let weather = weatherBlurbProvider?(), !weather.isEmpty {
             contextParts.append("outside the window, \(weather)")
+        }
+        let extra = preferences.promptExtraInstructions.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !extra.isEmpty {
+            contextParts.append("extra persona notes from my user: \(extra)")
         }
         guard !contextParts.isEmpty else { return text }
         hasIncludedActivityContext = true
@@ -613,8 +620,14 @@ final class CharacterWindowController: NSObject {
     private static let maxAppDescriptionsPerRefresh = 5
 
     private func maybeRefreshDialogue() {
-        guard memoryStore.shouldRefreshDialogue(interval: Self.dialogueRefreshInterval) else { return }
-        performDialogueRefresh(trigger: "daily timer")
+        // `promptRefreshesPerDay` spreads the refresh across the day (the
+        // user's explicit ask: prompts refresh *across* the day, not once).
+        // Read live so the Settings stepper applies on the next check — no
+        // restart, no timer rebuild.
+        let perDay = min(max(preferences.promptRefreshesPerDay, AppPreferences.promptRefreshesPerDayRange.lowerBound), AppPreferences.promptRefreshesPerDayRange.upperBound)
+        let interval = Self.dialogueRefreshInterval / Double(perDay)
+        guard memoryStore.shouldRefreshDialogue(interval: interval) else { return }
+        performDialogueRefresh(trigger: "periodic timer (\(perDay)x per day)")
     }
 
     /// Manually forces the same daily refresh `maybeRefreshDialogue` fires
@@ -714,6 +727,10 @@ final class CharacterWindowController: NSObject {
                 these apps is for, formatted exactly as \
                 "APP: <name>: <description>", for: \(names).
                 """
+        }
+        let extraNotes = preferences.promptExtraInstructions.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !extraNotes.isEmpty {
+            prompt += "\n\nAdditional persona notes from the user — honor them: \(extraNotes)"
         }
 
         activeRefreshID = dialogueRefreshStore.begin(trigger: trigger, prompt: prompt)
@@ -1010,6 +1027,12 @@ final class CharacterWindowController: NSObject {
     @discardableResult
     func sendBillToApp(pid: pid_t) -> Bool {
         roaming?.goToApp(pid: pid) ?? false
+    }
+
+    /// Settings live-preview passthrough: re-lays-out the pixel chat panel
+    /// (if open) after a width/accent change.
+    func relayoutChatBubble() {
+        chatBubble.refresh()
     }
 
     private func handleRoamEvent(_ event: RoamEvent) {

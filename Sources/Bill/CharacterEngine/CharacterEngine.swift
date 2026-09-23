@@ -27,6 +27,13 @@ final class CharacterEngine {
     /// slider's intent rather than its literal arithmetic.
     var speakingFrequencyMultiplier: Double = 1.0
 
+    /// Multiplies the *spacing* between ambient idle beats — the Settings
+    /// "how long until the next animation" knob, kept live from
+    /// `AppPreferences.ambientAnimationSpacing` the same way as above.
+    /// Deliberately its own control: pacing his motion should not drag his
+    /// dialogue (or vice versa) along with it.
+    var ambientAnimationSpacingMultiplier: Double = 1.0
+
     /// Rare Easter eggs (power surge / zodiac vision / summon ritual / …)
     /// are deliberately dramatic — see `BillState.rareEasterEggs` — so
     /// they're gated to a small chance per idle beat *and* a cooldown,
@@ -111,7 +118,11 @@ final class CharacterEngine {
     private func scheduleNextIdleBeat() {
         idleBeatTimer?.invalidate()
         let baseDelay = Double.random(in: 4...9)
-        let delay = max(0.5, baseDelay / speakingFrequencyMultiplier)
+        // Spacing knob first (motion pacing), frequency knob second (line
+        // probability now lives entirely in `shouldSpeak`, but the beat
+        // cadence still respects overall chattiness when the user leans on
+        // it hard).
+        let delay = max(0.5, baseDelay * ambientAnimationSpacingMultiplier / max(0.5, speakingFrequencyMultiplier))
         idleBeatTimer = Timer.scheduledTimer(withTimeInterval: delay, repeats: false) { [weak self] _ in
             Task { @MainActor in
                 self?.fireIdleBeat()

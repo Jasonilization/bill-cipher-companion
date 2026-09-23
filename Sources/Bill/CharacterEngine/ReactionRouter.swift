@@ -164,8 +164,33 @@ final class ReactionRouter {
             // The dialogue pools swap themselves via `TimeOfDayCache`; nothing
             // to announce here beyond what the half-hour chime already says.
             break
+
+        case .weatherChanged(let snapshot):
+            handleWeatherChanged(snapshot)
         }
     }
+
+    // MARK: - Weather
+
+    /// Weather commentary, at most once per cooldown window per *condition*
+    /// change — the monitor already only fires on a condition transition,
+    /// but the first successful pull of every launch also counts as one, so
+    /// a restart loop must not re-announce "IT IS RAINING" every time.
+    private var lastWeatherBarkAt: Date?
+
+    private func handleWeatherChanged(_ snapshot: WeatherSnapshot) {
+        if let lastWeatherBarkAt, Date().timeIntervalSince(lastWeatherBarkAt) < Self.weatherBarkCooldown {
+            return
+        }
+        lastWeatherBarkAt = Date()
+        let temp = String(format: "%.0f", snapshot.temperatureC.rounded())
+        play(Self.weatherStates, keys: ["weather.\(snapshot.condition.rawValue)"], substitutions: ["temp": temp])
+    }
+
+    private static let weatherBarkCooldown: TimeInterval = 10 * 60
+    private static let weatherStates: [BillState] = [
+        .watched, .scanning, .smug, .caneTwist, .presenting, .zodiacVision, .conjuring,
+    ]
 
     private var idleStartDate: Date?
 
@@ -243,16 +268,30 @@ final class ReactionRouter {
         guard category == nil || preferences.isCategoryEnabled(category!) else { return }
 
         // A transition line first, when we came from somewhere interesting.
-        if let from = previousFocusTag, from != tag,
-           let line = dialogue.firstLine(DialogueKey.transition(from: from, to: tag), substitutions: ["app": name]) {
-            characterEngine.bark(line)
+        // Ladder: this user's own app *pair*, then the authored
+        // tag-pair/category/generic ladder.
+        if let from = previousFocusTag, from != tag {
+            if let fromBundle = previousBundleID,
+               let pairLine = dialogue.firstLine(
+                [PersonalizedDialogueStore.shared.transitionKey(from: fromBundle, to: bundleID)],
+                substitutions: ["app": name]
+               ) {
+                characterEngine.bark(pairLine)
+            } else if let line = dialogue.firstLine(
+                DialogueKey.transition(from: from, to: tag),
+                substitutions: ["app": name]
+            ) {
+                characterEngine.bark(line)
+            }
         }
 
-        // Then the app's own reaction.
+        // Then the app's own reaction. A personalized line for this exact
+        // app wins before the special-state/category buckets — that's the
+        // entire point of the setup flow.
         if let special = SpecialAppMapper.state(bundleID: bundleID, name: name) {
             _ = goToApp?(pid)
             characterEngine.request(special, force: true)
-            speak([special.rawValue], substitutions: ["app": name])
+            speak([PersonalizedDialogueStore.shared.appKey(for: bundleID), special.rawValue], substitutions: ["app": name])
             return
         }
 
@@ -262,7 +301,7 @@ final class ReactionRouter {
         }
 
         let (states, key) = Self.reaction(for: category)
-        play(states, keys: [key], substitutions: ["app": name])
+        play(states, keys: [PersonalizedDialogueStore.shared.appKey(for: bundleID), key], substitutions: ["app": name])
     }
 
     /// Returning to an already-seen app gets a distinct "back again?" line,
@@ -393,13 +432,24 @@ final class ReactionRouter {
 
     /// Requests one of `states` (never the one that just played) and speaks the
     /// first authored line among `keys`.
+    ///
+    /// A per-trigger override from Settings (`customAnimationMap`) wins over
+    /// the pool entirely: the user pinning "batteryLow" to `meltdown` means
+    /// exactly that, every time.
     private func play(
         _ states: [BillState],
         keys: [String],
         substitutions: [String: String] = [:],
         importance: CharacterEngine.BarkImportance = .normal
     ) {
-        if let state = characterEngine.coverage.pick(from: states) {
+        let override: BillState? = keys
+            .lazy
+            .compactMap { self.preferences.customAnimationMap[$0] }
+            .compactMap(BillState.init(rawValue:))
+            .first
+        if let override {
+            characterEngine.request(override, force: true)
+        } else if let state = characterEngine.coverage.pick(from: states) {
             characterEngine.request(state, force: true)
         }
         speak(keys, substitutions: substitutions, importance: importance)

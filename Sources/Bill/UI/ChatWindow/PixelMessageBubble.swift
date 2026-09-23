@@ -57,8 +57,14 @@ final class PixelMessageBubbleView: NSView {
     /// Wide enough that a normal ChatGPT paragraph spreads across most of
     /// the screen instead of wrapping into a tall, narrow column — the
     /// direct ask was to let a message "go everywhere on the screen"
-    /// rather than staying cramped.
-    private static let maxTextWidth: CGFloat = 520
+    /// rather than staying cramped. 520 is the ceiling; the *effective*
+    /// cap also shrinks with the user's chat-bubble-width setting so a
+    /// narrowed panel can never have bubbles wider than itself (the panel
+    /// padding + bubble chrome are the 36pt of margin).
+    private static let absoluteMaxTextWidth: CGFloat = 520
+    static var maxTextWidth: CGFloat {
+        min(absoluteMaxTextWidth, PixelChatBubble.maxWidth - 36)
+    }
     private static let closeButtonSize: CGFloat = 14
     private static let closeGap: CGFloat = 5
     private static let userAccent = NSColor(calibratedRed: 0.36, green: 0.58, blue: 0.86, alpha: 1)
@@ -220,7 +226,7 @@ final class PixelMessageBubbleView: NSView {
         ctx.scaleBy(x: Self.pixelScale, y: Self.pixelScale)
 
         let bodyRect = CGRect(x: 0, y: 0, width: bodyWidthUnits, height: bodyHeightUnits)
-        let accent = isFromUser ? Self.userAccent : BillPalette.bodyYellow
+        let accent = isFromUser ? Self.userAccent : BillPalette.bubbleAccent
         BarkBubble.drawLayeredBorder(ctx, bodyRect: bodyRect, cornerRadius: Self.cornerRadius, borderThickness: Self.borderThickness, accentThickness: Self.accentThickness, accentColor: accent)
         ctx.restoreGState()
     }

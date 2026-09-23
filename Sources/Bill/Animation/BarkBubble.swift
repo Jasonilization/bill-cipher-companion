@@ -33,6 +33,19 @@ enum BarkBubble {
     /// convert scene-space shifts into tail-offset units.
     static let pixelScale: CGFloat = 3
 
+    /// Live text-size knob from Settings ("size of text box text") —
+    /// multiplies the whole bitmap (text *and* its bubble) so everything
+    /// stays on one grid. Nearest-neighbor filtering keeps it crisp at
+    /// any value. Set by `AppDelegate` from
+    /// `AppPreferences.bubbleTextScale`.
+    static var textScaleMultiplier: CGFloat = 1
+
+    /// `pixelScale` with the user's text-size knob applied — the number
+    /// every point↔unit conversion actually uses.
+    static var effectivePixelScale: CGFloat {
+        pixelScale * textScaleMultiplier
+    }
+
     // MARK: - Layout grid (all in bubble units)
 
     private static let paddingX: CGFloat = 7
@@ -73,7 +86,7 @@ enum BarkBubble {
         // silently ignored, which is how a wide bubble could be placed
         // and then nudged into a region it never fit.
         let chromeUnits = paddingX * 2 + CGFloat(borderThickness + accentThickness) * 2
-        let roomUnits = Int((maxWidth / pixelScale).rounded(.down)) - Int(chromeUnits)
+        let roomUnits = Int((maxWidth / effectivePixelScale).rounded(.down)) - Int(chromeUnits)
         let textColumnUnits = min(maxTextWidthUnits, max(minTextWidthUnits, roomUnits))
         let lines = PixelFont.wrap(normalize(text.uppercased()), maxWidthUnits: textColumnUnits, maxLines: maxLines)
 
@@ -91,7 +104,7 @@ enum BarkBubble {
             ctx.interpolationQuality = .none
 
             let bodyRect = CGRect(x: 0, y: tailHeight, width: bodyWidth, height: bodyHeight)
-            let fillRect = drawLayeredBorder(ctx, bodyRect: bodyRect, cornerRadius: cornerRadius, borderThickness: borderThickness, accentThickness: accentThickness, accentColor: BillPalette.bodyYellow)
+            let fillRect = drawLayeredBorder(ctx, bodyRect: bodyRect, cornerRadius: cornerRadius, borderThickness: borderThickness, accentThickness: accentThickness, accentColor: BillPalette.bubbleAccent)
             drawTail(ctx, bodyRect: bodyRect, offsetUnits: tailOffsetUnits)
             PixelFont.drawCentered(ctx, lines: lines, in: fillRect, color: BillPalette.black)
 
@@ -101,7 +114,7 @@ enum BarkBubble {
         let texture = SKTexture(image: image)
         texture.filteringMode = .nearest
         let sprite = SKSpriteNode(texture: texture)
-        sprite.setScale(pixelScale)
+        sprite.setScale(effectivePixelScale)
         sprite.anchorPoint = CGPoint(x: 0.5, y: 0)
         return sprite
     }
