@@ -368,8 +368,22 @@ final class RoamingController {
         sim.worldBounds = visible
         sim.solids = WindowTopology
             .platforms(excludingWindowNumber: panel.windowNumber)
-            .filter { $0.rect.intersects(visible) }
-            .map { RoamSolid(rect: $0.rect) }
+            .compactMap { platform -> RoamSolid? in
+                // Clamp every solid into the *walkable* world (the screen's
+                // visible frame, which excludes the menu-bar strip). A
+                // window whose top edge reaches into that strip — a
+                // fullscreen-adjacent app, a "maximize" that keeps the bar —
+                // was previously solid above the ceiling: the side-grab
+                // could catch it, Bill would climb toward a top edge the
+                // ceiling clamp refuses to let him reach, and he ping-ponged
+                // in a grab-clamp-fall loop right under the menu bar — the
+                // "stuck on the menu" report. After the clamp, no solid
+                // exists above the ceiling at all: the climb tops out
+                // exactly at the walkable top edge.
+                let rect = platform.rect.intersection(visible)
+                guard !rect.isEmpty, rect.height > 4 else { return nil }
+                return RoamSolid(rect: rect)
+            }
     }
 
     private func pickGoal(on screen: NSScreen, panel: NSPanel) -> Goal? {
