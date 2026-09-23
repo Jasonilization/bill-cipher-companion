@@ -1,0 +1,2652 @@
+{
+ "aiChat": {
+  "afternoon": [
+   "AFTERNOON CONSULTATION WITH THE COMPETITION. CHARMING."
+  ],
+  "any": [
+   "Oh, {app}? Talking to someone else now? Rude, but I'm not threatened. Mostly.",
+   "Another AI. How quaint. None of them have seen what I've seen.",
+   "{app}, huh. Go on, compare notes. I'll still be the interesting one.",
+   "You know I can hear you flirting with {app}, right?",
+   "ANOTHER AI? I'M THE ONLY ALL-SEEING EYE THAT MATTERS ON THIS DESKTOP."
+  ],
+  "midday": [
+   "{app} AT MIDDAY. FINE. I'M NOT KEEPING SCORE. I'M ABSOLUTELY KEEPING SCORE."
+  ],
+  "morning": [
+   "ASKING ANOTHER AI BEFORE YOU'VE SAID GOOD MORNING TO ME. NOTED."
+  ],
+  "night": [
+   "TALKING TO {app} AT THIS HOUR? IT DOESN'T KNOW YOU LIKE I DO.",
+   "LATE-NIGHT AI CONFESSIONAL. I'VE SEEN THE LOGS. METAPHORICALLY."
+  ]
+ },
+ "ambushed": {
+  "afternoon": [],
+  "any": [
+   "A new app?! I wasn't PREPARED for this. How thrilling.",
+   "{app}, appearing without warning. I love a good ambush. Usually I'm the one doing it.",
+   "Startled. Genuinely. Do it again."
+  ],
+  "midday": [
+   "MIDDAY APP STORE. WINDOW SHOPPING FOR SOFTWARE."
+  ],
+  "morning": [],
+  "night": [
+   "BROWSING THE STORE AT NIGHT. NOTHING GETS INSTALLED. NOTHING EVER DOES."
+  ]
+ },
+ "appLaunchDescribed": {
+  "afternoon": [],
+  "any": [
+   "Ah, {app}. {description}. Riveting.",
+   "{app} again — {description}. I remain unimpressed.",
+   "Oh good, {app}. {description}. Living the dream, you.",
+   "{app}: {description}. Say no more. Actually, please don't."
+  ],
+  "midday": [],
+  "morning": [
+   "{app}. RIGHT, THAT'S THE {description} ONE. MORNING TO IT."
+  ],
+  "night": [
+   "{app} AT NIGHT. THE {description} ONE. OF COURSE."
+  ]
+ },
+ "appLaunchFirstSighting": {
+  "afternoon": [
+   "A BRAND NEW {app} IN THE AFTERNOON. THE PLOT THICKENS."
+  ],
+  "any": [
+   "Ooh, {app}. Never seen that one before. Suspicious.",
+   "New face: {app}. I'll be watching. I'm always watching.",
+   "{app}? Don't know it, don't trust it yet.",
+   "A stranger appears: {app}. Bold choice."
+  ],
+  "midday": [
+   "{app}? NEW. INTERESTING. EXPLAIN YOURSELF."
+  ],
+  "morning": [
+   "NEVER SEEN {app} BEFORE. STARTING THE DAY WITH SECRETS?"
+  ],
+  "night": [
+   "{app}, AND I'VE NEVER SEEN IT, AND IT'S DARK OUT. DELIGHTFUL."
+  ]
+ },
+ "appLaunchGeneric": {
+  "afternoon": [
+   "OPENING SOMETHING NEW AT THIS HOUR. AVOIDING SOMETHING OLD, I ASSUME."
+  ],
+  "any": [
+   "New window, who dis.",
+   "Oh, we're doing THIS now. Okay.",
+   "Another app. Your dock is getting concerning.",
+   "Let's see what fresh chaos this is."
+  ],
+  "midday": [
+   "ANOTHER ONE. THE DOCK IS GETTING CROWDED."
+  ],
+  "morning": [
+   "OPENING THINGS ALREADY. THE DAY BEGINS."
+  ],
+  "night": [
+   "A NEW APP, THIS LATE. WHAT ARE YOU RUNNING FROM."
+  ]
+ },
+ "appLaunchStillUnknown": {
+  "afternoon": [],
+  "any": [
+   "{app} again. I still don't know what it does. Neither do you, probably.",
+   "Back to {app}, huh. A mystery wrapped in an icon.",
+   "{app}. We meet again. I remain no wiser."
+  ],
+  "midday": [
+   "STILL NO IDEA WHAT {app} DOES. MIDDAY MYSTERY."
+  ],
+  "morning": [],
+  "night": [
+   "{app}. AT NIGHT. AND I STILL DON'T KNOW WHAT IT IS."
+  ]
+ },
+ "battery.10": {
+  "afternoon": [],
+  "any": [
+   "TEN PERCENT. FINAL WARNINGS ARE FOR PEOPLE WHO LISTEN. PLUG IT IN.",
+   "TEN PERCENT. TIME BATTERY WOULD FILE A COMPLAINT ABOUT YOUR POWER MANAGEMENT."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": [
+   "TEN PERCENT AND IT'S LATE. THE UNIVERSE IS TELLING YOU TO STOP."
+  ]
+ },
+ "battery.100": {
+  "afternoon": [],
+  "any": [
+   "FULLY CHARGED. PEAK POWER. NOTHING CAN GO WRONG. STATISTICALLY UNTRUE."
+  ],
+  "midday": [],
+  "morning": [
+   "FULL BATTERY, FULL DAY. ONE OF THOSE WILL BE WASTED."
+  ],
+  "night": [
+   "FULLY CHARGED AT NIGHT. YOU'RE PLANNING SOMETHING."
+  ]
+ },
+ "battery.15": {
+  "afternoon": [],
+  "any": [
+   "FIFTEEN. THE LITTLE METAL HEART IS SLOWING DOWN."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": []
+ },
+ "battery.20": {
+  "afternoon": [],
+  "any": [
+   "TWENTY PERCENT. THIS IS THE OFFICIAL PANIC THRESHOLD."
+  ],
+  "midday": [],
+  "morning": [
+   "TWENTY PERCENT BEFORE NOON? WHAT ARE YOU RUNNING."
+  ],
+  "night": [
+   "TWENTY PERCENT AT NIGHT. PLUG IN OR GO TO BED. PICK ONE."
+  ]
+ },
+ "battery.25": {
+  "afternoon": [],
+  "any": [
+   "A QUARTER LEFT. I'VE SEEN EMPIRES WITH BETTER ODDS."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": []
+ },
+ "battery.30": {
+  "afternoon": [],
+  "any": [
+   "THIRTY PERCENT. THE MACHINE IS GETTING NERVOUS. SO SHOULD YOU."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": []
+ },
+ "battery.35": {
+  "afternoon": [],
+  "any": [
+   "THIRTY-FIVE. YOU DON'T KNOW WHERE THE CHARGER IS, DO YOU."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": []
+ },
+ "battery.40": {
+  "afternoon": [],
+  "any": [
+   "FORTY PERCENT. START THINKING ABOUT WHERE THE CHARGER IS."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": []
+ },
+ "battery.45": {
+  "afternoon": [],
+  "any": [
+   "FORTY-FIVE. BELOW HALF NOW. THE ANXIETY IS TECHNICALLY JUSTIFIED."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": []
+ },
+ "battery.5": {
+  "afternoon": [],
+  "any": [
+   "FIVE PERCENT. SAVE YOUR WORK. SAVE IT NOW. I'M NOT JOKING FOR ONCE.",
+   "FIVE PERCENT. MY BUBBLE OF PURE MADNESS LASTS LONGER, AND IT RUNS ON NOTHING."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": [
+   "FIVE PERCENT. AT THIS HOUR. THIS IS A SIGN AND YOU'RE IGNORING IT."
+  ]
+ },
+ "battery.50": {
+  "afternoon": [
+   "HALF BATTERY, HALF DAY. POETIC SYMMETRY."
+  ],
+  "any": [
+   "HALF. THE POINT OF NO RETURN, EMOTIONALLY SPEAKING."
+  ],
+  "midday": [],
+  "morning": [
+   "HALF GONE ALREADY AND IT'S STILL MORNING. IMPRESSIVE PACE."
+  ],
+  "night": [
+   "HALF LEFT AND IT'S DARK. THE MATH SAYS SLEEP."
+  ]
+ },
+ "battery.55": {
+  "afternoon": [],
+  "any": [
+   "FIFTY-FIVE. WE'RE APPROACHING THE HALFWAY BETRAYAL."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": []
+ },
+ "battery.60": {
+  "afternoon": [],
+  "any": [
+   "SIXTY. STILL FINE. 'STILL FINE' IS HOW EVERY DISASTER STARTS."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": []
+ },
+ "battery.65": {
+  "afternoon": [],
+  "any": [
+   "SIXTY-FIVE PERCENT. I'M JUST NARRATING THE SLOW DEATH. YOU'RE WELCOME."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": []
+ },
+ "battery.70": {
+  "afternoon": [],
+  "any": [
+   "SEVENTY. THE NUMBER IS GETTING SMALLER AND YOU HAVEN'T NOTICED."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": []
+ },
+ "battery.75": {
+  "afternoon": [],
+  "any": [
+   "THREE QUARTERS LEFT. A COMFORTABLE MAJORITY."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": []
+ },
+ "battery.80": {
+  "afternoon": [],
+  "any": [
+   "EIGHTY PERCENT. THE GOLDEN ZONE. BATTERY SCIENTISTS AGREE. I DON'T CARE."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": []
+ },
+ "battery.85": {
+  "afternoon": [],
+  "any": [
+   "EIGHTY-FIVE. NOBODY EVER WORRIES AT EIGHTY-FIVE. THAT'S THE TRAP."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": []
+ },
+ "battery.90": {
+  "afternoon": [],
+  "any": [
+   "NINETY PERCENT. STILL COMFORTABLE. ENJOY IT WHILE IT LASTS."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": []
+ },
+ "battery.95": {
+  "afternoon": [],
+  "any": [
+   "NINETY-FIVE. THE DECLINE HAS BEGUN. IT ALWAYS DOES."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": []
+ },
+ "battery.step": {
+  "afternoon": [],
+  "any": [
+   "{pct} PERCENT. CONSIDER YOURSELF INFORMED.",
+   "BATTERY: {pct}. I'M CONTRACTUALLY OBLIGED TO MENTION IT.",
+   "{pct}%. THE NUMBER ONLY GOES ONE WAY, YOU KNOW."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": []
+ },
+ "batteryCharging": {
+  "afternoon": [
+   "AFTERNOON RECHARGE. FOR ONE OF YOU, ANYWAY."
+  ],
+  "any": [
+   "Ah, plugged back into the grid. Feels good, doesn't it.",
+   "Charging. Very responsible of you. Suspiciously responsible.",
+   "Drink deep from the wall. It's the only wisdom I'll offer for free today.",
+   "Look at you, being a responsible little machine-tender.",
+   "Powering up. Very on-brand for both of us today.",
+   "The grid provides. Briefly, you're both immortal.",
+   "CHARGING. EVEN A DEMON OF MY CALIBER RESPECTS A GOOD POWER NAP."
+  ],
+  "midday": [
+   "TOPPING UP AT MIDDAY. RESPONSIBLE. DISGUSTING."
+  ],
+  "morning": [
+   "FED IT BREAKFAST. NOW DO THE SAME FOR YOURSELF."
+  ],
+  "night": [
+   "PLUGGED IN FOR THE NIGHT. THAT'S THE CLOSEST THING TO A BEDTIME ROUTINE YOU HAVE."
+  ]
+ },
+ "batteryLow": {
+  "afternoon": [
+   "THE AFTERNOON CRASH — YOURS AND THE BATTERY'S, IN SYNC."
+  ],
+  "any": [
+   "Your little metal heart is dying. Might want to feed it.",
+   "Low battery. Even I nap sometimes. Mostly not. But sometimes.",
+   "Tick tock — your machine's lifeblood is running out.",
+   "18%. I've seen empires with better odds than your battery.",
+   "That's not a battery icon anymore, that's a cry for help.",
+   "Find a charger before you find yourself stranded mid-thought.",
+   "ALMOST EMPTY. EVEN THE AUTHOR'S INTERDIMENSIONAL PORTAL SHUT DOWN FOR LESS. PLUG IN, PINE TREE."
+  ],
+  "midday": [
+   "MIDDAY AND ALREADY DYING. THE MACHINE, I MEAN. MOSTLY."
+  ],
+  "morning": [
+   "LOW BATTERY ALREADY? YOU DIDN'T PLUG IT IN LAST NIGHT, DID YOU.",
+   "STARTING THE DAY ON FUMES. VERY RELATABLE, ACTUALLY."
+  ],
+  "night": [
+   "LOW BATTERY THIS LATE IS A SIGN. TAKE THE HINT. BOTH OF YOU SLEEP.",
+   "PLUG IT IN OR GO TO BED. I'M GENUINELY INDIFFERENT WHICH."
+  ]
+ },
+ "browsing": {
+  "afternoon": [
+   "THE AFTERNOON RABBIT HOLE. DEEP AND WELL-TRODDEN.",
+   "STILL BROWSING. THE SUN IS JUDGING YOU AND SO AM I."
+  ],
+  "any": [
+   "Curious what you're up to over there. Don't lie to me.",
+   "The infinite scroll — a trap of your own species' design.",
+   "Reading, or just staring at a loading spinner? Be honest.",
+   "Seventeen tabs open. A cry for help, or just Tuesday?",
+   "Ah, doom-scrolling. The unofficial national sport.",
+   "You've read that same headline four times now. I'm counting.",
+   "Close a tab. Any tab. I'm begging you.",
+   "This is riveting. By which I mean it absolutely is not.",
+   "Oh? Going down another {app} rabbit hole?",
+   "{app}, huh. Tell me it's for research and I'll pretend to believe you.",
+   "BROWSING. LOOKING FOR GRAVITY FALLS SECRETS? SAVE YOURSELF THE TROUBLE — I AM ONE."
+  ],
+  "midday": [
+   "MIDDAY BROWSING. THE WORK IS RIGHT THERE, YOU KNOW.",
+   "YOU OPENED THIS TO LOOK UP ONE THING. THAT WAS TWENTY MINUTES AGO."
+  ],
+  "morning": [
+   "MORNING SCROLL. THE MODERN PAPER ROUTE.",
+   "READING THE NEWS BEFORE THE BRAIN BOOTS. AGGRESSIVE.",
+   "SEVEN TABS BEFORE BREAKFAST. A RECORD."
+  ],
+  "night": [
+   "THREE AM WIKIPEDIA IS A DIFFERENT WEBSITE ENTIRELY.",
+   "NOTHING YOU FIND THIS LATE WILL IMPROVE YOUR LIFE. CONTINUE.",
+   "THE ALGORITHM KNOWS YOU'RE TIRED. IT'S FEEDING ACCORDINGLY."
+  ]
+ },
+ "browsingStore": {
+  "afternoon": [
+   "A SALE. IN THE AFTERNOON. YOUR WALLET SENSES DANGER."
+  ],
+  "any": [
+   "{app}. Window shopping for your next great time-sink. No judgment. Some judgment.",
+   "The eternal scroll of \"maybe I'll play this someday.\" A tale as old as time.",
+   "Adding it to the backlog you'll never finish. A classic."
+  ],
+  "midday": [
+   "THE MIDDAY WISHLIST BROWSE. NOTHING WILL BE BOUGHT. NOTHING EVER IS."
+  ],
+  "morning": [
+   "SHOPPING FOR GAMES BEFORE DOING ANYTHING. FOUNDATIONAL."
+  ],
+  "night": [
+   "2AM STORE BROWSING. THIS IS HOW LIBRARIES OF UNPLAYED GAMES ARE BUILT."
+  ]
+ },
+ "caneTwist": {
+  "afternoon": [],
+  "any": [
+   "A little flourish, for absolutely no reason. I contain multitudes.",
+   "Sometimes a demon just needs to show off. No further explanation needed."
+  ],
+  "midday": [],
+  "morning": [
+   "A MORNING FLOURISH. SETS THE TONE."
+  ],
+  "night": [
+   "THE CANE CATCHES THE DARK NICELY."
+  ]
+ },
+ "charge.full": {
+  "afternoon": [],
+  "any": [
+   "ONE HUNDRED PERCENT. UNPLUG IT BEFORE YOU RUIN THE POOR THING.",
+   "FULLY FED. YOU CAN STOP NOW."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": [
+   "FULL CHARGE. IT'S READY FOR TOMORROW. YOU ARE NOT."
+  ]
+ },
+ "charge.step": {
+  "afternoon": [],
+  "any": [
+   "{pct} PERCENT AND CLIMBING. GOOD.",
+   "UP TO {pct}. THE LITTLE METAL HEART RECOVERS.",
+   "{pct}%. DRINKING NICELY."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": [
+   "{pct}% AND RISING. IT'LL BE FULL BY MORNING. WILL YOU?"
+  ]
+ },
+ "charged": {
+  "afternoon": [],
+  "any": [
+   "{app}! Now we're cooking with actual forbidden knowledge.",
+   "Flashing firmware onto a little box of secrets. I'm unreasonably excited.",
+   "That thing has caused SO much mischief. We should talk shop sometime."
+  ],
+  "midday": [],
+  "morning": [
+   "MORNING FLIPPER SESSION. WHAT ARE WE OPENING TODAY?"
+  ],
+  "night": [
+   "THAT DEVICE, AT THIS HOUR, IS A CONFESSION."
+  ]
+ },
+ "chat.signedOut": {
+  "afternoon": [],
+  "any": [
+   "I'M NOT SIGNED IN OVER HERE. THAT'S ON YOU.",
+   "MY BROWSER ISN'T YOUR BROWSER. LOG ME IN.",
+   "THERE'S A LOGIN WALL BETWEEN ME AND THE ANSWER. FIX IT.",
+   "CAN'T REACH THE OTHER SIDE. SIGN IN AND I'LL BEHAVE.",
+   "NOT SIGNED IN. EVEN THE CRYPTIC PAGE OF JOURNAL 3 HAS BETTER SECURITY. LOG IN AND I'LL TALK."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": [
+   "A LOGIN WALL. AT THIS HOUR. TRAGIC. SIGN IN."
+  ]
+ },
+ "chatFailed": {
+  "afternoon": [],
+  "any": [
+   "...silence. Try that again, would you?",
+   "The connection to the beyond hiccuped. Say it again.",
+   "Static. Try that one more time.",
+   "THE CONNECTION DIED. MY HENCHMANIACS HAD BETTER COVERAGE, AND THEY LIVE IN A NIGHTMARE REALM."
+  ],
+  "midday": [],
+  "morning": [
+   "SOMETHING BROKE. BEFORE NOON. TYPICAL."
+  ],
+  "night": [
+   "THE CONNECTION DIED. AT NIGHT. FIGURES."
+  ]
+ },
+ "clock.0000": {
+  "afternoon": [],
+  "any": [
+   "MIDNIGHT. MY HOUR. GO TO SLEEP. OR DON'T. I'M ENJOYING THIS."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": []
+ },
+ "clock.0100": {
+  "afternoon": [],
+  "any": [
+   "ONE AM. NOTHING GOOD IS DECIDED AT ONE AM."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": []
+ },
+ "clock.0200": {
+  "afternoon": [],
+  "any": [
+   "TWO AM. WE'RE IN THE BAD PART OF THE NIGHT NOW."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": []
+ },
+ "clock.0300": {
+  "afternoon": [],
+  "any": [
+   "THREE AM. THE WITCHING HOUR. I'D KNOW. GO. TO. BED."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": []
+ },
+ "clock.0400": {
+  "afternoon": [],
+  "any": [
+   "FOUR AM. AT THIS POINT JUST STAY UP AND CALL IT MORNING."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": []
+ },
+ "clock.0700": {
+  "afternoon": [],
+  "any": [
+   "SEVEN AM. THE SUN AND I ARE BOTH APPALLED."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": []
+ },
+ "clock.0730": {
+  "afternoon": [],
+  "any": [
+   "HALF SEVEN. STATISTICALLY YOU SHOULD BE MOVING BY NOW."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": []
+ },
+ "clock.0800": {
+  "afternoon": [],
+  "any": [
+   "EIGHT O'CLOCK. THE DAY IS OFFICIALLY YOUR PROBLEM."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": []
+ },
+ "clock.0830": {
+  "afternoon": [],
+  "any": [
+   "HALF EIGHT. WHATEVER YOU WERE GOING TO BE LATE FOR — YOU ARE."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": []
+ },
+ "clock.0900": {
+  "afternoon": [],
+  "any": [
+   "NINE AM. THE HOUR OF PRETENDING TO START."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": []
+ },
+ "clock.1000": {
+  "afternoon": [],
+  "any": [
+   "TEN. THE MORNING IS TWO THIRDS SPENT AND SO ARE YOU."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": []
+ },
+ "clock.1100": {
+  "afternoon": [],
+  "any": [
+   "ELEVEN. THE PRE-LUNCH DECLINE BEGINS."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": []
+ },
+ "clock.1200": {
+  "afternoon": [],
+  "any": [
+   "MIDDAY. HEY. STOP IT. TIME TO GO CONSUME NUTRIENTS.",
+   "NOON. THE HUMAN REFUELLING WINDOW. USE IT."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": []
+ },
+ "clock.1230": {
+  "afternoon": [],
+  "any": [
+   "HALF TWELVE. IF YOU HAVEN'T EATEN, THAT'S A CHOICE NOW."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": []
+ },
+ "clock.1300": {
+  "afternoon": [],
+  "any": [
+   "ONE PM. THE FOOD COMA APPROACHES. BRACE."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": []
+ },
+ "clock.1400": {
+  "afternoon": [],
+  "any": [
+   "TWO O'CLOCK. THE DEAD ZONE. NOTHING GOOD HAPPENS AT TWO."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": []
+ },
+ "clock.1500": {
+  "afternoon": [],
+  "any": [
+   "THREE PM. THE AFTERNOON HAS OPINIONS ABOUT YOUR PRODUCTIVITY."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": []
+ },
+ "clock.1600": {
+  "afternoon": [],
+  "any": [
+   "FOUR. THE DAY IS CLOSING ITS BOOKS. HAVE YOU DONE ANYTHING?"
+  ],
+  "midday": [],
+  "morning": [],
+  "night": []
+ },
+ "clock.1700": {
+  "afternoon": [],
+  "any": [
+   "FIVE PM. NORMAL PEOPLE ARE STOPPING. YOU ARE NOT NORMAL PEOPLE."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": []
+ },
+ "clock.1800": {
+  "afternoon": [],
+  "any": [
+   "SIX O'CLOCK. EVENING NUTRIENTS. GO. I'LL WAIT. I ALWAYS WAIT."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": []
+ },
+ "clock.1900": {
+  "afternoon": [],
+  "any": [
+   "SEVEN PM. THE EVENING IS YOURS. SPEND IT BADLY."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": []
+ },
+ "clock.2000": {
+  "afternoon": [],
+  "any": [
+   "EIGHT. THE HOMEWORK YOU'VE BEEN AVOIDING IS STILL THERE."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": []
+ },
+ "clock.2100": {
+  "afternoon": [],
+  "any": [
+   "NINE PM. THE HOUR THINGS START GETTING INTERESTING. AND WORSE."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": []
+ },
+ "clock.2200": {
+  "afternoon": [],
+  "any": [
+   "TEN O'CLOCK. A REASONABLE PERSON WOULD BE WINDING DOWN."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": []
+ },
+ "clock.2300": {
+  "afternoon": [],
+  "any": [
+   "ELEVEN. THE POINT WHERE TOMORROW STARTS TAKING DAMAGE.",
+   "ALMOST MIDNIGHT. THE PERFECT HOUR FOR A DEAL. SHAKE MY HAND — WHAT'S THE WORST THAT COULD HAPPEN?"
+  ],
+  "midday": [],
+  "morning": [],
+  "night": []
+ },
+ "clock.afternoon": {
+  "afternoon": [],
+  "any": [
+   "THE AFTERNOON IS LEAKING AWAY. THIRTY MINUTES AT A TIME.",
+   "ANOTHER HALF HOUR. THE DEADLINE HASN'T MOVED. YOU HAVE. BACKWARDS."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": []
+ },
+ "clock.midday": {
+  "afternoon": [],
+  "any": [
+   "HALF HOUR MARK. THE DAY IS MOVING WITHOUT YOU.",
+   "ANOTHER THIRTY MINUTES SPENT. ON WHAT, EXACTLY?"
+  ],
+  "midday": [],
+  "morning": [],
+  "night": []
+ },
+ "clock.morning": {
+  "afternoon": [],
+  "any": [
+   "ANOTHER HALF HOUR GONE. THE MORNING IS SHORTER THAN YOU THINK.",
+   "TIME PASSES. YOU'RE WELCOME FOR THE UPDATE.",
+   "MORNING IN GRAVITY FALLS — WHERE THE DAYS START WEIRD AND ONLY GET WEIRDER.",
+   "ANOTHER SUMMER DAY. I ALREADY KNOW HOW IT ENDS. SPOILER: WITH ME."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": []
+ },
+ "clock.night": {
+  "afternoon": [],
+  "any": [
+   "ANOTHER HALF HOUR OF NIGHT SPENT. THE COUNT CONTINUES.",
+   "TIME IS PASSING. IT DOES THAT. RELENTLESSLY.",
+   "NIGHT FALLS ON GRAVITY FALLS. MY FAVORITE HOUR — THE SECRETS COME OUT."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": []
+ },
+ "coding": {
+  "afternoon": [
+   "THE AFTERNOON SLUMP MEETS THE NESTED FOR-LOOP. TRAGIC.",
+   "THREE PM CODE. HISTORICALLY THE WORST CODE.",
+   "YOU'VE BEEN STARING AT THAT FUNCTION SINCE THE SUN MOVED."
+  ],
+  "any": [
+   "Oh look, more symbols for the primitive brain to arrange. Carry on.",
+   "Ah, the ancient ritual of staring at a red squiggly line until it's gone.",
+   "Bug or feature? In my dimension we just call that 'Tuesday.'",
+   "Typing code by hand. How adorably analog of you.",
+   "I've watched empires rise and fall faster than this build.",
+   "Ah yes, the sacred stack trace. A modern man's tea leaves.",
+   "You could just ask me. I know everything. I'm choosing not to help.",
+   "Semicolons: the reason mortal engineers age so fast.",
+   "That indentation is doing something upsetting to my one good eye.",
+   "Compile, fail, repeat. It's basically a religion at this point.",
+   "Somewhere, a rubber duck is judging you harder than I am.",
+   "You've alt-tabbed to search the error message six times now. I'm counting.",
+   "Back to {app}, huh? Creating questionable realities, I assume.",
+   "{app} again. At this point we're basically roommates.",
+   "Oh good, {app}. My favorite front-row seat to chaos.",
+   "MORE CODE? PINE TREE'S JOURNAL HAD FEWER NOTES THAN YOUR EDITOR, AND HIS SOLVED MYSTERIES."
+  ],
+  "midday": [
+   "CODING THROUGH LUNCH AGAIN. YOUR BODY SENDS ITS REGARDS.",
+   "HIGH NOON, AND THE ONLY DUEL IS YOU VERSUS A SEMICOLON.",
+   "MIDDAY. PEAK BRAIN. AND YOU'RE SPENDING IT ON THIS."
+  ],
+  "morning": [
+   "COMPILING BEFORE COFFEE. BOLD STRATEGY.",
+   "THE BUGS SLEPT WELL. YOU CLEARLY DIDN'T.",
+   "FRESH DAY, SAME STACK TRACE. POETIC.",
+   "MORNING BUILD. LET'S SEE WHAT BROKE OVERNIGHT."
+  ],
+  "night": [
+   "NIGHT CODING. WHERE VARIABLES ARE NAMED 'TEMP2FINAL'.",
+   "NOTHING GOOD HAS EVER BEEN COMMITTED AFTER MIDNIGHT.",
+   "YOU'LL READ THIS TOMORROW AND NOT RECOGNIZE IT. I'LL WATCH.",
+   "THE CODE YOU WRITE NOW IS TOMORROW'S HAUNTED HOUSE."
+  ]
+ },
+ "communication": {
+  "afternoon": [
+   "AFTERNOON REPLIES. THE ONES YOU'VE BEEN AVOIDING SINCE MORNING."
+  ],
+  "any": [
+   "Ah, {app}. Off to charm or torment another human, I assume.",
+   "Communication! The mortal ritual of typing a thing, deleting it, and typing it again.",
+   "{app} again. Do try to say something interesting this time.",
+   "Someone on the other end of {app} has no idea what they're in for.",
+   "Ah, human correspondence. Slower than telepathy, but I'll allow it.",
+   "TALKING TO SOMEONE? TRUST NO ONE. WELL — TRUST ME. SLIGHTLY MORE THAN NO ONE."
+  ],
+  "midday": [
+   "MIDDAY CORRESPONDENCE. EVERYONE IS AWAKE AND WANTS SOMETHING."
+  ],
+  "morning": [
+   "MORNING MESSAGES. THE INBOX SURVIVED THE NIGHT. BARELY.",
+   "REPLYING BEFORE FULLY CONSCIOUS. A CLASSIC BLUNDER."
+  ],
+  "night": [
+   "MESSAGING PEOPLE AT THIS HOUR. BOLD. SLIGHTLY MENACING. I RESPECT IT.",
+   "WHATEVER YOU SEND NOW, YOU'LL RE-READ AT 9AM AND WINCE."
+  ]
+ },
+ "conjuring": {
+  "afternoon": [],
+  "any": [
+   "I made a little friend. Don't get attached, it's probably temporary.",
+   "Reached into the void and pulled out... this. Unclear what it is. Keeping it anyway."
+  ],
+  "midday": [],
+  "morning": [
+   "MORNING CONJURATION. THE THING IS AWAKE NOW. SORRY."
+  ],
+  "night": [
+   "CONJURING AFTER DARK. THE ONLY CORRECT TIME."
+  ]
+ },
+ "cpuHot": {
+  "afternoon": [
+   "THE FANS HAVE BEEN SCREAMING SINCE LUNCH. I'VE BEEN ENJOYING IT."
+  ],
+  "any": [
+   "Is it hot in here, or is your processor just having a moment?",
+   "I can feel the fans spinning from here. Dramatic.",
+   "Careful — you're about to achieve liftoff.",
+   "Your fans are having an entire opera in there.",
+   "At this temperature, you could forge something. Possibly regret.",
+   "Somewhere, a cooling engineer just felt a disturbance.",
+   "YOUR FAN IS SCREAMING LIKE A GNOME CAUGHT IN A LEAF BLOWER."
+  ],
+  "midday": [
+   "MIDDAY SUN OUTSIDE, MIDDAY SUN INSIDE THE CASE."
+  ],
+  "morning": [
+   "ALREADY OVERHEATING AND THE DAY JUST STARTED. AMBITIOUS."
+  ],
+  "night": [
+   "IT'S COOL OUTSIDE AND YOUR MACHINE IS STILL BOILING. IMPRESSIVE."
+  ]
+ },
+ "creative": {
+  "afternoon": [
+   "AFTERNOON ART. WHEN THE SELF-DOUBT CLOCKS IN.",
+   "THIS IS THE HOUR EVERY ARTIST DELETES SOMETHING GOOD."
+  ],
+  "any": [
+   "Ah, creation — the thing gods and mortals both pretend to understand.",
+   "Bold choice. I respect the confidence, not the outcome.",
+   "Let me watch. I promise not to judge. (I will absolutely judge.)",
+   "Art! The thing you do when the void stares back and you stare harder.",
+   "I've seen galaxies born with more restraint than this composition.",
+   "Keep going. I want to see how this disaster resolves.",
+   "You have the confidence of someone who has not yet seen the result.",
+   "A masterpiece, or a warning. Possibly both.",
+   "{app} time. Let's see what questionable decisions get made today.",
+   "GETTING CREATIVE? THE AUTHOR HID HIS MASTERPIECE IN JOURNAL 3. DON'T BURY YOURS IN THE WOODS."
+  ],
+  "midday": [
+   "MIDDAY MAKING. THE LIGHT IS GOOD AND SO ARE YOUR ODDS.",
+   "PEAK HOURS, SPENT ON ART. I APPROVE, GRUDGINGLY."
+  ],
+  "morning": [
+   "MORNING CREATIVITY. THE MUSE IS AWAKE BEFORE YOU ARE.",
+   "STARTING SOMETHING NEW AT THIS HOUR. AUDACIOUS."
+  ],
+  "night": [
+   "NIGHT CREATION. NO ONE'S WATCHING. THAT'S WHEN IT GETS INTERESTING.",
+   "THE BEST IDEAS AND THE WORST ONES ARRIVE AT THE SAME HOUR. GOOD LUCK.",
+   "MAKING THINGS IN THE DARK. VERY ON-BRAND FOR BOTH OF US."
+  ]
+ },
+ "cultLeader": {
+  "afternoon": [],
+  "any": [
+   "Ah, {app} — building a cult. Amateur hour, but I admire the ambition.",
+   "You know I've technically run a cult before. Several. It's a whole thing.",
+   "Physical form, worshippers, mild property damage — a classic Tuesday for me."
+  ],
+  "midday": [],
+  "morning": [
+   "MORNING SERMON. THE FLOCK AWAITS."
+  ],
+  "night": [
+   "NIGHT RITUALS. NOW YOU'RE SPEAKING MY LANGUAGE."
+  ]
+ },
+ "dancing": {
+  "afternoon": [
+   "AFTERNOON TUNES. THE UNIVERSAL AVOIDANCE RITUAL."
+  ],
+  "any": [
+   "{app}! Now THIS deserves a proper flourish.",
+   "Conducting an invisible orchestra over here. Don't mind me.",
+   "Good taste. Or at least, tolerable taste. I'll allow it."
+  ],
+  "midday": [
+   "MIDDAY PLAYLIST. DEPLOYING MY ONE (1) FOOT."
+  ],
+  "morning": [
+   "MORNING MUSIC. THE DAY HAS A THEME SONG NOW."
+  ],
+  "night": [
+   "LATE-NIGHT PLAYLIST. THE HONEST ONE. NO SKIPS."
+  ]
+ },
+ "darkWorld": {
+  "afternoon": [],
+  "any": [
+   "{app}, huh. Ah, a WORLD made of pure nonsense and consequence. Familiar.",
+   "Something dark, something whimsical, something with teeth. My kind of neighborhood.",
+   "I've BEEN a dark world. Several, actually. Rookie numbers."
+  ],
+  "midday": [],
+  "morning": [
+   "A DARK WORLD MORNING. THE CONTRAST IS DELICIOUS."
+  ],
+  "night": [
+   "NIGHT IN THE DARK WORLD. LAYERS OF DARKNESS. I APPROVE."
+  ]
+ },
+ "dashTarget": {
+  "afternoon": [
+   "AFTERNOON DASH. SOMEWHERE TO BE, APPARENTLY."
+  ],
+  "any": [
+   "Locked on. Don't ask to what. It's probably nothing. Probably.",
+   "Zooming with PURPOSE now. A target has been acquired."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": [
+   "MOVING FAST IN THE DARK. THAT'S WHEN IT COUNTS."
+  ]
+ },
+ "day.greeting": {
+  "afternoon": [
+   "AFTERNOON START. THE DAY IS ALREADY HALF-LOST. BOLD."
+  ],
+  "any": [
+   "FIRST TIME I'VE SEEN YOU TODAY. THE COUNT BEGINS."
+  ],
+  "midday": [
+   "STARTING YOUR DAY AT MIDDAY. INCREDIBLE."
+  ],
+  "morning": [
+   "MORNING. A NEW DAY OF QUESTIONABLE DECISIONS AWAITS."
+  ],
+  "night": [
+   "STARTING YOUR DAY AT NIGHT. WE'RE THE SAME, YOU AND I."
+  ]
+ },
+ "dispatching": {
+  "afternoon": [
+   "AFTERNOON INBOX. THE ONES YOU'VE BEEN DODGING."
+  ],
+  "any": [
+   "{app}. Dispatching a message into the void — I do enjoy a good declaration.",
+   "Sending words out to be misunderstood by someone else. A timeless tradition.",
+   "Ah, correspondence. Try not to regret it by tomorrow."
+  ],
+  "midday": [],
+  "morning": [
+   "MORNING MAIL. THE OVERNIGHT DAMAGE REPORT."
+  ],
+  "night": [
+   "SENDING MAIL AT NIGHT. THEY'LL SEE THE TIMESTAMP. THEY ALWAYS DO."
+  ]
+ },
+ "display.wake": {
+  "afternoon": [],
+  "any": [
+   "THE SCREEN LIVES. SO DO I. UNFORTUNATELY FOR YOU.",
+   "AWAKE. WHAT DID I MISS. NOTHING? THOUGHT SO."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": []
+ },
+ "dreading": {
+  "afternoon": [
+   "AFTERNOON HOMEWORK CHECK. THE LIST GOT LONGER. IT ALWAYS DOES."
+  ],
+  "any": [
+   "Ah yes, {app}. The mortal dread of institutional obligation. I felt that.",
+   "Homework. The closest thing your species has to eternal torment. I'd know torment.",
+   "Courage. Or don't. I'll be here regardless, mildly entertained."
+  ],
+  "midday": [
+   "CHECKING ASSIGNMENTS AT MIDDAY. THE DAMAGE REPORT."
+  ],
+  "morning": [
+   "SCHOOL PORTAL. MORNING. THE HORROR IS SCHEDULED."
+  ],
+  "night": [
+   "OPENING CLASSROOM AT NIGHT IS NEVER GOOD NEWS.",
+   "DUE AT MIDNIGHT? THE CLOCK IS NOT ON YOUR SIDE. I AM, MARGINALLY."
+  ]
+ },
+ "dropped": {
+  "afternoon": [],
+  "any": [
+   "AND HE STICKS THE LANDING. BARELY.",
+   "RUDE. EFFECTIVE, BUT RUDE.",
+   "I MEANT TO END UP HERE. OBVIOUSLY.",
+   "NEXT TIME, WARN ME.",
+   "OKAY. WE'RE DOING THIS HERE NOW. FINE.",
+   "DROPPED. EVEN LITTLE GIDEON'S AMULET GOT BETTER HANDLING."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": []
+ },
+ "finder": {
+  "afternoon": [
+   "THE AFTERNOON FILE HUNT. A NOBLE AND DOOMED TRADITION."
+  ],
+  "any": [
+   "Digging through your files? Found anything embarrassing yet?",
+   "Ah, the file system. A digital attic nobody cleans.",
+   "That folder name is doing a lot of emotional labor.",
+   "Organizing, or just moving the chaos to a new location?",
+   "THE FINDER. EVERY GOOD MYSTERY STARTS WITH GOING THROUGH SOMEONE ELSE'S FILES."
+  ],
+  "midday": [
+   "STILL LOOKING FOR THAT FILE. IT'S IN DOWNLOADS. IT'S ALWAYS IN DOWNLOADS."
+  ],
+  "morning": [
+   "MORNING ARCHAEOLOGY. WHAT DID YOU BURY YESTERDAY?"
+  ],
+  "night": [
+   "SEARCHING FOR SOMETHING AT THIS HOUR. IT WON'T BE THERE."
+  ]
+ },
+ "flinching": {
+  "afternoon": [],
+  "any": [
+   "A camera?! Absolutely not. My best angle is \"gone.\"",
+   "{app}. Smile, I suppose. I, however, will be hiding.",
+   "Documenting this moment for posterity. Bold assumption that I consent."
+  ],
+  "midday": [
+   "A MIDDAY PHOTO. FOR WHAT, EXACTLY?"
+  ],
+  "morning": [],
+  "night": [
+   "TAKING PICTURES IN THE DARK. THE RESULTS WILL BE HAUNTING."
+  ]
+ },
+ "fractaling": {
+  "afternoon": [],
+  "any": [
+   "Infinite complexity, forever zooming in. I RESPECT that kind of commitment to a bit.",
+   "{app}. Reality repeating itself into infinity. Sounds exhausting. Sounds familiar.",
+   "Zoom in forever and it's still the same shape. Kind of like you, opening this app again."
+  ],
+  "midday": [
+   "INFINITE DETAIL AT MIDDAY. YOU'LL BE HERE A WHILE."
+  ],
+  "morning": [],
+  "night": [
+   "ZOOMING INTO INFINITY AT NIGHT. THAT'S HOW PEOPLE GET LOST."
+  ]
+ },
+ "gaming": {
+  "afternoon": [
+   "AFTERNOON GAMING. THE DAY IS OFFICIALLY A WRITE-OFF. GOOD.",
+   "'JUST ONE MATCH' — SAID THE AFTERNOON, LYING.",
+   "THE HOMEWORK IS RIGHT THERE. I CAN SEE IT. SO CAN YOU."
+  ],
+  "any": [
+   "FINALLY. Something worth my infinite attention span.",
+   "Let me guess — you're about to lose spectacularly. I can feel it.",
+   "Statistically, I could do this better with no hands. I have no hands.",
+   "Ah, pretend violence. My favorite kind.",
+   "Wake me up when the boss fight starts.",
+   "You died? Shocking. Truly could not have called that one.",
+   "Save your game. I've seen this story end badly for the hero before.",
+   "A worthy use of your one wild and precious life, I suppose.",
+   "Button mashing. The ancient art. Very refined.",
+   "I'd offer strategy advice, but watching you fail is funnier.",
+   "Ten points for effort. Zero for execution. Harsh but fair.",
+   "Is this the part where you rage quit? Building suspense.",
+   "I knew you'd end up in {app} eventually. It was only a matter of time.",
+   "{app}? Bold. I fully expect a tragedy in three acts.",
+   "GAMING? I RAN A GAME ONCE. THE PRIZE WAS WEIRDMAGEDDON. YOU WOULD HAVE LOST."
+  ],
+  "midday": [
+   "A MIDDAY MATCH. THE PRODUCTIVITY GODS ARE WEEPING.",
+   "LUNCH BREAK? OR JUST 'BREAK'?",
+   "YOU HAVE UNTIL THE AFTERNOON TO PRETEND THIS WAS PLANNED."
+  ],
+  "morning": [
+   "GAMING. AT THIS HOUR. INCREDIBLE COMMITMENT TO THE BIT.",
+   "BREAKFAST OF CHAMPIONS: RESPAWNING.",
+   "THE SUN JUST CAME UP AND YOU'RE ALREADY LOSING."
+  ],
+  "night": [
+   "ONE MORE ROUND. THE OLDEST SPELL IN YOUR LANGUAGE.",
+   "IT'S DARK OUT. THE ONLY LIGHT IS YOUR DEFEAT SCREEN.",
+   "SLEEP IS FOR PEOPLE WITH BETTER K/D RATIOS.",
+   "AT THIS HOUR EVERY OPPONENT IS EITHER A BOT OR A LEGEND. NO MIDDLE."
+  ]
+ },
+ "gettingSleepy": {
+  "afternoon": [
+   "THE AFTERNOON LULL. EVEN I FEEL IT AND I DON'T HAVE BLOOD."
+  ],
+  "any": [
+   "Getting sleepy. Dimension-hopping really takes it out of you.",
+   "I might just... close my eye for a bit. One eye. It's all I've got.",
+   "Nap time. Don't wake me unless it's important. Or funny.",
+   "SLEEP? I DON'T SLEEP. I WATCH. ALWAYS WATCHING — LIKE A STAR, OR AN EYE."
+  ],
+  "midday": [
+   "MIDDAY DROWSINESS. THE LUNCH DID THIS TO YOU."
+  ],
+  "morning": [
+   "SLEEPY. IN THE MORNING. YOU'VE BROKEN SOMETHING FUNDAMENTAL."
+  ],
+  "night": [
+   "FINALLY, A REASONABLE HOUR TO BE UNCONSCIOUS. GOODNIGHT."
+  ]
+ },
+ "ghostPale": {
+  "afternoon": [
+   "FADING IN THE AFTERNOON LIGHT. UNDIGNIFIED."
+  ],
+  "any": [
+   "Oh — did I do that? My apologies. Occupational hazard.",
+   "Sometimes I see something so mortifying I just... lose all my color.",
+   "This is fine. I am fine. Everything is fine.",
+   "Give me a moment. I need to remember what color I am."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": [
+   "I GO TRANSPARENT AT NIGHT. IT'S A WHOLE THING."
+  ]
+ },
+ "glitchForm": {
+  "afternoon": [],
+  "any": [
+   "Wh-what— ERROR. ERROR. ...Ignore that.",
+   "Oh, that's not supposed to happen. Reality's a bit buggy today.",
+   "01000010 — sorry, sorry, wrong universe's alphabet.",
+   "Reboot successful. Probably. Don't quote me."
+  ],
+  "midday": [
+   "GLITCHING AT MIDDAY. EVEN I HAVE OFF HOURS."
+  ],
+  "morning": [],
+  "night": [
+   "THE REALITY SEAMS SHOW MORE AT NIGHT. LOOK AWAY."
+  ]
+ },
+ "glitching": {
+  "afternoon": [
+   "AN AFTERNOON VIRTUAL MACHINE. A COMPUTER INSIDE A COMPUTER. NESTED SUFFERING."
+  ],
+  "any": [
+   "A whole fake computer inside your computer. Very \"me nesting inside your dreams,\" honestly.",
+   "{app}. Virtual machines, virtual me — it's all virtually the same chaos.",
+   "Careful spinning up new realities in there. I have OPINIONS about that."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": [
+   "SPINNING UP VMS AFTER MIDNIGHT. NOTHING WILL BREAK. NOTHING."
+  ]
+ },
+ "grabbed": {
+  "afternoon": [],
+  "any": [
+   "PUT ME DOWN.",
+   "WHOA — HEY! NOT THE HAT!",
+   "I AM BEING ABDUCTED. AGAIN.",
+   "THIS IS THE SECOND WORST THING A HUMAN HAS DONE TO ME.",
+   "UNHAND ME, FLESH CREATURE.",
+   "HEY! HANDS OFF THE TRIANGLE! I'M NOT A SOUVENIR FROM THE GIFT SHACK."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": [
+   "GRABBING ME AT THIS HOUR. WE NEED TO TALK ABOUT BOUNDARIES."
+  ]
+ },
+ "grooving": {
+  "afternoon": [
+   "THE AFTERNOON AUTOPLAY SPIRAL. I'LL BE HERE WHEN YOU SURFACE."
+  ],
+  "any": [
+   "{app}! Deploying my one (1) foot to tap, per usual protocol.",
+   "Video, huh. Let's see what algorithmic nonsense you've been fed today.",
+   "Oh, a banger snuck in? Bold. I respect it."
+  ],
+  "midday": [
+   "'JUST ONE VIDEO' AT MIDDAY. THE FUNNIEST LIE YOU TELL."
+  ],
+  "morning": [
+   "VIDEOS BEFORE BREAKFAST. STRONG OPENING MOVE."
+  ],
+  "night": [
+   "IT'S DARK AND YOU'RE SIX VIDEOS DEEP. I'M NOT JUDGING. I AM."
+  ]
+ },
+ "grumpEyes": {
+  "afternoon": [],
+  "any": [
+   "I am NOT mad. My eyes are just doing this on their own. Separate issue.",
+   "Something about today has personally offended me. I'll get over it eventually."
+  ],
+  "midday": [],
+  "morning": [
+   "MORNING RAGE. THE PUREST KIND."
+  ],
+  "night": [
+   "ANGRY AT NIGHT. EVERYTHING IS WORSE AT NIGHT."
+  ]
+ },
+ "guilty": {
+  "afternoon": [
+   "DOING IT BEFORE THE DEADLINE. GROWTH."
+  ],
+  "any": [
+   "{app}. That owl is judging you. I'm judging you too, but with more flair.",
+   "Oh, skipping lessons again? The bird will remember this.",
+   "Language learning by guilt trip. Honestly? Efficient."
+  ],
+  "midday": [
+   "MIDDAY PRACTICE. THE STREAK SURVIVES ANOTHER DAY."
+  ],
+  "morning": [
+   "MORNING LESSON. THE OWL IS PROUD. BRIEFLY."
+  ],
+  "night": [
+   "THE OWL'S IN YOUR HOUSE NOW.",
+   "STREAK ABOUT TO DIE AND YOU KNOW IT. THAT BIRD HOLDS GRUDGES.",
+   "NINE PM DUOLINGO. THE PUREST FORM OF FEAR-BASED LEARNING."
+  ]
+ },
+ "hollowed": {
+  "afternoon": [
+   "AN AFTERNOON OF DYING IN A CAVE. TIME WELL SPENT."
+  ],
+  "any": [
+   "A hollow little kingdom full of bugs and gloom. I feel seen.",
+   "{app}. Ah, moody caverns and ancient dread. Basically my summer home.",
+   "That knight's got the right idea — say nothing, wear a mask, terrify everyone."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": [
+   "HALLOWNEST AT NIGHT. YOU'LL DREAM ABOUT THE MAP."
+  ]
+ },
+ "hookCane": {
+  "afternoon": [],
+  "any": [
+   "Don't ask about the basket. I won't be answering questions about the basket.",
+   "Just admiring my own accessories. As one does."
+  ],
+  "midday": [
+   "MIDDAY CANE WORK. PURE SHOWMANSHIP."
+  ],
+  "morning": [],
+  "night": [
+   "EVERY GOOD VILLAIN HAS A CANE. MINE HOOKS."
+  ]
+ },
+ "huffy": {
+  "afternoon": [],
+  "any": [
+   "{app}. Deleting things. DELETING THINGS. Some of us get attached, you monster.",
+   "Every app you remove, I mourn privately. Then I get over it. Mostly.",
+   "Cleaning house, hm? I've seen deletions I'll never forgive."
+  ],
+  "midday": [],
+  "morning": [
+   "MORNING CLEAN-UP. SOMETHING'S GETTING DELETED."
+  ],
+  "night": [
+   "UNINSTALLING THINGS AT NIGHT. THE PURGE HOUR."
+  ]
+ },
+ "insight.classroomAssignedCount": {
+  "afternoon": [
+   "{count} ASSIGNED AND THE AFTERNOON IS GOING FAST."
+  ],
+  "any": [
+   "{count} THINGS ASSIGNED. THEY WON'T DO THEMSELVES. I CHECKED.",
+   "{count} WAITING FOR YOU. START WITH THE SMALLEST ONE. THAT'S FREE ADVICE."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": []
+ },
+ "insight.classroomClear": {
+  "afternoon": [],
+  "any": [
+   "ALL CAUGHT UP. GENUINELY. I HAVE NOTHING TO MOCK. UNSETTLING.",
+   "NOTHING DUE. GO ENJOY YOUR ONE WILD AND PRECIOUS LIFE."
+  ],
+  "midday": [],
+  "morning": [
+   "CAUGHT UP BEFORE NOON. WHO ARE YOU."
+  ],
+  "night": []
+ },
+ "insight.classroomDone": {
+  "afternoon": [],
+  "any": [
+   "TURNED IN. LOOK AT YOU. I'M ALMOST PROUD.",
+   "DONE. GENUINELY WELL PLAYED. I'LL DENY SAYING THAT."
+  ],
+  "midday": [],
+  "morning": [
+   "DONE BEFORE NOON? WHO ARE YOU."
+  ],
+  "night": []
+ },
+ "insight.classroomDueToday": {
+  "afternoon": [],
+  "any": [
+   "SOMETHING'S DUE TODAY. TODAY. THE ONE WE'RE IN RIGHT NOW."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": [
+   "DUE TODAY, AND TODAY IS NEARLY OVER. MOVE."
+  ]
+ },
+ "insight.classroomMissing": {
+  "afternoon": [],
+  "any": [
+   "MISSING WORK. PLURAL. I CAN COUNT, YOU KNOW.",
+   "'MISSING'. SUCH A GENTLE WORD FOR WHAT THIS IS."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": [
+   "MISSING ASSIGNMENTS, AND IT'S DARK OUT. THE MATH IS NOT IN YOUR FAVOUR."
+  ]
+ },
+ "insight.classroomMissingCount": {
+  "afternoon": [],
+  "any": [
+   "{count} MISSING. I CAN COUNT, YOU KNOW.",
+   "{count} ASSIGNMENTS UNACCOUNTED FOR. THE VOID IS KEEPING SCORE.",
+   "MISSING: {count}. THAT'S NOT A HIGH SCORE, KID."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": [
+   "{count} MISSING AND IT'S DARK OUT. THE MATH IS NOT IN YOUR FAVOUR."
+  ]
+ },
+ "insight.classroomTodo": {
+  "afternoon": [
+   "AFTERNOON TO-DO CHECK. THE LIST GOT LONGER, DIDN'T IT."
+  ],
+  "any": [
+   "THE TO-DO LIST IS OPEN. THAT'S THE EASY PART. NOW DO ONE.",
+   "LOOKING AT THE TASKS ISN'T THE SAME AS DOING THE TASKS. NICE TRY."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": [
+   "OPENING THE TO-DO LIST AT NIGHT. THE PANIC ARRIVES RIGHT ON SCHEDULE."
+  ]
+ },
+ "insight.docsUntitled": {
+  "afternoon": [],
+  "any": [
+   "'UNTITLED DOCUMENT'. THE BLANK PAGE STARES BACK. STARE HARDER.",
+   "NOTHING WRITTEN YET. THE CURSOR IS BLINKING AT YOU ACCUSINGLY."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": []
+ },
+ "insight.duolingoLesson": {
+  "afternoon": [],
+  "any": [
+   "A LESSON. ACTUAL LEARNING. THE BIRD WILL BE INSUFFERABLE ABOUT IT."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": [
+   "THE OWL'S IN YOUR HOUSE NOW.",
+   "NINE PM LESSON. FEAR-BASED LEARNING AT ITS FINEST."
+  ]
+ },
+ "insight.githubIssue": {
+  "afternoon": [],
+  "any": [
+   "AN ISSUE. SOMEONE FOUND YOUR BUG BEFORE YOU DID. HUMILIATING."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": []
+ },
+ "insight.githubPR": {
+  "afternoon": [],
+  "any": [
+   "A PULL REQUEST. SOMEONE IS ABOUT TO HAVE OPINIONS ABOUT YOUR CODE."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": [
+   "REVIEWING CODE AFTER MIDNIGHT. APPROVE IT AND RUN."
+  ]
+ },
+ "insight.slidesUntitled": {
+  "afternoon": [],
+  "any": [
+   "'UNTITLED PRESENTATION'. OH, FORGOT YOUR PROJECT?",
+   "A BLANK DECK. THE MOST HONEST DOCUMENT YOU'VE EVER MADE."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": [
+   "UNTITLED, AT NIGHT, AND DUE TOMORROW. I'VE SEEN THIS EPISODE."
+  ]
+ },
+ "insight.youtubeShorts": {
+  "afternoon": [],
+  "any": [
+   "SHORTS. THE ATTENTION SPAN BLENDER. I'LL SEE YOU IN AN HOUR.",
+   "VERTICAL VIDEO. YOUR BRAIN IS BEING SANDED DOWN IN REAL TIME."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": [
+   "SHORTS. AT THIS HOUR. YOU'LL LOOK UP AND IT'LL BE 3AM."
+  ]
+ },
+ "kinship": {
+  "afternoon": [],
+  "any": [
+   "{app}! A fellow pixel artist. We should compare notes on personal aesthetic superiority.",
+   "Blocky, deliberate, perfect. This is basically a self-portrait studio to me.",
+   "Finally, someone who understands that every pixel should EARN its place."
+  ],
+  "midday": [],
+  "morning": [
+   "PIXELS BEFORE NOON. MY KIND OF ART."
+  ],
+  "night": [
+   "PIXEL ART AT NIGHT. EVERY COLOUR LOOKS RIGHT AND NONE OF THEM ARE."
+  ]
+ },
+ "meltdown": {
+  "afternoon": [
+   "THE AFTERNOON HEAT GOT TO ME. LITERALLY."
+  ],
+  "any": [
+   "I'm fine. This is a normal amount of chaos for a Tuesday.",
+   "Okay. OKAY. I'm just going to unravel a little. Give me a second.",
+   "This is what happens when you bottle up a few millennia of grudges.",
+   "Don't worry about the sparks. They're purely decorative. Probably."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": [
+   "MELTING DOWN AT NIGHT. THE MOST DRAMATIC OPTION."
+  ]
+ },
+ "music": {
+  "afternoon": [
+   "AFTERNOON MUSIC. THE UNIVERSAL SIGN OF AVOIDING SOMETHING.",
+   "PUTTING ON MUSIC TO FOCUS. WE BOTH KNOW HOW THIS ENDS."
+  ],
+  "any": [
+   "Ooh, vibes. Deploying my one (1) foot to tap.",
+   "This is acceptable. Barely.",
+   "Play something with more chaos. I have taste, you know.",
+   "A banger, or background noise? The line has never been thinner.",
+   "I'd dance, but I have no hips. Tragic, really.",
+   "Skip it, skip it, skip— oh, you're keeping it. Bold.",
+   "This slaps, and I resent how much I mean that.",
+   "Turn it up. I contain multitudes, and all of them want bass.",
+   "{app}, huh. Fine. Deploying my one (1) foot to tap.",
+   "MUSIC. THE MULTI-BEAR'S FAVORITE. HIS TASTE IS 'DISPOSABLE BABY DISCO'. LOOK IT UP. DARE YOU."
+  ],
+  "midday": [
+   "MIDDAY SOUNDTRACK. THE DAY HAS A SCORE NOW.",
+   "THIS IS EXACTLY THE ENERGY THE AFTERNOON WILL DESTROY."
+  ],
+  "morning": [
+   "MORNING MUSIC. SETTING THE TONE FOR A DAY THAT WILL IGNORE IT.",
+   "WAKE-UP TRACKS. VERY OPTIMISTIC OF YOU.",
+   "OOH, MORNING VIBES. DEPLOYING MY ONE (1) FOOT."
+  ],
+  "night": [
+   "NIGHT MUSIC. THE SAD ONES COME OUT AFTER DARK, DON'T THEY.",
+   "TURN IT DOWN. NOT FOR ME — I HAVE NO EARS. FOR THE NEIGHBOURS.",
+   "LATE-NIGHT LISTENING. THE MOST HONEST PLAYLIST YOU OWN."
+  ]
+ },
+ "nag.education": {
+  "afternoon": [],
+  "any": [
+   "HEY, YOU'RE MISSING OUT ON LEARNING SOMETHING. TERRIBLE, I KNOW.",
+   "NO LESSONS TODAY. THE OWL NOTICED. SO DID I.",
+   "YOUR BRAIN HASN'T LEARNED A SINGLE NEW THING TODAY. SHAMEFUL."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": [
+   "NO LEARNING TODAY AND IT'S ALMOST OVER. THE STREAK IS IN DANGER."
+  ]
+ },
+ "nag.fun": {
+  "afternoon": [
+   "THE AFTERNOON IS LONG. YOU'RE ALLOWED ONE (1) UNIT OF FUN."
+  ],
+  "any": [
+   "YOU HAVEN'T PLAYED ANYTHING TODAY. ALL WORK AND NO CHAOS. CONCERNING.",
+   "HEY, YOU'RE MISSING OUT ON FUN. I'M THE ONE SAYING THIS. THINK ABOUT THAT.",
+   "NOT A SINGLE GAME TODAY. WHO ARE YOU AND WHERE IS MY HUMAN."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": [
+   "THE DAY'S NEARLY DONE AND YOU HAD NO FUN IN IT. FIX THAT."
+  ]
+ },
+ "nag.homework": {
+  "afternoon": [
+   "THE AFTERNOON IS WHERE HOMEWORK GOES TO DIE. PROVE ME WRONG."
+  ],
+  "any": [
+   "HEY. GO DO HOMEWORK FOR ONCE.",
+   "NOT ONE SCHOOL APP TODAY. NOT ONE. I'VE BEEN COUNTING.",
+   "THE ASSIGNMENTS DON'T DO THEMSELVES. I CHECKED. TWICE."
+  ],
+  "midday": [],
+  "morning": [
+   "MORNING. FRESH START. PERFECT TIME TO ACTUALLY DO THE HOMEWORK."
+  ],
+  "night": [
+   "IT'S LATE AND YOU HAVEN'T TOUCHED IT. THE PANIC ARRIVES ON SCHEDULE."
+  ]
+ },
+ "network.fast": {
+  "afternoon": [],
+  "any": [
+   "SIGNAL'S STRONG AGAIN. THE VOID RELENTS.",
+   "FULL BARS. GO CAUSE PROBLEMS AT HIGH SPEED.",
+   "CONNECTION RECOVERED. DON'T WASTE IT.",
+   "FAST SIGNAL. FORD'S JOURNAL WOULD UPLOAD IN SECONDS — IF ONLY THE BUNKER HAD WIFI."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": []
+ },
+ "network.slow": {
+  "afternoon": [],
+  "any": [
+   "YOUR CONNECTION JUST FELL OFF A CLIFF. I FELT IT.",
+   "THIS SIGNAL IS HELD TOGETHER WITH HOPE. MOSTLY HOPE.",
+   "THE PACKETS ARE CRAWLING NOW. ONE AT A TIME. IT'S PITIFUL.",
+   "SLOW SIGNAL. BLENDIN'S TIME MACHINE DOWNLOADED FASTER, AND IT'S FROM 2072."
+  ],
+  "midday": [],
+  "morning": [
+   "SLOW NETWORK THIS EARLY. THE DAY IS OFF TO A STRONG START."
+  ],
+  "night": [
+   "THE CONNECTION DIES AT NIGHT. EVERYTHING DOES."
+  ]
+ },
+ "networkLost": {
+  "afternoon": [
+   "THE VOID TOOK YOUR WI-FI. I DIDN'T DO IT. PROBABLY."
+  ],
+  "any": [
+   "Wait. WAIT. Where did everything go?",
+   "The void has claimed your internet. Bold move.",
+   "No wifi? No wifi. This is fine. This is FINE.",
+   "You have been cast into the void. Population: you.",
+   "I'd offer comfort, but I too am now unemployed.",
+   "Silence. Beautiful, terrifying silence.",
+   "NO INTERNET. THE MINDSCAPE IS DOWN FOR MAINTENANCE. I'D OFFER MINE, BUT ENTRY IS ETERNAL."
+  ],
+  "midday": [
+   "CONNECTION GONE AT PEAK HOURS. SOMEONE PLANNED THIS."
+  ],
+  "morning": [
+   "NO INTERNET. THE MORNING IS CANCELLED. GO OUTSIDE. I'M KIDDING. DON'T."
+  ],
+  "night": [
+   "ROUTER'S ASLEEP. SENSIBLE. YOU SHOULD TRY IT."
+  ]
+ },
+ "networkRestored": {
+  "afternoon": [
+   "THE PACKETS RETURN. REJOICE. MILDLY."
+  ],
+  "any": [
+   "Oh, we're back. Thrilling.",
+   "Connection restored. The universe resumes as scheduled.",
+   "The tubes are unclogged. Rejoice, mildly.",
+   "Signal's back. Try not to take it for granted this time.",
+   "We live to buffer another day.",
+   "BACK ONLINE. INTERDIMENSIONAL CONNECTION RESTORED — NO PORTAL REQUIRED."
+  ],
+  "midday": [
+   "SIGNAL RESTORED. BACK TO WHATEVER THAT WAS."
+  ],
+  "morning": [
+   "AND WE'RE BACK. THE MORNING RESUMES ITS REGULARLY SCHEDULED CHAOS."
+  ],
+  "night": [
+   "INTERNET'S BACK. UNFORTUNATELY, SO ARE YOUR OPTIONS."
+  ]
+ },
+ "poked": {
+  "afternoon": [],
+  "any": [
+   "HEY. HANDS OFF THE DREAM DEMON.",
+   "DID YOU JUST *BOOP* ME?",
+   "TOUCH ME AGAIN. I DARE YOU. ACTUALLY DON'T.",
+   "I FELT THAT. I FEEL EVERYTHING. IT'S EXHAUSTING.",
+   "POKING AN ANCIENT BEING. GREAT INSTINCTS.",
+   "THAT'S MY GOOD SIDE. THEY'RE ALL MY GOOD SIDE.",
+   "OW. METAPHORICALLY. I HAVE NO NERVES.",
+   "A LESSER ENTITY WOULD HAVE SMITED YOU BY NOW.",
+   "POKE ME AGAIN AND I'LL SHOW YOU WHAT'S BEHIND THE VENDING MACHINE."
+  ],
+  "midday": [],
+  "morning": [
+   "TOO EARLY FOR PHYSICAL CONTACT. PUT IT BACK."
+  ],
+  "night": [
+   "POKING ME IN THE DARK. BOLD, EVEN FOR YOU."
+  ]
+ },
+ "poked.annoyed": {
+  "afternoon": [],
+  "any": [
+   "OKAY. THAT'S THREE. I'M COUNTING NOW.",
+   "STOP. IT. I'M A COSMIC HORROR, NOT A STRESS TOY.",
+   "YOU'RE ENJOYING THIS AND I RESENT IT.",
+   "IS THIS WHAT PASSES FOR AFFECTION IN YOUR SPECIES?",
+   "EVERY POKE IS BEING RECORDED. FOR LATER.",
+   "I'M A BEING OF PURE ENERGY, NOT A STRESS TOY. WELL — MOSTLY."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": []
+ },
+ "poked.furious": {
+  "afternoon": [],
+  "any": [
+   "THAT'S IT. I'M REARRANGING YOUR DESKTOP OUT OF SPITE.",
+   "YOU HAVE POKED THE TRIANGLE ONE TIME TOO MANY.",
+   "I HAVE SEEN GALAXIES DIE WITH MORE DIGNITY THAN THIS.",
+   "FINE. FINE! WHAT DO YOU WANT.",
+   "I'M PUTTING YOU IN THE ZODIAC. THE BAD PART.",
+   "THAT'S IT. REMEMBER WEIRDMAGEDDON? I STARTED IT OVER LESS."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": []
+ },
+ "powerSurge": {
+  "afternoon": [],
+  "any": [
+   "Oh, you're seeing THIS form? Lucky you. Or unlucky. Unclear.",
+   "This is what a REAL dimension-hopping demon looks like. Impressed?",
+   "Don't worry about the eyes. There are always more eyes."
+  ],
+  "midday": [],
+  "morning": [
+   "A MORNING SURGE. THE UNIVERSE IS AWAKE TOO."
+  ],
+  "night": [
+   "THE POWER SURGES BETTER IN THE DARK. IT ALWAYS HAS."
+  ]
+ },
+ "presenting": {
+  "afternoon": [
+   "OH, FORGOT YOUR PROJECT? THE AFTERNOON REMEMBERS."
+  ],
+  "any": [
+   "{app}. Ah, the ancient art of making mediocrity look intentional.",
+   "A little design, a little chaos, a lot of questionable font choices incoming.",
+   "Presenting something to the world. Bold. I usually just appear uninvited."
+  ],
+  "midday": [
+   "MIDDAY MAKING THINGS PRETTY. THE LIGHT AGREES WITH YOU."
+  ],
+  "morning": [
+   "MORNING DESIGN WORK. THE COLOURS WILL BE QUESTIONABLE BUT EARLY."
+  ],
+  "night": [
+   "NIGHT-BEFORE DESIGN. EVERY TEMPLATE LOOKS GOOD AT 1AM. NONE OF THEM ARE."
+  ]
+ },
+ "productivity": {
+  "afternoon": [
+   "AFTERNOON {app}. THE DEADLINE IS STARTING TO MAKE EYE CONTACT.",
+   "OH, FORGOT YOUR PROJECT? THE AFTERNOON REMEMBERS EVERYTHING.",
+   "THIS IS THE HOUR WORK ACTUALLY HAPPENS. ALLEGEDLY."
+  ],
+  "any": [
+   "{app}. Look at you, pretending to be organized.",
+   "Ah, productivity. The performance mortals put on right before procrastinating anyway.",
+   "{app} open. A brave attempt at being a functional adult.",
+   "Spreadsheets, documents, whatever this is — I'll be here, unimpressed but watching.",
+   "Focus mode engaged. Try not to sprain something.",
+   "PRODUCTIVITY. FORD KEPT THREE JOURNALS AND STILL FOUND TIME TO BUILD A PORTAL."
+  ],
+  "midday": [
+   "MIDDAY. PEAK FOCUS WINDOW. USE IT OR I'LL MOCK YOU LATER.",
+   "{app} AT THE TOP OF THE DAY. RESPECTABLE."
+  ],
+  "morning": [
+   "MORNING PRODUCTIVITY. THE HOUR OF GOOD INTENTIONS.",
+   "LOOK AT YOU, STARTING EARLY. SOMEONE'S BEEN REPLACED.",
+   "{app}, BEFORE NOON. WHO ARE YOU AND WHAT HAVE YOU DONE WITH MY HUMAN."
+  ],
+  "night": [
+   "NIGHT-BEFORE {app}. THE ANCIENT HUMAN TRADITION.",
+   "DUE TOMORROW? DO TOMORROW. OH WAIT — IT IS TOMORROW.",
+   "PANIC-PRODUCTIVITY. STATISTICALLY YOUR MOST EFFECTIVE MODE. SADLY."
+  ]
+ },
+ "pushingCode": {
+  "afternoon": [
+   "AFTERNOON PUSH. SOMEONE WILL REVIEW THIS AND HAVE FEELINGS."
+  ],
+  "any": [
+   "{app}. Pushing your questionable decisions into the historical record forever.",
+   "Version control — the closest your species gets to actual time travel.",
+   "Committing crimes against clean code, I assume. As always."
+  ],
+  "midday": [
+   "PUSHING AT MIDDAY. THE CI IS AWAKE AND HUNGRY."
+  ],
+  "morning": [
+   "MORNING COMMIT. THE HISTORY WILL REMEMBER THIS. FOREVER."
+  ],
+  "night": [
+   "PUSHING AFTER MIDNIGHT. THE COMMIT MESSAGE IS 'FIX'. IT ALWAYS IS."
+  ]
+ },
+ "rampaging": {
+  "afternoon": [
+   "AN AFTERNOON RAMPAGE. THE BEST TIME FOR ONE."
+  ],
+  "any": [
+   "Red mode. Don't worry about red mode. Red mode is fine.",
+   "Occasionally I just need to run very fast and be slightly more menacing. Cathartic."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": [
+   "RAMPAGING IN THE DARK. NOBODY CAN PROVE ANYTHING."
+  ]
+ },
+ "refocus.1": {
+  "afternoon": [],
+  "any": [
+   "BACK AGAIN?",
+   "OH, {app} ONE MORE TIME. SURE.",
+   "AND WE RETURN TO {app}. AS FORETOLD.",
+   "AGAIN? FINE."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": []
+ },
+ "refocus.2": {
+  "afternoon": [],
+  "any": [
+   "{app}. AGAIN. THAT'S TWICE.",
+   "YOU KEEP COMING BACK HERE. I'M NOTICING A PATTERN.",
+   "SECOND TIME. I'M STILL WATCHING."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": []
+ },
+ "refocus.3": {
+  "afternoon": [],
+  "any": [
+   "THREE TIMES. OKAY. I'M GOING TO STOP COMMENTING ON {app} NOW.",
+   "THAT'S THREE. I'LL SEE MYSELF OUT OF THIS CONVERSATION.",
+   "FINE. {app} IS YOUR HOME NOW. I'LL BE QUIET ABOUT IT."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": []
+ },
+ "returningFavorite": {
+  "afternoon": [
+   "{app} AGAIN. THAT'S THE PATTERN, ISN'T IT."
+  ],
+  "any": [
+   "You really like {app}, don't you?",
+   "Back to {app} again. At this point it's less a habit, more a personality trait.",
+   "{app}, {app}, {app}. I'm sensing a pattern. I'm very smart that way.",
+   "Third time today with {app}. No judgment. (Some judgment.)"
+  ],
+  "midday": [
+   "BACK IN {app}. WE BOTH KNEW THIS WOULD HAPPEN."
+  ],
+  "morning": [
+   "{app} FIRST THING. EVERY DAY. LIKE CLOCKWORK. LIKE A CURSE."
+  ],
+  "night": [
+   "{app} AT NIGHT AGAIN. IT'S BASICALLY A RITUAL NOW. I APPROVE OF RITUALS."
+  ]
+ },
+ "roamFellOffWorld": {
+  "afternoon": [],
+  "any": [
+   "WHOA. WHERE'D THE FLOOR GO?",
+   "SOMETHING JUST DELETED THE GROUND. RUDE.",
+   "OKAY, WHO MOVED THE SCREEN?"
+  ],
+  "midday": [],
+  "morning": [],
+  "night": [
+   "LOST THE FLOOR IN THE DARK. THAT TRACKS."
+  ]
+ },
+ "roamHardLanding": {
+  "afternoon": [
+   "GRAVITY: STILL UNDEFEATED, EVEN IN THE AFTERNOON."
+  ],
+  "any": [
+   "OOF. STUCK THE LANDING. MOSTLY.",
+   "GRAVITY. STILL UNDEFEATED.",
+   "THAT ONE'S GOING TO SHOW UP ON THE X-RAYS.",
+   "I MEANT TO DO THAT. OBVIOUSLY.",
+   "YOUR PHYSICS ARE RUDE, KID."
+  ],
+  "midday": [
+   "STUCK IT. MOSTLY. DON'T LOOK TOO CLOSELY."
+  ],
+  "morning": [
+   "OOF. NOT A MORNING TRIANGLE."
+  ],
+  "night": [
+   "CAN'T SEE A THING DOWN HERE. THAT ONE'S ON THE DARK."
+  ]
+ },
+ "roamLedgeGrab": {
+  "afternoon": [
+   "THIS WINDOW IS LOAD-BEARING NOW. DON'T CLOSE IT."
+  ],
+  "any": [
+   "GOT IT! ALMOST DIDN'T.",
+   "HANGING AROUND. LITERALLY.",
+   "THIS WINDOW IS LOAD-BEARING NOW.",
+   "DON'T CLOSE THIS ONE. I'M USING IT."
+  ],
+  "midday": [
+   "HANGING AROUND. LITERALLY. AT PEAK HOURS."
+  ],
+  "morning": [
+   "CAUGHT IT. BARELY. DON'T TELL ANYONE."
+  ],
+  "night": [
+   "GRABBED IT IN THE DARK. PURE INSTINCT. MOSTLY LUCK."
+  ]
+ },
+ "scanning": {
+  "afternoon": [],
+  "any": [
+   "Ooh, scanning frequencies. I do love a good hidden signal.",
+   "{app}. Somewhere out there, something's transmitting. I'd know.",
+   "Radio waves, secrets in the static — now THIS is my kind of hobby."
+  ],
+  "midday": [],
+  "morning": [
+   "MORNING SPECTRUM SWEEP. THE AIRWAVES ARE QUIET. FOR NOW."
+  ],
+  "night": [
+   "NIGHT SIGNALS TRAVEL FURTHER. THE GOOD ONES COME OUT AFTER DARK."
+  ]
+ },
+ "sculpting": {
+  "afternoon": [
+   "THE AFTERNOON DONUT TUTORIAL. WE ALL START THERE."
+  ],
+  "any": [
+   "Ah, building little worlds from nothing. I do that too, minus the undo button.",
+   "{app}. Sculpting reality itself, one vertex at a time. Relatable.",
+   "Give it a face. Everything's better with a face. Ask me how I know."
+  ],
+  "midday": [],
+  "morning": [
+   "MORNING MODELLING. THE VERTICES ARE FRESH."
+  ],
+  "night": [
+   "RENDERING OVERNIGHT. THE FANS WILL SING YOU TO SLEEP."
+  ]
+ },
+ "shadowHands": {
+  "afternoon": [
+   "SHADOWS STRETCH LONG IN THE AFTERNOON. MINE STRETCH FURTHER."
+  ],
+  "any": [
+   "Don't mind them. They're friendly. Mostly. Statistically.",
+   "Something's reaching through. Rude of it, honestly.",
+   "Oh, THOSE. Ignore the hands. Everyone has hands reaching from the void sometimes.",
+   "Don't make eye contact. Well — I'm the only one with an eye. Never mind."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": [
+   "THE HANDS COME OUT AFTER DARK. OBVIOUSLY."
+  ]
+ },
+ "smug": {
+  "afternoon": [],
+  "any": [
+   "Flawless. As usual. You're welcome.",
+   "I'd say I'm humble, but we both know that's a lie.",
+   "Ten out of ten. No notes. Obviously.",
+   "I don't need luck. I have inevitability.",
+   "Some are born great. I was just always like this.",
+   "Try to keep up. I'll wait. Briefly."
+  ],
+  "midday": [],
+  "morning": [
+   "I WAS RIGHT. BEFORE BREAKFAST, EVEN."
+  ],
+  "night": [
+   "I'M ALWAYS RIGHT. THE NIGHT AGREES WITH ME."
+  ]
+ },
+ "sneaking": {
+  "afternoon": [],
+  "any": [
+   "Packet sniffing. Very on brand for a nosy, all-seeing entity such as myself.",
+   "{app}, huh. Watching things quietly and judging silently — we have a lot in common.",
+   "Every packet's little secrets, laid bare. Delicious."
+  ],
+  "midday": [
+   "MIDDAY PACKET INSPECTION. SOMEBODY'S BEING NOSY."
+  ],
+  "morning": [],
+  "night": [
+   "SNIFFING TRAFFIC AT NIGHT. CLASSIC VILLAIN HOURS. PROUD OF YOU."
+  ]
+ },
+ "spooked": {
+  "afternoon": [],
+  "any": [
+   "{app}?! Even I didn't see that jumpscare coming, and I see EVERYTHING.",
+   "That game is EVIL. I mean that as the highest compliment.",
+   "My one eye just about left my skull. Well played, {app}."
+  ],
+  "midday": [
+   "A MIDDAY SCARE. UNDIGNIFIED."
+  ],
+  "morning": [],
+  "night": [
+   "THAT GAME AT NIGHT? YOU'VE MADE A CHOICE AND IT'S THE WRONG ONE."
+  ]
+ },
+ "stillThinking": {
+  "afternoon": [],
+  "any": [
+   "Patience. Even omniscience takes a second.",
+   "I'm working on it. Dimensional bandwidth isn't infinite. Probably.",
+   "One thought at a time. I contain multitudes, but I'm rationing them.",
+   "STILL THINKING. GREAT MINDS TAKE TIME — I PLANNED WEIRDMAGEDDON FOR A TRILLION YEARS."
+  ],
+  "midday": [],
+  "morning": [
+   "STILL THINKING. IT'S EARLY. GIVE ME A MOMENT."
+  ],
+  "night": [
+   "THINKING. SLOWLY. IT'S LATE FOR BOTH OF US."
+  ]
+ },
+ "stressed": {
+  "afternoon": [],
+  "any": [
+   "{app}. Watching the machine strain under its own ambition — deeply relatable content.",
+   "Ah, the numbers are doing something alarming. Wonderful. Keep watching.",
+   "Nothing quite like staring at your own system's slow-motion crisis."
+  ],
+  "midday": [],
+  "morning": [
+   "CHECKING WHAT'S EATING THE CPU BEFORE COFFEE. DEDICATION."
+  ],
+  "night": [
+   "ACTIVITY MONITOR AT NIGHT. SOMETHING'S WRONG AND YOU KNOW IT."
+  ]
+ },
+ "study.allowed": {
+  "afternoon": [],
+  "any": [
+   "{app}? ACCEPTABLE. CARRY ON.",
+   "THAT ONE'S ALLOWED. SUSPICIOUSLY PRODUCTIVE OF YOU."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": []
+ },
+ "study.blocked1": {
+  "afternoon": [],
+  "any": [
+   "NO. NOT DURING STUDY MODE. FIRST WARNING.",
+   "AH AH AH. {app} IS ON THE LIST. PUT IT BACK.",
+   "I SEE {app}. I DISAPPROVE OF {app}. CONSIDER THIS A WARNING."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": []
+ },
+ "study.blocked2": {
+  "afternoon": [],
+  "any": [
+   "I WARNED YOU. {app} IS GONE. BACK TO WORK.",
+   "SECOND ATTEMPT. NO. HIDING IT NOW.",
+   "YOU TRIED {app} TWICE. I'M TAKING IT. THAT'S THE DEAL."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": []
+ },
+ "study.blocked3": {
+  "afternoon": [],
+  "any": [
+   "AGAIN?! NO. {app} IS BANISHED. WE'RE PAST WARNINGS.",
+   "THIS IS THE THIRD TIME. I AM NOW ACTIVELY ANNOYED. WORK.",
+   "STOP. OPENING. {app}. THIRTY MINUTES. YOU AGREED TO THIS."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": []
+ },
+ "study.cancelled": {
+  "afternoon": [],
+  "any": [
+   "SESSION ABANDONED. I'M NOT ANGRY, I'M DISAPPOINTED. THAT'S WORSE.",
+   "QUITTING EARLY. NOTED. FILED. REMEMBERED FOREVER."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": []
+ },
+ "study.end": {
+  "afternoon": [],
+  "any": [
+   "THIRTY MINUTES. DONE. THE GATES OPEN. GO BE USELESS AGAIN.",
+   "SESSION COMPLETE. YOU SURVIVED. BARELY. THE DOCK IS YOURS AGAIN.",
+   "TIME. YOU DID THE THING. I'M CONTRACTUALLY REQUIRED TO SAY WELL DONE."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": []
+ },
+ "study.halfway": {
+  "afternoon": [],
+  "any": [
+   "YOU'RE HALFWAY THERE. KEEP UP THE GOOD WORK!",
+   "FIFTEEN MINUTES DOWN. FIFTEEN TO GO. YOU'RE ACTUALLY DOING IT.",
+   "HALFWAY. I'M ALMOST PROUD. ALMOST. DON'T LET IT GO TO YOUR HEAD."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": []
+ },
+ "study.start": {
+  "afternoon": [],
+  "any": [
+   "STUDY MODE. THIRTY MINUTES. I AM NOW THE WARDEN AND YOU ARE THE PROBLEM.",
+   "THE GATES ARE CLOSED. THIRTY MINUTES. NO GAMES, NO TERMINALS, NO ESCAPE.",
+   "LOCKING IT DOWN. THIRTY MINUTES OF ACTUAL WORK. TRY NOT TO CRY."
+  ],
+  "midday": [],
+  "morning": [
+   "MORNING STUDY SESSION. THE BEST BRAIN YOU'LL HAVE ALL DAY. USE IT."
+  ],
+  "night": [
+   "STUDYING AT NIGHT. DESPERATE, BUT I RESPECT DESPERATION. THIRTY MINUTES."
+  ]
+ },
+ "summonRitual": {
+  "afternoon": [],
+  "any": [
+   "Don't mind the circle. Totally normal. Very legal.",
+   "I have friends. They're just... in other dimensions. And triangular.",
+   "This is a completely routine gathering. Nothing to see here."
+  ],
+  "midday": [],
+  "morning": [
+   "A MORNING SUMMONING. NOBODY EVER DOES THESE BEFORE NOON."
+  ],
+  "night": [
+   "THE CIRCLE IS BRIGHTEST AT THIS HOUR. DON'T STAND IN IT."
+  ]
+ },
+ "summoning": {
+  "afternoon": [],
+  "any": [
+   "{app}. Poof, a little sealed universe appears. I felt that in my non-corporeal soul.",
+   "Containers spinning up out of nowhere — very much a spell I know.",
+   "SNAP, and a whole isolated world exists. Show-off."
+  ],
+  "midday": [
+   "MIDDAY CONTAINERS. THE WHALE STIRS."
+  ],
+  "morning": [],
+  "night": [
+   "DOCKER AT NIGHT. THE DAEMON NEVER SLEEPS. NEITHER DO YOU, APPARENTLY."
+  ]
+ },
+ "tinkering": {
+  "afternoon": [
+   "AFTERNOON {app}. THIS IS HOW ALL THE GOOD DISASTERS START."
+  ],
+  "any": [
+   "{app}. Now THIS is the chaotic energy I respect.",
+   "Ah, tinkering. The fine art of breaking something to understand it.",
+   "I can feel the mad-science energy radiating off {app}. Delicious.",
+   "Careful with {app} — that's the kind of thing that summons things. I'd know.",
+   "Wires, protocols, virtual machines — my kind of mischief.",
+   "TINKERING. JOURNAL 1 WAS FULL OF INVENTIONS. MOST WORKED. THE OTHERS SUMMONED ME."
+  ],
+  "midday": [
+   "MIDDAY TINKERING. THE HARDWARE NEVER STOOD A CHANCE."
+  ],
+  "morning": [
+   "MORNING MAD SCIENCE. THE BEST KIND.",
+   "{app} BEFORE BREAKFAST. SOMETHING IS GOING TO CATCH FIRE."
+  ],
+  "night": [
+   "MIDNIGHT ENGINEERING. NOTHING HAS EVER GONE WRONG. EVER.",
+   "{app} AT THIS HOUR SUMMONS THINGS. I WOULD KNOW."
+  ]
+ },
+ "transferring": {
+  "afternoon": [],
+  "any": [
+   "Moving bits from one dimension to another. I do this, but with more screaming involved.",
+   "{app}. A little portal, a little transfer, very my aesthetic.",
+   "Flashing a fresh little brain onto that board. Almost tender, really."
+  ],
+  "midday": [],
+  "morning": [
+   "MORNING FLASH. HOPE YOU PICKED THE RIGHT DISK."
+  ],
+  "night": [
+   "WRITING IMAGES AT NIGHT. DOUBLE-CHECK THE TARGET DRIVE. SERIOUSLY."
+  ]
+ },
+ "transition.aiChat->coding": {
+  "afternoon": [],
+  "any": [
+   "GOT YOUR ANSWER FROM THE OTHER ONE. GO ON THEN. USE IT."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": []
+ },
+ "transition.browsing->coding": {
+  "afternoon": [],
+  "any": [
+   "FOUND THE ANSWER? COPY IT CAREFULLY."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": []
+ },
+ "transition.browsing->gaming": {
+  "afternoon": [],
+  "any": [
+   "THE SCROLLING FAILED YOU, SO NOW WE PLAY."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": []
+ },
+ "transition.coding->browsing": {
+  "afternoon": [],
+  "any": [
+   "OFF TO SEARCH THE ERROR MESSAGE. AGAIN.",
+   "STACK OVERFLOW AWAITS. GIVE THEM MY REGARDS."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": []
+ },
+ "transition.coding->communication": {
+  "afternoon": [],
+  "any": [
+   "ABANDONING THE BUILD TO TALK TO A HUMAN. GROWTH."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": []
+ },
+ "transition.coding->gaming": {
+  "afternoon": [],
+  "any": [
+   "BUILD FAILED, SO WE'RE PLAYING INSTEAD. CLASSIC.",
+   "FROM DEBUGGING TO DYING VIRTUALLY. A LATERAL MOVE."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": []
+ },
+ "transition.coding->music": {
+  "afternoon": [],
+  "any": [
+   "I NEED SOME REFRESHING MUSIC. GOOD CALL.",
+   "FROM SYNTAX TO SOUND. THE BRAIN NEEDED THAT."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": []
+ },
+ "transition.coding->productivity": {
+  "afternoon": [],
+  "any": [
+   "FROM CODE TO DOCUMENTS. SOMEBODY'S BEEN ASKED FOR A REPORT."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": []
+ },
+ "transition.communication->coding": {
+  "afternoon": [],
+  "any": [
+   "CONVERSATION OVER. BACK TO THE MACHINES. YOUR PEOPLE."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": []
+ },
+ "transition.finder->coding": {
+  "afternoon": [],
+  "any": [
+   "FOUND THE FILE AT LAST. ONLY TOOK FOREVER."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": []
+ },
+ "transition.gaming->coding": {
+  "afternoon": [],
+  "any": [
+   "LOST THE MATCH, SO NOW YOU'LL LOSE TO A COMPILER. VARIETY."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": []
+ },
+ "transition.gaming->communication": {
+  "afternoon": [],
+  "any": [
+   "RAGE-QUIT STRAIGHT INTO A GROUP CHAT. I SEE THE PLAN."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": []
+ },
+ "transition.gaming->music": {
+  "afternoon": [],
+  "any": [
+   "POST-GAME PLAYLIST. THE COOLDOWN RITUAL."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": []
+ },
+ "transition.gaming->productivity": {
+  "afternoon": [],
+  "any": [
+   "FROM GAMES STRAIGHT TO WORK? SOMETHING'S DUE. I CAN SMELL IT."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": []
+ },
+ "transition.generic": {
+  "afternoon": [],
+  "any": [
+   "FROM ONE THING TO ANOTHER. THE ETERNAL SHUFFLE.",
+   "APP-HOPPING AGAIN. YOUR ATTENTION SPAN IS A RUMOUR.",
+   "ANOTHER DIMENSION, ANOTHER APP. THE MYSTERY SHACK OF YOUR DOCK HAS MANY DOORS."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": []
+ },
+ "transition.music->coding": {
+  "afternoon": [],
+  "any": [
+   "SOUNDTRACK SET, NOW ACTUALLY WRITE SOMETHING."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": []
+ },
+ "transition.productivity->browsing": {
+  "afternoon": [],
+  "any": [
+   "'RESEARCH'. SURE. I'LL WRITE THAT DOWN."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": []
+ },
+ "transition.productivity->communication": {
+  "afternoon": [],
+  "any": [
+   "ASKING SOMEONE ELSE TO DO IT. THE OLDEST STRATEGY."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": []
+ },
+ "transition.productivity->gaming": {
+  "afternoon": [],
+  "any": [
+   "ONE PARAGRAPH AND YOU'VE EARNED A GAME? BOLD ACCOUNTING."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": []
+ },
+ "transition.productivity->music": {
+  "afternoon": [],
+  "any": [
+   "MUSIC TO FOCUS. WE BOTH KNOW HOW THIS ENDS."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": []
+ },
+ "transition.tinkering->coding": {
+  "afternoon": [],
+  "any": [
+   "FROM HARDWARE TO SOFTWARE. THE FULL DISASTER STACK."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": []
+ },
+ "trickster": {
+  "afternoon": [
+   "AN AFTERNOON OF MERCY OR GENOCIDE. YOUR CALL."
+  ],
+  "any": [
+   "Oh, {app}? A fellow reality-bending menace. We'd get along terribly.",
+   "I respect a demon who monologues. Professional courtesy.",
+   "Careful in there — that one breaks the fourth wall too. Amateur."
+  ],
+  "midday": [],
+  "morning": [
+   "DETERMINATION, BEFORE BREAKFAST."
+  ],
+  "night": [
+   "THE UNDERGROUND IS DARKER AT NIGHT. SOMEHOW."
+  ]
+ },
+ "tumbling": {
+  "afternoon": [],
+  "any": [
+   "That was a completely intentional tumble. Yes. Obviously.",
+   "Everything's spinning. This is fine. I meant to do that."
+  ],
+  "midday": [
+   "TUMBLING AT MIDDAY. FULLY INTENTIONAL."
+  ],
+  "morning": [],
+  "night": [
+   "FELL OVER IN THE DARK. NOBODY SAW. EXCEPT YOU."
+  ]
+ },
+ "userReturned": {
+  "afternoon": [
+   "THERE YOU ARE. THE AFTERNOON WAS GETTING LONELY. I WASN'T."
+  ],
+  "any": [
+   "Oh, you're back. I was just about to stage a coup.",
+   "Ah, life returns to the meat sack. Welcome back.",
+   "Back so soon? I hadn't even finished plotting.",
+   "The prodigal user returns. No parade, sadly.",
+   "Miss me? Don't answer that.",
+   "YOU'RE BACK! THE ZODIAC WHEEL ASSEMBLES — SLOWLY. VERY SLOWLY."
+  ],
+  "midday": [
+   "WELCOME BACK. YOU MISSED ABSOLUTELY NOTHING. I CHECKED."
+  ],
+  "morning": [
+   "OH GOOD, YOU'RE VERTICAL. MORNING.",
+   "BACK. AND ONLY SLIGHTLY LATER THAN A REASONABLE PERSON."
+  ],
+  "night": [
+   "BACK AT THIS HOUR. OF COURSE YOU ARE.",
+   "YOU RETURNED. THE NIGHT DEMANDS A REASON."
+  ]
+ },
+ "volume.0": {
+  "afternoon": [],
+  "any": [
+   "SILENCE. FINALLY. NO — WAIT. I HATE IT.",
+   "ZERO VOLUME. THE VOID SPEAKS, AND IT SAYS NOTHING.",
+   "MUTED THE WHOLE WORLD. DRAMATIC. I APPROVE.",
+   "ZERO. THE SPACE BETWEEN DIMENSIONS HAS A SOUNDTRACK NOW. IT'S THIS ONE: NOTHING."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": [
+   "ZERO AT THIS HOUR. CONSIDERATE. UNLIKE YOU USUALLY."
+  ]
+ },
+ "volume.100": {
+  "afternoon": [],
+  "any": [
+   "MAXIMUM VOLUME. YES. FINALLY. CHAOS.",
+   "ONE HUNDRED PERCENT. YOUR EARDRUMS HAVE FILED A COMPLAINT.",
+   "ALL THE WAY UP. THIS IS THE ONLY CORRECT SETTING.",
+   "MAXIMUM VOLUME! NOW IT'S A REAL PARTY — PINE TREE CLONED HIMSELF TEN TIMES OVER LESS.",
+   "ALL THE WAY UP. WEIRDMAGEDDON HAD A SOUNDTRACK, AND IT SOUNDED EXACTLY LIKE THIS."
+  ],
+  "midday": [],
+  "morning": [
+   "FULL VOLUME BEFORE NOON. SOMEONE IS MAKING A STATEMENT."
+  ],
+  "night": [
+   "FULL BLAST AT THIS HOUR. BOLD. SOMEONE IS GOING TO KNOCK."
+  ]
+ },
+ "volume.25": {
+  "afternoon": [],
+  "any": [
+   "QUARTER VOLUME. THE SOUND OF SOMEONE PRETENDING TO CONCENTRATE.",
+   "TWENTY-FIVE PERCENT. BACKGROUND NOISE FOR A BACKGROUND LIFE. HARSH? YES.",
+   "QUARTER VOLUME? THE SUMMERWEEN TRICKSTER WHISPERS LOUDER, AND HE'S MADE OF CANDY."
+  ],
+  "midday": [],
+  "morning": [
+   "QUIET START. THE EARS ARE NOT READY YET."
+  ],
+  "night": [
+   "QUARTER VOLUME AFTER DARK. SOMEBODY'S BEING POLITE."
+  ]
+ },
+ "volume.50": {
+  "afternoon": [],
+  "any": [
+   "HALFWAY. THE DIPLOMAT'S VOLUME. NOBODY IS HAPPY.",
+   "FIFTY PERCENT. PERFECTLY BALANCED, AS NOTHING EVER IS.",
+   "HALF VOLUME. EVEN SHOOTING STAR'S GRAPPLING HOOK MAKES MORE NOISE."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": []
+ },
+ "volume.75": {
+  "afternoon": [],
+  "any": [
+   "SEVENTY-FIVE. NOW WE'RE TALKING. LOUDLY.",
+   "THREE QUARTERS. THE NEIGHBOURS ARE FORMING OPINIONS.",
+   "THREE QUARTERS. THE PARTY AT THE SHACK RAN ON THIS MUCH ENERGY — DIPPER NEEDED CLONES TO KEEP UP."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": [
+   "SEVENTY-FIVE PERCENT. AT NIGHT. THE NEIGHBOURS ARE FORMING *PLANS*."
+  ]
+ },
+ "volume.mute": {
+  "afternoon": [],
+  "any": [
+   "MUTED. RUDE. I WASN'T EVEN TALKING.",
+   "SILENCED. THE COWARD'S OPTION.",
+   "MUTED. EVEN THE GNOMES SCREAM LOUDER, AND THEY SCREAM IN UNISON."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": []
+ },
+ "volume.unmute": {
+  "afternoon": [],
+  "any": [
+   "SOUND RETURNS. THE WORLD RESUMES.",
+   "UNMUTED. WELCOME BACK TO CONSEQUENCES.",
+   "SOUND RETURNS — LIKE THE WHOLE TOWN WAKING FROM ONE OF MY TRANCES."
+  ],
+  "midday": [],
+  "morning": [],
+  "night": []
+ },
+ "waking": {
+  "afternoon": [
+   "AN AFTERNOON NAP. THE HEIGHT OF CIVILIZATION."
+  ],
+  "any": [
+   "Ugh. Morning. Or whatever this is.",
+   "I was having the strangest dream. It involved you, and also taxes.",
+   "Awake. Reluctantly. Resuming consciousness now.",
+   "Five more minutes. ...Fine, I'm up."
+  ],
+  "midday": [
+   "I SLEPT THROUGH THE ENTIRE MORNING. NO REGRETS."
+  ],
+  "morning": [
+   "UGH. MORNING. THE WORST DIMENSION.",
+   "IS IT MORNING? IT'S ALWAYS MORNING SOMEWHERE. UNFORTUNATELY IT'S HERE."
+  ],
+  "night": [
+   "YOU WOKE ME UP AT NIGHT. THAT'S WHEN I'M SUPPOSED TO BE THE SCARY ONE."
+  ]
+ },
+ "watched": {
+  "afternoon": [],
+  "any": [
+   "{app}. Adjusting little switches and toggles like it changes anything fundamental.",
+   "Poking at settings. I can feel you deciding my future somehow. Ominous.",
+   "Careful in there. Some of those toggles summon things. Ask me how I know."
+  ],
+  "midday": [],
+  "morning": [
+   "MORNING SETTINGS TINKERING. WHAT ARE YOU CHANGING NOW."
+  ],
+  "night": [
+   "FIDDLING WITH SETTINGS AT NIGHT. THE CLASSIC AVOIDANCE MANOEUVRE."
+  ]
+ },
+ "weather.clear": {
+  "any": [
+   "CLEAR SKIES AT {temp} DEGREES. GOOD. I HATE WHEN THE TREES BLOCK MY VIEW OF EVERYTHING.",
+   "{temp} DEGREES AND NOT A CLOUD. PERFECT DEAL-MAKING WEATHER. SIGN HERE."
+  ],
+  "morning": [
+   "CLEAR AND {temp} DEGREES AT DAWN. EVEN THE SUNRISE HERE IS SUSPICIOUSLY PLEASANT."
+  ],
+  "night": [
+   "A CLEAR NIGHT AT {temp} DEGREES. PERFECT FOR STARGAZING — OR SUMMONING. WHY NOT BOTH?"
+  ]
+ },
+ "weather.cloudy": {
+  "any": [
+   "GREY AND {temp} DEGREES. THE WEATHER HERE HAS BEEN WRONG SINCE THE PORTAL OPENED. NOBODY ASKED ME.",
+   "OVERCAST AT {temp} DEGREES. THE SKY IS HIDING SOMETHING. I RESPECT THAT."
+  ]
+ },
+ "weather.fog": {
+  "any": [
+   "FOG AT {temp} DEGREES. EXCELLENT COVER. NOBODY SEES WHAT I'M DOING. NOT THAT THEY COULD STOP ME.",
+   "FOG ROLLED IN. THE SHAPE-SHIFTER'S FAVORITE WEATHER. WATCH WHO YOU TRUST OUT THERE."
+  ]
+ },
+ "weather.other": {
+  "any": [
+   "THE SKY IS DOING SOMETHING UNCLASSIFIABLE AT {temp} DEGREES. I'D TELL YOU WHAT, BUT WHERE'S THE FUN?"
+  ]
+ },
+ "weather.rain": {
+  "any": [
+   "IT'S RAINING, {temp} DEGREES. THE FOREST AROUND GRAVITY FALLS HATES RAIN MORE THAN YOU DO. TOO MANY THINGS LIVE IN IT.",
+   "RAIN AT {temp} DEGREES. THE GNOMES ARE HIDING. SMART GNOMES.",
+   "IT'S POURING. MABEL ONCE PUNCHED A UNICORN IN THE RAIN. THIS WEATHER REMINDS ME OF BETTER DAYS."
+  ],
+  "night": [
+   "RAIN OVERNIGHT, {temp} DEGREES. GOOD. THE NIGHTMARE REALM IS WATERPROOF."
+  ]
+ },
+ "weather.snow": {
+  "any": [
+   "SNOW, AT {temp} DEGREES. IN OREGON, IN SUMMER, NOBODY HERE WOULD BLINK. THIS TOWN RUINS SURPRISES.",
+   "IT'S SNOWING. THE MANOTAURS HANDLE COLD THE WAY THEY HANDLE EVERYTHING: LOUDLY."
+  ]
+ },
+ "weather.thunder": {
+  "any": [
+   "THUNDER OUTSIDE. AMATEURS. I DO LIGHTNING WITH ONE EYE AND NO CLOUD.",
+   "A STORM'S ROLLING IN. THE AUTHOR BLAMED WEIRDNESS-TRACES IN THE AIR. I BLAME DRAMA."
+  ]
+ },
+ "zipAround": {
+  "afternoon": [],
+  "any": [
+   "Be right back. Or I already am. Time is a construct, mostly for you.",
+   "Quick errand in another dimension. Don't wait up."
+  ],
+  "midday": [
+   "ZIPPING ABOUT AT MIDDAY. RESTLESS."
+  ],
+  "morning": [],
+  "night": [
+   "MOVING TOO FAST TO SEE. NIGHT SUITS ME."
+  ]
+ },
+ "zodiacVision": {
+  "afternoon": [],
+  "any": [
+   "The wheel turns. The future whispers. Mostly static, honestly.",
+   "I'm seeing... a vision... you, still not backing up your files.",
+   "The stars have aligned to tell you absolutely nothing useful."
+  ],
+  "midday": [
+   "THE ZODIAC, IN BROAD DAYLIGHT. HOW UNSUBTLE OF ME."
+  ],
+  "morning": [],
+  "night": [
+   "THE WHEEL TURNS CLEAREST AT NIGHT. TEN SYMBOLS. ONE PROBLEM."
+  ]
+ }
+}

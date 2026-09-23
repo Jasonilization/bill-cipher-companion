@@ -1,0 +1,208 @@
+{
+  "canvasWidth": 118,
+  "canvasHeight": 111,
+  "groups": {
+    "bill_annoyed": [
+      "bill_annoyed_01.png",
+      "bill_annoyed_02.png",
+      "bill_annoyed_03.png",
+      "bill_annoyed_04.png",
+      "bill_annoyed_05.png",
+      "bill_annoyed_06.png"
+    ],
+    "bill_cane": [
+      "bill_cane_01.png",
+      "bill_cane_02.png",
+      "bill_cane_03.png",
+      "bill_cane_04.png",
+      "bill_cane_05.png",
+      "bill_cane_06.png",
+      "bill_cane_07.png",
+      "bill_cane_08.png"
+    ],
+    "bill_celebrating": [
+      "bill_celebrating_01.png",
+      "bill_celebrating_02.png",
+      "bill_celebrating_03.png",
+      "bill_celebrating_04.png",
+      "bill_celebrating_05.png"
+    ],
+    "bill_channeling": [
+      "bill_channeling_01.png",
+      "bill_channeling_02.png",
+      "bill_channeling_03.png",
+      "bill_channeling_04.png",
+      "bill_channeling_05.png",
+      "bill_channeling_06.png",
+      "bill_channeling_07.png",
+      "bill_channeling_08.png",
+      "bill_channeling_09.png"
+    ],
+    "bill_charging": [
+      "bill_charging_01.png"
+    ],
+    "bill_coding": [
+      "bill_coding_01.png",
+      "bill_coding_02.png"
+    ],
+    "bill_confused": [
+      "bill_confused_01.png",
+      "bill_confused_02.png",
+      "bill_confused_03.png",
+      "bill_confused_04.png"
+    ],
+    "bill_curious": [
+      "bill_curious_01.png",
+      "bill_curious_02.png",
+      "bill_curious_03.png",
+      "bill_curious_04.png"
+    ],
+    "bill_dazed": [
+      "bill_dazed_01.png",
+      "bill_dazed_02.png"
+    ],
+    "bill_focused": [
+      "bill_focused_01.png",
+      "bill_focused_02.png",
+      "bill_focused_03.png",
+      "bill_focused_04.png"
+    ],
+    "bill_ghost": [
+      "bill_ghost_01.png",
+      "bill_ghost_02.png",
+      "bill_ghost_03.png",
+      "bill_ghost_04.png",
+      "bill_ghost_05.png"
+    ],
+    "bill_glitch": [
+      "bill_glitch_01.png",
+      "bill_glitch_02.png",
+      "bill_glitch_03.png",
+      "bill_glitch_04.png"
+    ],
+    "bill_happy": [
+      "bill_happy_01.png",
+      "bill_happy_02.png"
+    ],
+    "bill_heating": [
+      "bill_heating_01.png",
+      "bill_heating_02.png",
+      "bill_heating_03.png",
+      "bill_heating_04.png",
+      "bill_heating_05.png",
+      "bill_heating_06.png",
+      "bill_heating_07.png"
+    ],
+    "bill_idle": [
+      "bill_idle_01.png",
+      "bill_idle_02.png",
+      "bill_idle_03.png",
+      "bill_idle_04.png",
+      "bill_idle_05.png",
+      "bill_idle_06.png",
+      "bill_idle_07.png"
+    ],
+    "bill_meltdown": [
+      "bill_meltdown_01.png",
+      "bill_meltdown_02.png",
+      "bill_meltdown_03.png",
+      "bill_meltdown_04.png",
+      "bill_meltdown_05.png",
+      "bill_meltdown_06.png",
+      "bill_meltdown_07.png",
+      "bill_meltdown_08.png"
+    ],
+    "bill_poked": [
+      "bill_poked_01.png",
+      "bill_poked_02.png",
+      "bill_poked_03.png",
+      "bill_poked_04.png"
+    ],
+    "bill_portalring": [
+      "bill_portalring_01.png",
+      "bill_portalring_02.png",
+      "bill_portalring_03.png",
+      "bill_portalring_04.png",
+      "bill_portalring_05.png",
+      "bill_portalring_06.png",
+      "bill_portalring_07.png",
+      "bill_portalring_08.png"
+    ],
+    "bill_powersurge": [
+      "bill_powersurge_01.png",
+      "bill_powersurge_02.png",
+      "bill_powersurge_03.png",
+      "bill_powersurge_04.png"
+    ],
+    "bill_powersurgeclose": [
+      "bill_powersurgeclose_01.png"
+    ],
+    "bill_shadowa": [
+      "bill_shadowa_01.png",
+      "bill_shadowa_02.png",
+      "bill_shadowa_03.png",
+      "bill_shadowa_04.png",
+      "bill_shadowa_05.png"
+    ],
+    "bill_shadowb": [
+      "bill_shadowb_01.png",
+      "bill_shadowb_02.png",
+      "bill_shadowb_03.png",
+      "bill_shadowb_04.png"
+    ],
+    "bill_sleeping": [
+      "bill_sleeping_01.png"
+    ],
+    "bill_smug": [
+      "bill_smug_01.png",
+      "bill_smug_02.png"
+    ],
+    "bill_snap": [
+      "bill_snap_01.png",
+      "bill_snap_02.png",
+      "bill_snap_03.png"
+    ],
+    "bill_summonbuild": [
+      "bill_summonbuild_01.png",
+      "bill_summonbuild_02.png",
+      "bill_summonbuild_03.png"
+    ],
+    "bill_summonhold": [
+      "bill_summonhold_01.png"
+    ],
+    "bill_surprised": [
+      "bill_surprised_01.png",
+      "bill_surprised_02.png",
+      "bill_surprised_03.png"
+    ],
+    "bill_talking": [
+      "bill_talking_01.png",
+      "bill_talking_02.png",
+      "bill_talking_03.png"
+    ],
+    "bill_thinking": [
+      "bill_thinking_01.png",
+      "bill_thinking_02.png",
+      "bill_thinking_03.png",
+      "bill_thinking_04.png"
+    ],
+    "bill_walk": [
+      "bill_walk_01.png",
+      "bill_walk_02.png",
+      "bill_walk_03.png",
+      "bill_walk_04.png",
+      "bill_walk_05.png",
+      "bill_walk_06.png"
+    ],
+    "bill_zodiac": [
+      "bill_zodiac_01.png",
+      "bill_zodiac_02.png",
+      "bill_zodiac_03.png",
+      "bill_zodiac_04.png",
+      "bill_zodiac_05.png",
+      "bill_zodiac_06.png",
+      "bill_zodiac_07.png",
+      "bill_zodiac_08.png"
+    ]
+  }
+}

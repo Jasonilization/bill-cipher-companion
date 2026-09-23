@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleName</key>
+	<string>Bill</string>
+	<key>CFBundleDisplayName</key>
+	<string>Bill</string>
+	<key>CFBundleIdentifier</key>
+	<string>local.billcipher.app</string>
+	<key>CFBundleVersion</key>
+	<string>1</string>
+	<key>CFBundleShortVersionString</key>
+	<string>1.0.0</string>
+	<key>CFBundleExecutable</key>
+	<string>Bill</string>
+	<key>CFBundleIconFile</key>
+	<string>AppIcon</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>LSMinimumSystemVersion</key>
+	<string>26.0</string>
+	<key>LSUIElement</key>
+	<true/>
+	<key>NSHighResolutionCapable</key>
+	<true/>
+	<key>NSPrincipalClass</key>
+	<string>NSApplication</string>
+	<key>NSSupportsAutomaticGraphicsSwitching</key>
+	<true/>
+	<key>NSAccessibilityUsageDescription</key>
+	<string>Bill reads the title of the window you have focused so he can react to what you are actually doing, not just which app is open.</string>
+	<key>NSScreenCaptureUsageDescription</key>
+	<string>Only if you turn it on in Settings: Bill captures just the window you have focused and reads it on-device so he can tell whether your assignments are done.</string>
+</dict>
+</plist>
