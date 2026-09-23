@@ -29,8 +29,9 @@ enum BarkBubble {
     /// below is in "bubble units" (1 unit = 1 source pixel before this
     /// multiplier) so the border, tail, and font all share one consistent
     /// grid and scale together with no risk of one axis stretching
-    /// relative to another.
-    private static let pixelScale: CGFloat = 3
+    /// relative to another. Internal: `BillStateMachine` needs it to
+    /// convert scene-space shifts into tail-offset units.
+    static let pixelScale: CGFloat = 3
 
     // MARK: - Layout grid (all in bubble units)
 
@@ -45,6 +46,11 @@ enum BarkBubble {
     /// separate window, so anything wider gets clipped by the view bounds
     /// — the exact "resizing looks wrong" bug for long lines).
     private static let maxTextWidthUnits = 66
+    /// The narrowest text column the bubble will ever wrap into — below
+    /// this the words get too cramped to read, so a window that's almost
+    /// entirely off-screen (the only case that could demand less room)
+    /// truncates instead of wrapping into a sliver.
+    private static let minTextWidthUnits = 20
     /// Caps vertical growth for the same reason — the character window's
     /// height (`CharacterWindowController`) is sized to leave enough
     /// headroom above Bill's head for this many lines without the bubble
@@ -55,8 +61,18 @@ enum BarkBubble {
     /// should always show in full.
     private static let maxLines = 14
 
-    static func makeNode(text: String, maxWidth: CGFloat) -> SKNode {
-        let lines = PixelFont.wrap(normalize(text.uppercased()), maxWidthUnits: maxTextWidthUnits, maxLines: maxLines)
+    static func makeNode(text: String, maxWidth: CGFloat, tailOffsetUnits: CGFloat = 0) -> SKNode {
+        // Honor the caller's measured on-screen room: the caller
+        // (`BillStateMachine.present`) passes the width of the window's
+        // on-screen region so a bubble placed while Bill stands at a
+        // screen edge wraps to what's actually visible instead of the
+        // full 66-unit column. The parameter used to be accepted and
+        // silently ignored, which is how a wide bubble could be placed
+        // and then nudged into a region it never fit.
+        let chromeUnits = paddingX * 2 + CGFloat(borderThickness + accentThickness) * 2
+        let roomUnits = Int((maxWidth / pixelScale).rounded(.down)) - Int(chromeUnits)
+        let textColumnUnits = min(maxTextWidthUnits, max(minTextWidthUnits, roomUnits))
+        let lines = PixelFont.wrap(normalize(text.uppercased()), maxWidthUnits: textColumnUnits, maxLines: maxLines)
 
         let textBlockWidth = CGFloat(lines.map(PixelFont.lineWidth).max() ?? 0)
         let textBlockHeight = CGFloat(lines.count) * PixelFont.lineHeight - PixelFont.lineSpacing
@@ -73,7 +89,7 @@ enum BarkBubble {
 
             let bodyRect = CGRect(x: 0, y: tailHeight, width: bodyWidth, height: bodyHeight)
             let fillRect = drawLayeredBorder(ctx, bodyRect: bodyRect, cornerRadius: cornerRadius, borderThickness: borderThickness, accentThickness: accentThickness, accentColor: BillPalette.bodyYellow)
-            drawTail(ctx, bodyRect: bodyRect)
+            drawTail(ctx, bodyRect: bodyRect, offsetUnits: tailOffsetUnits)
             PixelFont.drawCentered(ctx, lines: lines, in: fillRect, color: BillPalette.black)
 
             return true
@@ -103,9 +119,17 @@ enum BarkBubble {
         return result
     }
 
-    private static func drawTail(_ ctx: CGContext, bodyRect: CGRect) {
+    /// The tail's horizontal position within the body, in bitmap units.
+    /// Zero (the default) puts it dead center; a non-zero offset slides it
+    /// toward whichever side Bill actually stands on when the bubble itself
+    /// had to shift left/right to stay on screen — the tail points at Bill,
+    /// not at the bubble's own middle.
+    private static func drawTail(_ ctx: CGContext, bodyRect: CGRect, offsetUnits: CGFloat) {
         ctx.setFillColor(BillPalette.black.cgColor)
-        let midX = bodyRect.midX
+        // Clamped so the tail always stays under the body's rounded corner
+        // region rather than hanging off the bubble's edge.
+        let maxOffset = bodyRect.width / 2 - 5
+        let midX = bodyRect.midX + min(max(offsetUnits, -maxOffset), maxOffset)
         ctx.fill([
             CGRect(x: midX - 3, y: bodyRect.minY - 2, width: 6, height: 2),
             CGRect(x: midX - 1, y: bodyRect.minY - tailHeight, width: 2, height: tailHeight - 2),
