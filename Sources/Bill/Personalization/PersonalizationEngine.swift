@@ -77,6 +77,11 @@ final class PersonalizationEngine {
     /// ("reference today's weather where it genuinely fits").
     var weatherBlurbProvider: (() -> String?)?
 
+    /// Set by `CharacterWindowController` — the user's free-form extra
+    /// persona instructions (Settings → Prompts), appended to the persona
+    /// so the personalized lines obey them too.
+    var extraInstructionsProvider: (() -> String?)?
+
     private var apps: [AppCandidate] = []
     private var batches: [[AppCandidate]] = []
     private var transitionPairs: [(from: AppCandidate, to: AppCandidate)] = []
@@ -184,7 +189,12 @@ final class PersonalizationEngine {
             marker = Self.freshMarker()
             model.batchIndex += 1
             model.statusText = "Writing quips for \(pendingBatch.map(\.name).prefix(3).joined(separator: ", "))…"
-            send?(Self.appBatchPrompt(for: pendingBatch, marker: marker, weather: weatherBlurbProvider?()))
+            send?(Self.appBatchPrompt(
+                for: pendingBatch,
+                marker: marker,
+                weather: weatherBlurbProvider?(),
+                extraInstructions: extraInstructionsProvider?()
+            ))
             armTimeout()
         case .transitions:
             guard !transitionPairs.isEmpty else {
@@ -196,7 +206,12 @@ final class PersonalizationEngine {
             marker = Self.freshMarker()
             model.batchIndex += 1
             model.statusText = "Writing transition lines…"
-            send?(Self.transitionPrompt(for: pendingTransitions, marker: marker, weather: weatherBlurbProvider?()))
+            send?(Self.transitionPrompt(
+                for: pendingTransitions,
+                marker: marker,
+                weather: weatherBlurbProvider?(),
+                extraInstructions: extraInstructionsProvider?()
+            ))
             armTimeout()
         case .done:
             break
@@ -318,7 +333,7 @@ final class PersonalizationEngine {
     /// the lore list keeps references canon, "one per line" plus the exact
     /// `KEY|VALUE` shape keeps the reply parseable, and "90 characters"
     /// keeps the bark bubble readable.
-    private static func personaPreamble(marker: String, weather: String?) -> String {
+    private static func personaPreamble(marker: String, weather: String?, extraInstructions: String?) -> String {
         var preamble = """
         \(marker)
         You write dialogue for BILL CIPHER, the triangular dream demon from \
@@ -338,11 +353,14 @@ final class PersonalizationEngine {
             preamble += "\nToday outside the user's window: \(weather). "
             preamble += "Reference today's weather in a few of the lines where it genuinely fits — not all of them."
         }
+        if let extra = extraInstructions?.trimmingCharacters(in: .whitespacesAndNewlines), !extra.isEmpty {
+            preamble += "\nAdditional persona notes from the user — honor them: \(extra)"
+        }
         return preamble
     }
 
-    private static func appBatchPrompt(for apps: [AppCandidate], marker: String, weather: String?) -> String {
-        var prompt = personaPreamble(marker: marker, weather: weather)
+    private static func appBatchPrompt(for apps: [AppCandidate], marker: String, weather: String?, extraInstructions: String?) -> String {
+        var prompt = personaPreamble(marker: marker, weather: weather, extraInstructions: extraInstructions)
         prompt += """
 
         For EACH app below, write FOUR lines about the user opening that \
@@ -359,8 +377,8 @@ final class PersonalizationEngine {
         return prompt
     }
 
-    private static func transitionPrompt(for pairs: [(from: AppCandidate, to: AppCandidate)], marker: String, weather: String?) -> String {
-        var prompt = personaPreamble(marker: marker, weather: weather)
+    private static func transitionPrompt(for pairs: [(from: AppCandidate, to: AppCandidate)], marker: String, weather: String?, extraInstructions: String?) -> String {
+        var prompt = personaPreamble(marker: marker, weather: weather, extraInstructions: extraInstructions)
         prompt += """
 
         For EACH ordered pair below, write ONE line about the user \

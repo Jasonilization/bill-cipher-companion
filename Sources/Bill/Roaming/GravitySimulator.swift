@@ -84,6 +84,10 @@ enum RoamEvent: Equatable {
     case fellOffWorld
     /// A window moved into him and knocked him flying.
     case shoved
+    /// Landed on a window's traffic-light zone with prank intent (see
+    /// `RoamingController`'s `.trafficLight` goal) — the owner should play
+    /// the press beat and then actually press the minimize button.
+    case minimizePrankArrived(window: CGRect)
 }
 
 /// A solid the simulation can collide with, reduced to just its geometry.

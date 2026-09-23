@@ -343,6 +343,9 @@ final class CharacterWindowController: NSObject {
         personalizationEngine.weatherBlurbProvider = { [weak self] in
             self?.weatherBlurbProvider?()
         }
+        personalizationEngine.extraInstructionsProvider = { [weak self] in
+            self?.preferences.promptExtraInstructions
+        }
         personalizationEngine.onRunFinished = { [weak self] in
             guard let self else { return }
             self.setChatEngineMounted?(false)
@@ -463,6 +466,10 @@ final class CharacterWindowController: NSObject {
         }
         if let weather = weatherBlurbProvider?(), !weather.isEmpty {
             contextParts.append("outside the window, \(weather)")
+        }
+        let extra = preferences.promptExtraInstructions.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !extra.isEmpty {
+            contextParts.append("extra persona notes from my user: \(extra)")
         }
         guard !contextParts.isEmpty else { return text }
         hasIncludedActivityContext = true
@@ -613,8 +620,14 @@ final class CharacterWindowController: NSObject {
     private static let maxAppDescriptionsPerRefresh = 5
 
     private func maybeRefreshDialogue() {
-        guard memoryStore.shouldRefreshDialogue(interval: Self.dialogueRefreshInterval) else { return }
-        performDialogueRefresh(trigger: "daily timer")
+        // `promptRefreshesPerDay` spreads the refresh across the day (the
+        // user's explicit ask: prompts refresh *across* the day, not once).
+        // Read live so the Settings stepper applies on the next check — no
+        // restart, no timer rebuild.
+        let perDay = min(max(preferences.promptRefreshesPerDay, AppPreferences.promptRefreshesPerDayRange.lowerBound), AppPreferences.promptRefreshesPerDayRange.upperBound)
+        let interval = Self.dialogueRefreshInterval / Double(perDay)
+        guard memoryStore.shouldRefreshDialogue(interval: interval) else { return }
+        performDialogueRefresh(trigger: "periodic timer (\(perDay)x per day)")
     }
 
     /// Manually forces the same daily refresh `maybeRefreshDialogue` fires
@@ -714,6 +727,10 @@ final class CharacterWindowController: NSObject {
                 these apps is for, formatted exactly as \
                 "APP: <name>: <description>", for: \(names).
                 """
+        }
+        let extraNotes = preferences.promptExtraInstructions.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !extraNotes.isEmpty {
+            prompt += "\n\nAdditional persona notes from the user — honor them: \(extraNotes)"
         }
 
         activeRefreshID = dialogueRefreshStore.begin(trigger: trigger, prompt: prompt)
@@ -1012,6 +1029,12 @@ final class CharacterWindowController: NSObject {
         roaming?.goToApp(pid: pid) ?? false
     }
 
+    /// Settings live-preview passthrough: re-lays-out the pixel chat panel
+    /// (if open) after a width/accent change.
+    func relayoutChatBubble() {
+        chatBubble.refresh()
+    }
+
     private func handleRoamEvent(_ event: RoamEvent) {
         switch event {
         case .landed(let hard, let fromHeight):
@@ -1026,6 +1049,23 @@ final class CharacterWindowController: NSObject {
             characterEngine.bark(BarkLines.random(from: BarkLines.roamFellOffWorld))
         case .shoved:
             characterEngine.bark(BarkLines.random(from: BarkLines.roamShoved))
+        case .minimizePrankArrived(let window):
+            // The press beat: `.smug` is the finger-snap-then-gloat clip
+            // (see its doc comment), which reads exactly as pressing a
+            // button and looking far too pleased about it. The window
+            // genuinely minimizing right after sells the prank, and its
+            // disappearance then drops him through where its top edge
+            // used to be — the fall is the punchline.
+            characterEngine.request(.smug, force: true)
+            if let line = DialogueLibrary.shared.line("prank.minimize") {
+                characterEngine.bark(line, importance: .always)
+            }
+            let rect = window
+            Task { @MainActor [weak self] in
+                try? await Task.sleep(nanoseconds: 550_000_000)
+                _ = await WindowTitleReader.pressMinimizeButton(ofWindowWithFrame: rect)
+                _ = self // keep the engine alive; nothing else to do
+            }
         case .bonkedHead, .walkedOffEdge, .reachedGoal:
             break
         }

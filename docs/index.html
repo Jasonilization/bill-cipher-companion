@@ -39,9 +39,48 @@
       radial-gradient(1px 1px at 90% 55%, #fff7 50%, transparent 50%),
       radial-gradient(1px 1px at 10% 75%, #fff5 50%, transparent 50%),
       radial-gradient(1px 1px at 45% 12%, #fff3 50%, transparent 50%);
+    animation: twinkle 7s ease-in-out infinite;
   }
+  .stars.two { animation-delay: -3.5s; transform: scale(1.06) rotate(2deg); opacity: .7; }
+  @keyframes twinkle { 0%, 100% { opacity: 1; } 50% { opacity: .45; } }
+
+  /* One slow meteor every ~9s — pure decoration. */
+  .meteor {
+    position: fixed; z-index: 0; pointer-events: none;
+    width: 2px; height: 2px; border-radius: 50%;
+    background: #fff; box-shadow: 0 0 6px 2px #fff6;
+    top: 8%; left: -4%;
+    animation: shoot 9s linear infinite; opacity: 0;
+  }
+  .meteor.b { top: 22%; animation-delay: 5.5s; transform: scaleX(-1); }
+  @keyframes shoot {
+    0% { transform: translate(0, 0); opacity: 0; }
+    3% { opacity: .9; }
+    14% { transform: translate(45vw, 34vh); opacity: 0; }
+    100% { transform: translate(45vw, 34vh); opacity: 0; }
+  }
+
   main { position: relative; z-index: 1; }
   .wrap { max-width: 1000px; margin: 0 auto; padding: 0 24px; }
+
+  /* Slow rotating summoning circle behind the hero art. */
+  .ritual {
+    position: absolute; inset: -70px; margin: auto;
+    width: 340px; height: 340px; border-radius: 50%;
+    border: 2px dashed var(--yellow-dark);
+    opacity: .5; pointer-events: none;
+    animation: spin 36s linear infinite;
+  }
+  .ritual::before {
+    content: ""; position: absolute; inset: 26px; border-radius: 50%;
+    border: 1px solid var(--yellow-dark);
+    animation: spin 24s linear infinite reverse;
+  }
+  .ritual::after {
+    content: ""; position: absolute; inset: -12px; border-radius: 50%;
+    border: 1px dotted color-mix(in srgb, var(--yellow) 30%, transparent);
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
 
   .pixel-frame {
     border: 2px solid var(--ink);
@@ -56,8 +95,10 @@
   .tagline { margin-top: 14px; font-size: 18px; color: #cfcedd; max-width: 34em; }
   .ctas { margin-top: 28px; display: flex; gap: 12px; flex-wrap: wrap; }
   .btn { display: inline-block; padding: 12px 20px; font-weight: 700; font-size: 15px; }
-  .btn-y { background: var(--yellow); color: var(--ink); border: 2px solid var(--ink); outline: 2px solid var(--yellow); }
+  .btn-y { background: var(--yellow); color: var(--ink); border: 2px solid var(--ink); outline: 2px solid var(--yellow);
+    animation: pulse 3.2s ease-in-out infinite; }
   .btn-y:hover { background: #ffd84a; text-decoration: none; }
+  @keyframes pulse { 0%,100% { box-shadow: 0 0 0 0 #fac72655; } 50% { box-shadow: 0 0 18px 4px #fac72633; } }
   .btn-ghost { border: 2px solid var(--line); color: var(--paper); }
   .btn-ghost:hover { border-color: var(--yellow); text-decoration: none; }
   .badges { margin-top: 22px; display: flex; gap: 8px; flex-wrap: wrap; }
@@ -73,7 +114,14 @@
   h2 { font-size: 24px; margin-bottom: 28px; }
   h2 .y { color: var(--yellow); }
   .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
-  .card { background: var(--ink-2); border: 1px solid var(--line); padding: 22px; }
+  .card { background: var(--ink-2); border: 1px solid var(--line); padding: 22px;
+    animation: fadeUp .5s ease-out both; transition: transform .18s ease, border-color .18s ease; }
+  .card:hover { transform: translateY(-3px); border-color: color-mix(in srgb, var(--yellow) 45%, var(--line)); }
+  .card:nth-child(2) { animation-delay: .06s; } .card:nth-child(3) { animation-delay: .12s; }
+  .card:nth-child(4) { animation-delay: .18s; } .card:nth-child(5) { animation-delay: .24s; }
+  .card:nth-child(6) { animation-delay: .3s; }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; } }
+  .card img { image-rendering: pixelated; float: right; margin: -4px -6px 6px 10px; }
   .card h3 { font-size: 15px; color: var(--yellow); margin-bottom: 8px; }
   .card p { font-size: 14px; color: #b9b8c6; }
 
@@ -129,6 +177,9 @@
 </head>
 <body>
 <div class="stars"></div>
+<div class="stars two"></div>
+<div class="meteor"></div>
+<div class="meteor b"></div>
 <main>
   <div class="wrap">
 
@@ -146,8 +197,9 @@
         </div>
       </div>
       <div class="hero-art">
+        <div class="ritual" aria-hidden="true"></div>
         <img class="float hero" src="assets/bill-hero.png" alt="Pixel-art Bill Cipher" width="300">
-        <img class="gif" src="assets/bill-demo.gif" alt="Bill idling" width="236">
+        <img class="gif" src="assets/bill-demo.gif" alt="Bill summoning the Zodiac wheel" width="236">
       </div>
     </div>
 
@@ -155,10 +207,10 @@
       <h2>What he <span class="y">does</span></h2>
       <div class="grid">
         <div class="card"><h3>Studies your apps</h3><p>On first launch, Bill offers to use his ChatGPT connection to write himself a morning, midday, afternoon and night line for every app on your Mac — plus switcheroo quips for your most-used pairs. Generated on your machine, in his voice, the moment you're ready.</p></div>
-        <div class="card"><h3>Reads the sky</h3><p>A keyless Open-Meteo nowcast, refreshed every five minutes off live radar. When it starts raining exactly outside, he tells you while it's still raining — and today's weather rides into his chat context. The forest around Gravity Falls approves.</p></div>
+        <div class="card"><img src="assets/bill-conjure.gif" width="72" alt="Bill conjuring"><h3>Reads the sky</h3><p>A keyless Open-Meteo nowcast, refreshed every five minutes off live radar. When it starts raining exactly outside, he tells you while it's still raining — and today's weather rides into his chat context.</p></div>
         <div class="card"><h3>Roams everything</h3><p>Walks the floor, climbs your windows, perches on them, falls with gravity — and gets shoved aside when you move windows under him. His blast animations keep him anchored where he stands.</p></div>
-        <div class="card"><h3>Knows what you're doing</h3><p>Reads your focused window's title via Accessibility — and with your opt-in, the window contents too, on-device, to tell whether your assignments are actually done. Journal 3 had nothing on this.</p></div>
-        <div class="card"><h3>Talks back</h3><p>Right-click → Talk, a global hotkey, or the menu bar. Conversations scroll — never clip — land pinned to the newest message, take Shift+Return for paragraphs, and always close with Esc.</p></div>
+        <div class="card"><h3>Presses buttons</h3><p>Very occasionally he leaps onto a background window's yellow minimize light, plays a satisfied finger-snap, and actually minimizes it — then falls through where its top edge used to be. Never the window you're in; toggleable.</p></div>
+        <div class="card"><img src="assets/bill-celebrate.gif" width="66" alt="Bill celebrating"><h3>Talks back</h3><p>Right-click → Talk, a global hotkey, or the menu bar. Conversations scroll — never clip — land pinned to the newest message, take Shift+Return for paragraphs, and always close with Esc.</p></div>
         <div class="card"><h3>Has moods</h3><p>Idle bobbing, thinking, talking, celebrating, meltdowns, shadow hands. Poke him too much and find out — Weirdmageddon started over less. 30fps when active, a calm 12fps when ambient.</p></div>
       </div>
     </section>

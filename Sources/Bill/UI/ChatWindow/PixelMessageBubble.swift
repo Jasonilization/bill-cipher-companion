@@ -46,14 +46,25 @@ final class PixelMessageBubbleView: NSView {
     static let pixelScale: CGFloat = 2
     private static let paddingX: CGFloat = 10
     private static let paddingY: CGFloat = 8
-    private static let cornerRadius = 3
+    /// Reads as genuinely rounded rather than a small chamfer — the user
+    /// flag was "make it look properly rounded," and at radius 3 the
+    /// staircase was too short to register as a curve. Six units gives the
+    /// corner quarter-circle enough steps to look intentional at this
+    /// bubble's size while staying pixel-art.
+    private static let cornerRadius = 6
     private static let borderThickness = 1
     private static let accentThickness = 1
     /// Wide enough that a normal ChatGPT paragraph spreads across most of
     /// the screen instead of wrapping into a tall, narrow column — the
     /// direct ask was to let a message "go everywhere on the screen"
-    /// rather than staying cramped.
-    private static let maxTextWidth: CGFloat = 520
+    /// rather than staying cramped. 520 is the ceiling; the *effective*
+    /// cap also shrinks with the user's chat-bubble-width setting so a
+    /// narrowed panel can never have bubbles wider than itself (the panel
+    /// padding + bubble chrome are the 36pt of margin).
+    private static let absoluteMaxTextWidth: CGFloat = 520
+    static var maxTextWidth: CGFloat {
+        min(absoluteMaxTextWidth, PixelChatBubble.maxWidth - 36)
+    }
     private static let closeButtonSize: CGFloat = 14
     private static let closeGap: CGFloat = 5
     private static let userAccent = NSColor(calibratedRed: 0.36, green: 0.58, blue: 0.86, alpha: 1)
@@ -185,7 +196,16 @@ final class PixelMessageBubbleView: NSView {
         // which was flagged directly as a readability problem.
         let paragraphStyle = NSMutableParagraphStyle()
         paragraphStyle.alignment = .left
-        paragraphStyle.lineBreakMode = .byWordWrapping
+        // Char- rather than word-wrapping: a ChatGPT reply routinely carries
+        // a URL or code token wider than the whole bubble, and by-word
+        // wrapping cannot break it — it overflows the line and gets cut off
+        // by the bubble's own edge (the "text clips off at edges" report).
+        // byCharWrapping still prefers whole words; it splits a word only
+        // when nothing else fits, and the two-pass measurement below
+        // (`boundingRect` honors this same style) stays in agreement with
+        // the text view's layout, so the bubble sizes to what actually
+        // renders.
+        paragraphStyle.lineBreakMode = .byCharWrapping
         let result = NSMutableAttributedString(string: text, attributes: [.font: font, .foregroundColor: NSColor.black, .paragraphStyle: paragraphStyle])
         if let detector = try? NSDataDetector(types: NSTextCheckingResult.CheckingType.link.rawValue) {
             let fullRange = NSRange(text.startIndex..., in: text)
@@ -206,7 +226,7 @@ final class PixelMessageBubbleView: NSView {
         ctx.scaleBy(x: Self.pixelScale, y: Self.pixelScale)
 
         let bodyRect = CGRect(x: 0, y: 0, width: bodyWidthUnits, height: bodyHeightUnits)
-        let accent = isFromUser ? Self.userAccent : BillPalette.bodyYellow
+        let accent = isFromUser ? Self.userAccent : BillPalette.bubbleAccent
         BarkBubble.drawLayeredBorder(ctx, bodyRect: bodyRect, cornerRadius: Self.cornerRadius, borderThickness: Self.borderThickness, accentThickness: Self.accentThickness, accentColor: accent)
         ctx.restoreGState()
     }

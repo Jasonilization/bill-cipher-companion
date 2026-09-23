@@ -99,7 +99,10 @@ private final class PixelInputBubbleView: NSView {
 
     private var bodyWidthUnits: CGFloat = 0
     private var bodyHeightUnits: CGFloat = 0
-    private let maxTextWidth: CGFloat
+    /// The composer's wrap ceiling. Internal (set live by `PixelChatBubble`
+    /// each layout pass so the Settings width slider applies immediately)
+    /// rather than a construction-time `let`.
+    var maxTextWidth: CGFloat
     let closeButton = PixelCloseButton()
     /// Drawn under the (transparent) text view while it's empty, so the box
     /// reads as a place to type into instead of a blank white lozenge.
@@ -110,7 +113,9 @@ private final class PixelInputBubbleView: NSView {
     var onFocusRequest: (() -> Void)?
 
     private static let pixelScale: CGFloat = PixelMessageBubbleView.pixelScale
-    private static let cornerRadius = 3
+    /// Matches the message bubbles' properly-rounded corner (see
+    /// `PixelMessageBubbleView.cornerRadius` for the reasoning).
+    private static let cornerRadius = 6
     private static let borderThickness = 1
     private static let accentThickness = 1
     private static let closeButtonSize: CGFloat = 14
@@ -148,7 +153,13 @@ private final class PixelInputBubbleView: NSView {
     func updateSize(for text: String) -> Bool {
         let oldSize = frame.size
         let sample = text.isEmpty ? " " : text
-        let attributed = NSAttributedString(string: sample, attributes: [.font: Self.font])
+        // Char-wrapping measurement so a pasted URL/token wider than the
+        // box wraps inside it instead of overflowing the bubble's edge
+        // (see `PixelMessageBubbleView.attributedString` for the full
+        // reasoning — measurement and layout must share the same style).
+        let paragraphStyle = NSMutableParagraphStyle()
+        paragraphStyle.lineBreakMode = .byCharWrapping
+        let attributed = NSAttributedString(string: sample, attributes: [.font: Self.font, .paragraphStyle: paragraphStyle])
 
         let wideBounding = attributed.boundingRect(
             with: NSSize(width: maxTextWidth, height: .greatestFiniteMagnitude),
@@ -202,7 +213,7 @@ private final class PixelInputBubbleView: NSView {
         ctx.scaleBy(x: Self.pixelScale, y: Self.pixelScale)
 
         let bodyRect = CGRect(x: 0, y: 0, width: bodyWidthUnits, height: bodyHeightUnits)
-        BarkBubble.drawLayeredBorder(ctx, bodyRect: bodyRect, cornerRadius: Self.cornerRadius, borderThickness: Self.borderThickness, accentThickness: Self.accentThickness, accentColor: BillPalette.bodyYellow)
+        BarkBubble.drawLayeredBorder(ctx, bodyRect: bodyRect, cornerRadius: Self.cornerRadius, borderThickness: Self.borderThickness, accentThickness: Self.accentThickness, accentColor: BillPalette.bubbleAccent)
 
         // Blocky tail on whichever edge faces Bill, same unit space as the
         // border above so it reads as one continuous piece of chrome.
@@ -273,8 +284,10 @@ final class PixelChatBubble: NSObject, NSTextViewDelegate {
     /// own worst-case footprint (520 + its padding/border ≈ 548) rather
     /// than an exact match: an exact fit leaves zero slack for any rounding
     /// difference between the two, which was clipping bubbles against the
-    /// panel's own edge.
-    private static let maxWidth: CGFloat = 600
+    /// panel's own edge. A live `var` (not `let`) — the Settings "chat
+    /// bubble width" slider writes it through `AppDelegate` and the next
+    /// relayout sizes to it.
+    static var maxWidth: CGFloat = 600
     private static let minWidth: CGFloat = 260
     private static let panelPadding: CGFloat = 8
     private static let bubbleSpacing: CGFloat = 8
@@ -322,11 +335,11 @@ final class PixelChatBubble: NSObject, NSTextViewDelegate {
         scrollView = NSScrollView()
         stackView = MessageStackView()
         textView = NSTextView()
-        // Matches PixelMessageBubbleView.maxTextWidth exactly (520) — same
-        // reasoning as the message bubbles themselves: contentWidth (584)
-        // minus this bubble's own worst-case footprint (520 + 28 padding/
-        // border ≈ 548) leaves the same ~36pt of slack, so no rounding
-        // difference can clip it against the panel's edge.
+        // Matches the message bubbles' live width ceiling (see
+        // `PixelMessageBubbleView.maxTextWidth`): same reasoning, plus this
+        // bubble's own worst-case chrome so no rounding difference can clip
+        // it against the panel's edge. Re-derived every layout pass, so the
+        // Settings width slider applies live.
         inputBubble = PixelInputBubbleView(maxTextWidth: 520)
         super.init()
         configure()
@@ -347,6 +360,12 @@ final class PixelChatBubble: NSObject, NSTextViewDelegate {
         textView.isRichText = false
         textView.delegate = self
         textView.textContainerInset = NSSize(width: 0, height: 2)
+        // Match the measurement style in `updateSize`: without this the
+        // text view word-wraps while sizing char-wraps, so a long pasted
+        // token measured as "3 lines" renders as 1 overflowing line.
+        let paragraphStyle = NSMutableParagraphStyle()
+        paragraphStyle.lineBreakMode = .byCharWrapping
+        textView.defaultParagraphStyle = paragraphStyle
         textView.isVerticallyResizable = false
         textView.isHorizontallyResizable = false
         textView.autoresizingMask = [.width]
@@ -385,6 +404,16 @@ final class PixelChatBubble: NSObject, NSTextViewDelegate {
     }
 
     var isVisible: Bool { panel.isVisible }
+
+    /// Re-applies the current geometry/appearance without changing content
+    /// — used when a Settings slider (chat width, accent) changes so the
+    /// bubble re-wraps to the new numbers instead of waiting for the next
+    /// message.
+    func refresh() {
+        guard isVisible else { return }
+        relayoutStack(animated: false)
+        container.needsDisplay = true
+    }
 
     /// Opens the bubble beside `anchorFrame` (Bill's character-window frame,
     /// in screen coordinates) on whichever side of `screen` has room, ready
@@ -588,6 +617,10 @@ final class PixelChatBubble: NSObject, NSTextViewDelegate {
 
     private func relayoutStack(animated: Bool) {
         let contentWidth = Self.maxWidth - Self.panelPadding * 2
+        // Keep the composer's wrap ceiling glued to the live panel width
+        // (Settings → chat bubble width) so typing can never grow a bubble
+        // past the panel's own edge.
+        inputBubble.maxTextWidth = max(120, contentWidth - 16)
         let naturalStackHeight = rebuildMessageStack(contentWidth: contentWidth, animated: animated)
         let hasStackContent = naturalStackHeight > 0
 

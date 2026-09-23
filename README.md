@@ -1,14 +1,25 @@
 # Bill Cipher — Desktop Companion for macOS
 
-<img src="docs/assets/bill-demo.gif" width="177" align="right" alt="Bill idling on the desktop" hspace="16">
+<p align="center">
+  <img src="docs/assets/bill-demo.gif" width="236" alt="Bill summoning the Zodiac wheel">
+</p>
 
-[![Release](https://img.shields.io/github/v/release/Jasonilization/bill-cipher-companion?style=flat-square)](https://github.com/Jasonilization/bill-cipher-companion/releases)
-[![Platform](https://img.shields.io/badge/platform-macOS%2026%2B-333333?style=flat-square&logo=apple&logoColor=white)](https://github.com/Jasonilization/bill-cipher-companion/releases)
-[![Swift](https://img.shields.io/badge/Swift%206.2-webkit%20%7C%20spritekit%20%7C%20appkit-F05138?style=flat-square)](https://swift.org)
-[![License: MIT](https://img.shields.io/badge/license-MIT-000000?style=flat-square)](LICENSE)
-[![CI](https://img.shields.io/github/actions/workflow/status/Jasonilization/bill-cipher-companion/ci.yml?branch=main&style=flat-square&label=CI)](https://github.com/Jasonilization/bill-cipher-companion/actions)
+<h3 align="center">Bill Cipher lives on your desktop.</h3>
 
-Bill Cipher lives on your desktop. A hand-drawn **380-frame pixel-art sprite rig** of Gravity Falls' dream demon — built natively in Swift with AppKit + SpriteKit — that roams your screen, reacts to what you're doing, watches the weather, nags your habits, and chats back through his own speech bubbles (powered by an embedded ChatGPT page).
+<p align="center">He studies your apps, watches the sky, presses buttons he shouldn't, and chats back through his own pixel speech bubbles.</p>
+
+<p align="center">
+  <a href="https://github.com/Jasonilization/bill-cipher-companion/releases/latest"><img src="https://img.shields.io/github/v/release/Jasonilization/bill-cipher-companion?style=flat-square" alt="Release"></a>
+  <a href="https://github.com/Jasonilization/bill-cipher-companion/releases"><img src="https://img.shields.io/badge/platform-macOS%2026%2B-333333?style=flat-square&logo=apple&logoColor=white" alt="macOS 26+"></a>
+  <a href="https://github.com/Jasonilization/bill-cipher-companion/actions"><img src="https://img.shields.io/github/actions/workflow/status/Jasonilization/bill-cipher-companion/ci.yml?branch=main&style=flat-square&label=CI" alt="CI"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-000000?style=flat-square" alt="MIT"></a>
+</p>
+
+<p align="center"><a href="https://github.com/Jasonilization/bill-cipher-companion/releases/latest"><b>Download the DMG</b></a> · <a href="https://jasonilization.github.io/bill-cipher-companion/">Homepage</a></p>
+
+---
+
+A hand-drawn **380-sprite pixel-art rig** of Gravity Falls' dream demon, native Swift end to end (AppKit + SpriteKit + WebKit), with desktop physics, app awareness, weather, and a real ChatGPT session behind the chat.
 
 > *Unofficial, non-commercial fan project. Bill Cipher and Gravity Falls are © Disney. Not affiliated with or endorsed by Disney.*
 
@@ -16,16 +27,28 @@ Bill Cipher lives on your desktop. A hand-drawn **380-frame pixel-art sprite rig
 
 ## What he does
 
+<p>
+<img src="docs/assets/bill-conjure.gif" width="120" align="right" alt="Bill conjuring" hspace="12" vspace="8">
+</p>
+
 - **Studies your apps (first-run personalization)** — on first launch, Bill offers to use his own ChatGPT connection to write himself commentary for the apps actually installed on your Mac: a morning line, a midday line, an afternoon line and a night line for each app, plus transition quips for switching between your most-used pairs. All in his voice, all referencing Gravity Falls lore, all generated on your machine at the moment you're ready to use it — and merged into his live dialogue immediately, batch by batch.
 - **Reads the sky** — pulls local weather (Open-Meteo, keyless) every five minutes using the radar-based nowcast, so he announces rain *while it's actually starting to rain*, and folds today's conditions into his chat context: *"outside the window, the weather is raining, 14°C."*
 - **Roams the whole screen** — walks the floor, climbs windows, perches on them, falls with gravity, and gets shoved aside when you move windows under him. Shooting animations keep him anchored where he was standing.
+- **Presses the minimize button** — very occasionally, Bill leaps onto a background window's yellow traffic light, plays a satisfied finger-snap, and *actually minimizes the window* — then falls through where its top edge used to be. Never the window you're working in; toggleable in Settings.
 - **Knows what you're up to** — reads your focused window's title (via Accessibility) and, if you opt in, can read the window contents on-device (Vision OCR) to tell whether your assignments are actually done.
 - **Talks to you** — right-click Bill → **Talk** (or the global hotkey, or the menu bar). You type in a pixel speech bubble; Bill answers in his own. Conversations scroll instead of clipping, never end up off-screen, accept `Shift+Return` for paragraphs, and always land pinned to the newest message.
 - **Actually chats** — replies come from a real ChatGPT session in an embedded WebKit view, with a summary of your recent Mac activity *and* the current weather folded into the first message of each conversation.
-- **Never runs out of things to say** — a daily background prompt asks ChatGPT for fresh, activity-relevant quips and merges them into the local dialogue pools; the static half of his dialogue now leans properly into the canon (turn the volume up and see what he says about the party at the Shack).
-- **Has moods** — poke him too much and watch. Idle bobbing, thinking, talking, celebrating, meltdowns, shadow hands — 30fps while active, a calm 12fps when ambient.
-- **Study mode & habit nagging** — a focused-work mode he guards, plus gentle (eventually less gentle) nudges about the habits you set in Settings.
+- **Never runs out of things to say** — a background prompt asks ChatGPT for fresh, activity-relevant quips **spread across the day** (1–6× per day, your call) and merges them into the local dialogue pools; the static half of his dialogue leans properly into the canon (turn the volume up and see what he says about the party at the Shack).
+- **Has moods** — poke him too much and watch. Idle bobbing, thinking, talking, celebrating, meltdowns, shadow hands — 30fps while active, a calm 12fps when ambient. Pin any reaction to a favourite animation in Settings.
 - **Menu bar citizen** — a proper `LSUIElement` accessory app: no Dock icon, no focus stealing, lives quietly in the menu bar. Trust no one; trust the eye.
+
+## Make him yours
+
+<p>
+<img src="docs/assets/bill-celebrate.gif" width="110" align="right" alt="Bill celebrating" hspace="12" vspace="8">
+</p>
+
+Settings is a proper control surface now: recolour his speech bubbles, scale the bark text, resize the chat window, dial the idle-animation pacing, pin individual reactions to specific animations, set how many times a day his prompts refresh, and write extra persona instructions that ride along with every prompt (chat, refreshes, personalization). Everything applies live.
 
 ## Requirements
 

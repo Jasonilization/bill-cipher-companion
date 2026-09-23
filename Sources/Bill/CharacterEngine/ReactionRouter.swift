@@ -432,13 +432,24 @@ final class ReactionRouter {
 
     /// Requests one of `states` (never the one that just played) and speaks the
     /// first authored line among `keys`.
+    ///
+    /// A per-trigger override from Settings (`customAnimationMap`) wins over
+    /// the pool entirely: the user pinning "batteryLow" to `meltdown` means
+    /// exactly that, every time.
     private func play(
         _ states: [BillState],
         keys: [String],
         substitutions: [String: String] = [:],
         importance: CharacterEngine.BarkImportance = .normal
     ) {
-        if let state = characterEngine.coverage.pick(from: states) {
+        let override: BillState? = keys
+            .lazy
+            .compactMap { self.preferences.customAnimationMap[$0] }
+            .compactMap(BillState.init(rawValue:))
+            .first
+        if let override {
+            characterEngine.request(override, force: true)
+        } else if let state = characterEngine.coverage.pick(from: states) {
             characterEngine.request(state, force: true)
         }
         speak(keys, substitutions: substitutions, importance: importance)

@@ -2,9 +2,11 @@ import SwiftUI
 import WebKit
 
 /// The floating chat popup's content: a small header (Bill's status dot +
-/// title) over the real chatgpt.com page. Liquid Glass via the real
-/// `.glassEffect()` API (this machine is macOS 26+, so we use it directly
-/// rather than approximating with `.ultraThinMaterial`).
+/// title) over the real chatgpt.com page. On macOS 26 that page is a
+/// SwiftUI `WebView(page:)`; on older macOS (the deployment target is 14)
+/// the bridge owns a classic `WKWebView` instead (see `ChatBridge.
+/// legacyWebView`) and this view merely hosts it inside the same chrome.
+/// Glass on 26, ultraThinMaterial below — the "old macOS fallback UI".
 ///
 /// Built without `@State` — this toolchain's Command Line Tools install
 /// can't resolve the `SwiftUIMacros` plugin needed to expand macro-based
@@ -22,7 +24,7 @@ struct ChatPanelView: View {
             content
         }
         .frame(width: 420, height: 560)
-        .glassEffect(.regular, in: .rect(cornerRadius: 20))
+        .modifier(BubbleChrome())
     }
 
     private var header: some View {
@@ -45,16 +47,49 @@ struct ChatPanelView: View {
 
     @ViewBuilder
     private var content: some View {
-        if let page = chatBridge.page {
-            WebView(page)
-        } else {
-            VStack(spacing: 10) {
-                ProgressView()
-                Text("Loading ChatGPT…")
-                    .font(.system(size: 12))
-                    .foregroundStyle(.secondary)
+        if #available(macOS 27, *) {
+            if let page = chatBridge.page {
+                WebView(page)
+            } else {
+                loadingView
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+        } else if let legacy = chatBridge.legacyWebView {
+            LegacyWebKitHost(webView: legacy)
+        } else {
+            loadingView
         }
     }
+
+    private var loadingView: some View {
+        VStack(spacing: 10) {
+            ProgressView()
+            Text("Loading ChatGPT…")
+                .font(.system(size: 12))
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+}
+
+/// Glass where it exists, `.ultraThinMaterial` where it doesn't — one
+/// modifier so the body stays flat.
+private struct BubbleChrome: ViewModifier {
+    func body(content: Content) -> some View {
+        if #available(macOS 26, *) {
+            content.glassEffect(.regular, in: .rect(cornerRadius: 20))
+        } else {
+            content.background(.ultraThinMaterial, in: .rect(cornerRadius: 20))
+        }
+    }
+}
+
+/// Hosts the pre-26 engine inside the SwiftUI panel.
+private struct LegacyWebKitHost: NSViewRepresentable {
+    let webView: WKWebView
+
+    func makeNSView(context: Context) -> WKWebView {
+        webView
+    }
+
+    func updateNSView(_ nsView: WKWebView, context: Context) {}
 }

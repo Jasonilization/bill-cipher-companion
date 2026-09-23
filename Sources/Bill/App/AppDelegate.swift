@@ -82,6 +82,34 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             .sink { [weak self] frequency in self?.characterEngine.speakingFrequencyMultiplier = frequency }
             .store(in: &cancellables)
 
+        // Live "proper app to edit more things" wiring: each Settings
+        // control below writes straight into the running app.
+        preferences.$ambientAnimationSpacing
+            .removeDuplicates()
+            .sink { [weak self] spacing in self?.characterEngine.ambientAnimationSpacingMultiplier = spacing }
+            .store(in: &cancellables)
+        preferences.$bubbleAccentColorHex
+            .removeDuplicates()
+            .sink { [weak self] hex in
+                BillPalette.bubbleAccent = BillPalette.color(fromHex: hex)
+                self?.characterWindowController.relayoutChatBubble()
+            }
+            .store(in: &cancellables)
+        preferences.$bubbleTextScale
+            .removeDuplicates()
+            .sink { [weak self] scale in
+                BarkBubble.textScaleMultiplier = CGFloat(scale)
+                self?.characterWindowController.relayoutChatBubble()
+            }
+            .store(in: &cancellables)
+        preferences.$chatBubbleMaxWidth
+            .removeDuplicates()
+            .sink { [weak self] width in
+                PixelChatBubble.maxWidth = CGFloat(width)
+                self?.characterWindowController.relayoutChatBubble()
+            }
+            .store(in: &cancellables)
+
         // Best-effort DOM-activity signal from the real ChatGPT page — see
         // ChatBridge's doc comment. Bill "talks" while it looks like content
         // is streaming in, and settles back down once it quiets.

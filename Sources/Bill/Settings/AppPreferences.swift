@@ -15,10 +15,26 @@ final class AppPreferences: ObservableObject {
         static let windowAwareness = "billWindowAwareness"
         static let screenOCR = "billScreenOCR"
         static let speakingFrequency = "billSpeakingFrequency"
+        static let minimizeMischief = "billMinimizeMischief"
+        static let bubbleAccentColor = "billBubbleAccentColor"
+        static let bubbleTextScale = "billBubbleTextScale"
+        static let chatBubbleMaxWidth = "billChatBubbleMaxWidth"
+        static let ambientAnimationSpacing = "billAmbientAnimationSpacing"
+        static let customAnimationMap = "billCustomAnimationMap"
+        static let promptRefreshesPerDay = "billPromptRefreshesPerDay"
+        static let promptExtraInstructions = "billPromptExtraInstructions"
     }
 
     @Published var isRoamingEnabled: Bool {
         didSet { UserDefaults.standard.set(isRoamingEnabled, forKey: Keys.roaming) }
+    }
+
+    /// Bill's occasional prank: leap up and press a window's minimize
+    /// button — actually minimizing it — to play with you. On by default
+    /// (it is rare and harmless); the user explicitly asked for a way to
+    /// disable the mode, and this is that switch.
+    @Published var isMinimizeMischiefEnabled: Bool {
+        didSet { UserDefaults.standard.set(isMinimizeMischiefEnabled, forKey: Keys.minimizeMischief) }
     }
 
     @Published var disabledCategories: Set<AppCategory> {
@@ -69,13 +85,78 @@ final class AppPreferences: ObservableObject {
     }
     static let speakingFrequencyRange: ClosedRange<Double> = 0.25...2.5
 
+    // MARK: - Look & feel (the "proper app to edit more things" set)
+
+    /// Hex string, no leading `#` — parsed into the live accent color at
+    /// `BillPalette`. Default is Bill's canon yellow.
+    @Published var bubbleAccentColorHex: String {
+        didSet { UserDefaults.standard.set(bubbleAccentColorHex, forKey: Keys.bubbleAccentColor) }
+    }
+    /// Multiplies the bark bubble's pixel scale — grows/shrinks the *text*
+    /// and its bubble together, crisp at any value (nearest-neighbor).
+    @Published var bubbleTextScale: Double {
+        didSet { UserDefaults.standard.set(bubbleTextScale, forKey: Keys.bubbleTextScale) }
+    }
+    static let bubbleTextScaleRange: ClosedRange<Double> = 0.6...2.4
+    /// The pixel chat panel's max width in points.
+    @Published var chatBubbleMaxWidth: Double {
+        didSet { UserDefaults.standard.set(chatBubbleMaxWidth, forKey: Keys.chatBubbleMaxWidth) }
+    }
+    static let chatBubbleMaxWidthRange: ClosedRange<Double> = 320...900
+
+    // MARK: - Animation pacing
+
+    /// Multiplies the spacing between ambient idle beats — "how long until
+    /// the next one." At 1.0 the base spacing is the original 4-9s roll;
+    /// 2.0 makes him lazier, 0.5 twitchier. Deliberately separate from
+    /// `speakingFrequency`, which gates *lines*, not motion.
+    @Published var ambientAnimationSpacing: Double {
+        didSet { UserDefaults.standard.set(ambientAnimationSpacing, forKey: Keys.ambientAnimationSpacing) }
+    }
+    static let ambientAnimationSpacingRange: ClosedRange<Double> = 0.25...4.0
+
+    /// Per-trigger animation overrides: dialogue-key → `BillState.rawValue`.
+    /// The router consults this before its animation pools, so any reaction
+    /// can be pinned to a favourite animation. Empty = fully automatic.
+    @Published var customAnimationMap: [String: String] {
+        didSet { UserDefaults.standard.set(customAnimationMap, forKey: Keys.customAnimationMap) }
+    }
+
+    // MARK: - Prompt cadence & persona
+
+    /// How many times a day the ChatGPT dialogue refresh runs. The user's
+    /// ask: prompts should refresh *across* the day, not once — this
+    /// spreads them evenly (24h / n), still skipping whenever a live chat
+    /// or another background request is in flight.
+    @Published var promptRefreshesPerDay: Int {
+        didSet { UserDefaults.standard.set(promptRefreshesPerDay, forKey: Keys.promptRefreshesPerDay) }
+    }
+    static let promptRefreshesPerDayRange: ClosedRange<Int> = 1...6
+    /// Free-form extra persona instructions appended to every prompt
+    /// (chat context, dialogue refresh, personalization) — the user's
+    /// handle on exactly how Bill talks to *them*.
+    @Published var promptExtraInstructions: String {
+        didSet { UserDefaults.standard.set(promptExtraInstructions, forKey: Keys.promptExtraInstructions) }
+    }
+
     @Published private(set) var launchAtLoginStatus: SMAppService.Status
 
     init() {
         let defaults = UserDefaults.standard
         isRoamingEnabled = (defaults.object(forKey: Keys.roaming) as? Bool) ?? true
+        isMinimizeMischiefEnabled = (defaults.object(forKey: Keys.minimizeMischief) as? Bool) ?? true
         isWindowAwarenessEnabled = (defaults.object(forKey: Keys.windowAwareness) as? Bool) ?? false
         isScreenOCREnabled = (defaults.object(forKey: Keys.screenOCR) as? Bool) ?? false
+        bubbleAccentColorHex = defaults.string(forKey: Keys.bubbleAccentColor) ?? "fac726"
+        let storedTextScale = (defaults.object(forKey: Keys.bubbleTextScale) as? Double) ?? 1.0
+        bubbleTextScale = min(max(storedTextScale, Self.bubbleTextScaleRange.lowerBound), Self.bubbleTextScaleRange.upperBound)
+        let storedChatWidth = (defaults.object(forKey: Keys.chatBubbleMaxWidth) as? Double) ?? 600
+        chatBubbleMaxWidth = min(max(storedChatWidth, Self.chatBubbleMaxWidthRange.lowerBound), Self.chatBubbleMaxWidthRange.upperBound)
+        let storedSpacing = (defaults.object(forKey: Keys.ambientAnimationSpacing) as? Double) ?? 1.0
+        ambientAnimationSpacing = min(max(storedSpacing, Self.ambientAnimationSpacingRange.lowerBound), Self.ambientAnimationSpacingRange.upperBound)
+        customAnimationMap = defaults.dictionary(forKey: Keys.customAnimationMap) as? [String: String] ?? [:]
+        promptRefreshesPerDay = (defaults.object(forKey: Keys.promptRefreshesPerDay) as? Int) ?? 3
+        promptExtraInstructions = defaults.string(forKey: Keys.promptExtraInstructions) ?? ""
         let disabledRaw = defaults.stringArray(forKey: Keys.disabledCategories) ?? []
         disabledCategories = Set(disabledRaw.compactMap(AppCategory.init(rawValue:)))
         let storedScale = (defaults.object(forKey: Keys.characterScale) as? Double) ?? 1.0

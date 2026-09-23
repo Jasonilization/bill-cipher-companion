@@ -29,14 +29,31 @@ enum BarkBubble {
     /// below is in "bubble units" (1 unit = 1 source pixel before this
     /// multiplier) so the border, tail, and font all share one consistent
     /// grid and scale together with no risk of one axis stretching
-    /// relative to another.
-    private static let pixelScale: CGFloat = 3
+    /// relative to another. Internal: `BillStateMachine` needs it to
+    /// convert scene-space shifts into tail-offset units.
+    static let pixelScale: CGFloat = 3
+
+    /// Live text-size knob from Settings ("size of text box text") —
+    /// multiplies the whole bitmap (text *and* its bubble) so everything
+    /// stays on one grid. Nearest-neighbor filtering keeps it crisp at
+    /// any value. Set by `AppDelegate` from
+    /// `AppPreferences.bubbleTextScale`.
+    static var textScaleMultiplier: CGFloat = 1
+
+    /// `pixelScale` with the user's text-size knob applied — the number
+    /// every point↔unit conversion actually uses.
+    static var effectivePixelScale: CGFloat {
+        pixelScale * textScaleMultiplier
+    }
 
     // MARK: - Layout grid (all in bubble units)
 
     private static let paddingX: CGFloat = 7
     private static let paddingY: CGFloat = 6
-    private static let cornerRadius = 3
+    /// Properly rounded rather than a near-chamfer — same reasoning as
+    /// `PixelMessageBubbleView.cornerRadius`; five units reads as a real
+    /// curve at the bark bubble's larger 3x scale.
+    private static let cornerRadius = 5
     private static let borderThickness = 1
     private static let accentThickness = 1
     private static let tailHeight: CGFloat = 5
@@ -60,7 +77,7 @@ enum BarkBubble {
     /// should always show in full.
     private static let maxLines = 14
 
-    static func makeNode(text: String, maxWidth: CGFloat) -> SKNode {
+    static func makeNode(text: String, maxWidth: CGFloat, tailOffsetUnits: CGFloat = 0) -> SKNode {
         // Honor the caller's measured on-screen room: the caller
         // (`BillStateMachine.present`) passes the width of the window's
         // on-screen region so a bubble placed while Bill stands at a
@@ -69,7 +86,7 @@ enum BarkBubble {
         // silently ignored, which is how a wide bubble could be placed
         // and then nudged into a region it never fit.
         let chromeUnits = paddingX * 2 + CGFloat(borderThickness + accentThickness) * 2
-        let roomUnits = Int((maxWidth / pixelScale).rounded(.down)) - Int(chromeUnits)
+        let roomUnits = Int((maxWidth / effectivePixelScale).rounded(.down)) - Int(chromeUnits)
         let textColumnUnits = min(maxTextWidthUnits, max(minTextWidthUnits, roomUnits))
         let lines = PixelFont.wrap(normalize(text.uppercased()), maxWidthUnits: textColumnUnits, maxLines: maxLines)
 
@@ -87,8 +104,8 @@ enum BarkBubble {
             ctx.interpolationQuality = .none
 
             let bodyRect = CGRect(x: 0, y: tailHeight, width: bodyWidth, height: bodyHeight)
-            let fillRect = drawLayeredBorder(ctx, bodyRect: bodyRect, cornerRadius: cornerRadius, borderThickness: borderThickness, accentThickness: accentThickness, accentColor: BillPalette.bodyYellow)
-            drawTail(ctx, bodyRect: bodyRect)
+            let fillRect = drawLayeredBorder(ctx, bodyRect: bodyRect, cornerRadius: cornerRadius, borderThickness: borderThickness, accentThickness: accentThickness, accentColor: BillPalette.bubbleAccent)
+            drawTail(ctx, bodyRect: bodyRect, offsetUnits: tailOffsetUnits)
             PixelFont.drawCentered(ctx, lines: lines, in: fillRect, color: BillPalette.black)
 
             return true
@@ -97,7 +114,7 @@ enum BarkBubble {
         let texture = SKTexture(image: image)
         texture.filteringMode = .nearest
         let sprite = SKSpriteNode(texture: texture)
-        sprite.setScale(pixelScale)
+        sprite.setScale(effectivePixelScale)
         sprite.anchorPoint = CGPoint(x: 0.5, y: 0)
         return sprite
     }
@@ -118,9 +135,17 @@ enum BarkBubble {
         return result
     }
 
-    private static func drawTail(_ ctx: CGContext, bodyRect: CGRect) {
+    /// The tail's horizontal position within the body, in bitmap units.
+    /// Zero (the default) puts it dead center; a non-zero offset slides it
+    /// toward whichever side Bill actually stands on when the bubble itself
+    /// had to shift left/right to stay on screen — the tail points at Bill,
+    /// not at the bubble's own middle.
+    private static func drawTail(_ ctx: CGContext, bodyRect: CGRect, offsetUnits: CGFloat) {
         ctx.setFillColor(BillPalette.black.cgColor)
-        let midX = bodyRect.midX
+        // Clamped so the tail always stays under the body's rounded corner
+        // region rather than hanging off the bubble's edge.
+        let maxOffset = bodyRect.width / 2 - 5
+        let midX = bodyRect.midX + min(max(offsetUnits, -maxOffset), maxOffset)
         ctx.fill([
             CGRect(x: midX - 3, y: bodyRect.minY - 2, width: 6, height: 2),
             CGRect(x: midX - 1, y: bodyRect.minY - tailHeight, width: 2, height: tailHeight - 2),

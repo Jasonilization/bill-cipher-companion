@@ -108,7 +108,7 @@ final class ChatPanelController: NSObject {
     /// timers alive for an entire session when the actual need for that is
     /// only ever a few seconds at a time.
     func warmUpIfNeeded() {
-        guard chatBridge.page == nil else { return }
+        guard !chatBridge.hasEngine else { return }
         chatBridge.prepareIfNeeded()
         positionTopRight()
         panel.alphaValue = 0.01
@@ -146,7 +146,7 @@ final class ChatPanelController: NSObject {
         didSet {
             guard keepMounted != oldValue else { return }
             if keepMounted {
-                guard chatBridge.page != nil, !isExplicitlyShown else { return }
+                guard chatBridge.hasEngine, !isExplicitlyShown else { return }
                 positionTopRight()
                 panel.alphaValue = 0.01
                 panel.ignoresMouseEvents = true
@@ -173,7 +173,7 @@ final class ChatPanelController: NSObject {
     /// CPU/GPU for the rest of an idle session the way leaving it
     /// permanently on-screen did.
     func beginAwaitingResponse() {
-        guard chatBridge.page != nil, !isExplicitlyShown else { return }
+        guard chatBridge.hasEngine, !isExplicitlyShown else { return }
         positionTopRight()
         panel.alphaValue = 0.01
         panel.ignoresMouseEvents = true
