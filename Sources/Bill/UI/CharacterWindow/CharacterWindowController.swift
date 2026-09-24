@@ -656,12 +656,32 @@ final class CharacterWindowController: NSObject {
     /// legitimately take a while. What matters is that it *always* resolves.
     private static let refreshTimeout: TimeInterval = 150
 
-    /// The pools a refresh is allowed to write into. Deliberately a subset —
-    /// the ones where an extra line is pure upside. System-critical pools
-    /// (study mode, battery warnings) stay fully authored.
+    /// The pools a refresh is allowed to write into. The explicit ask was
+    /// "every single quote refreshed" — so this is now *every* authored
+    /// pool except the two genuinely system-critical ones (study-mode
+    /// enforcement lines, which are behavioral, not flavor; and the
+    /// hardwired chat-signin failure path).
     private static let refreshablePools = [
+        // app categories
         "coding", "gaming", "browsing", "music", "creative",
         "productivity", "communication", "aiChat", "tinkering", "finder",
+        // system commentary
+        "cpuHot", "networkLost", "networkRestored", "network.slow", "network.fast",
+        "batteryLow", "batteryCharging", "battery.step", "charge.step",
+        "volume.0", "volume.25", "volume.50", "volume.75", "volume.100",
+        "volume.mute", "volume.unmute",
+        "weather.clear", "weather.cloudy", "weather.fog", "weather.rain",
+        "weather.snow", "weather.thunder", "weather.other",
+        // time of day
+        "clock.morning", "clock.midday", "clock.afternoon", "clock.night",
+        // presence & interaction
+        "userReturned", "waking", "gettingSleepy",
+        "poked", "poked.annoyed", "poked.furious",
+        "grabbed", "dropped", "roamHardLanding", "roamFellOffWorld",
+        // chat beats
+        "chatFailed", "stillThinking",
+        // transitions
+        "transition.generic",
     ]
 
     private func performDialogueRefresh(trigger: String) {
@@ -706,7 +726,7 @@ final class CharacterWindowController: NSObject {
             \(marker)
             Recent activity on this Mac: \(summary).
 
-            Write 12 short Bill-Cipher quips about it, ONE PER LINE, each in \
+            Write 16 short Bill-Cipher quips about it, ONE PER LINE, each in \
             exactly this pipe-separated format and nothing else:
             POOL|TIME|LINE
 
@@ -714,7 +734,7 @@ final class CharacterWindowController: NSObject {
             TIME must be exactly one of: \(times)
             LINE must be under 100 characters, no quotes, no numbering.
 
-            Spread them across at least 4 different POOLs and at least 3 \
+            Spread them across at least 8 different POOLs and at least 3 \
             different TIMEs. TIME is when the line makes sense — a "night" line \
             should only work at night. Begin your reply with \(marker) on its \
             own line.
@@ -852,6 +872,21 @@ final class CharacterWindowController: NSObject {
             for line in lines {
                 flat.append(key + ": " + line)
             }
+        }
+        // The clear-log ask: every entry starts with a plain-words summary
+        // of what landed, so the log reads as "what changed" at a glance
+        // instead of a wall of keyed lines.
+        if !flat.isEmpty {
+            let counts = parsed.pools
+                .map { ($0.key, $0.value.lineCount) }
+                .sorted { $0.1 > $1.1 }
+            let perPool = counts
+                .prefix(8)
+                .map { "\($0.0)×\($0.1)" }
+                .joined(separator: ", ")
+            let total = counts.reduce(0) { $0 + $1.1 }
+            let summary = "= \(total) new lines in \(counts.count) pools: \(perPool)"
+            flat.insert(summary, at: 0)
         }
         let descriptions = parsed.descriptions.map {
             DialogueRefreshLogEntry.AppDescription(name: $0.key, description: $0.value)

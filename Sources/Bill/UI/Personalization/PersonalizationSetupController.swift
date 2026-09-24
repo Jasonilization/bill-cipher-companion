@@ -17,6 +17,10 @@ final class PersonalizationSetupController: NSObject {
     var onStart: (() -> Void)?
     /// Set by `AppDelegate` — opens the full ChatGPT panel for sign-in.
     var onOpenLogin: (() -> Void)?
+    /// Set by `AppDelegate` — fires whenever the window is presented, so
+    /// the intro can show the detected-app list *before* the user commits
+    /// to anything (the guided-setup ask).
+    var onPresent: (() -> Void)?
 
     init(model: PersonalizationModel) {
         self.model = model
@@ -24,6 +28,7 @@ final class PersonalizationSetupController: NSObject {
     }
 
     func present() {
+        onPresent?()
         if let window {
             window.makeKeyAndOrderFront(nil)
             return
@@ -99,7 +104,35 @@ struct PersonalizationSetupView: View {
             Text("Bill will use his ChatGPT connection to write himself commentary about the apps on this Mac — a morning line, a midday line, an afternoon line and a night line for each app, plus lines for switching between your most-used apps.")
                 .font(.system(size: 12.5))
                 .fixedSize(horizontal: false, vertical: true)
-            Text("Everything is written in his voice, on this machine, through the same chat he talks to you with — and takes a few minutes. You can keep using your Mac while he studies.")
+            if !model.detectedApps.isEmpty {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Apps he can see right now (\(model.detectedApps.count)):")
+                        .font(.system(size: 12, weight: .semibold))
+                    ScrollView {
+                        LazyVStack(alignment: .leading, spacing: 2) {
+                            ForEach(model.detectedApps, id: \.self) { name in
+                                let done = model.studiedApps[name] ?? 0
+                                HStack(spacing: 6) {
+                                    Image(systemName: done > 0 ? "checkmark.circle.fill" : "circle.dotted")
+                                        .font(.system(size: 10))
+                                        .foregroundStyle(done > 0 ? Color.green : Color.secondary)
+                                    Text(name)
+                                        .font(.system(size: 11, design: .monospaced))
+                                    Spacer()
+                                    if done > 0 {
+                                        Text("\(done) lines")
+                                            .font(.system(size: 10, weight: .bold).monospacedDigit())
+                                            .foregroundStyle(.green)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    .frame(maxHeight: 148)
+                    .border(Color.secondary.opacity(0.25))
+                }
+            }
+            Text("Everything is written in his voice, on this machine, through the same chat he talks to you with — and takes a few minutes. You can keep using your Mac while he studies; the Quotes Manager (in Settings) shows every line the moment it lands.")
                 .font(.system(size: 12.5))
                 .fixedSize(horizontal: false, vertical: true)
             Text("You'll need to be signed in to ChatGPT in his chat window once.")
@@ -133,6 +166,11 @@ struct PersonalizationSetupView: View {
                 Text("Studying \(model.appCount) apps. Each batch goes live the moment it lands — no need to wait for the finish.")
                     .font(.system(size: 11.5))
                     .foregroundStyle(.tertiary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            if !model.studiedApps.isEmpty {
+                Text("\(model.studiedApps.values.reduce(0, +)) lines written across \(model.studiedApps.count) apps so far — watch them land live in Settings → Quotes Manager.")
+                    .font(.system(size: 11.5, weight: .medium))
                     .fixedSize(horizontal: false, vertical: true)
             }
             Spacer(minLength: 8)

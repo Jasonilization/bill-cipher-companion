@@ -663,6 +663,14 @@ enum BarkLines {
         "Occasionally I just need to run very fast and be slightly more menacing. Cathartic.",
     ]
 
+    /// Fires with the `ritualBuildup` rare Easter egg — the quiet standstill
+    /// before the summoning circle snaps in around him.
+    static let ritualBuildup = [
+        "Hold still. A circle is being summoned. It's very sensitive work.",
+        "Three... two... one... and NOW the chorus of tiny triangles.",
+        "Every good ritual opens with a dramatic pause. For ambiance. Mostly menace.",
+    ]
+
     static func specialApp(for state: BillState) -> [String] {
         switch state {
         case .trickster: return trickster
@@ -713,6 +721,7 @@ enum BarkLines {
         case .grumpEyes: return grumpEyes
         case .zipAround: return zipAround
         case .rampaging: return rampaging
+        case .ritualBuildup: return ritualBuildup
         default: return ["..."]
         }
     }

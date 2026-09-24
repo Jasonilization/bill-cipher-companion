@@ -14,6 +14,10 @@ struct SettingsView: View {
     @ObservedObject var memoryStore: MemoryStore
     var onSignOut: () -> Void
     var onResetMemory: () -> Void
+    /// Set by `AppDelegate` — forces a weather pull + loud report.
+    var onTestWeather: (() -> Void)?
+    /// Set by `AppDelegate` — opens the quotes manager window.
+    var onOpenQuotesManager: (() -> Void)?
 
     /// The dialogue keys offered as animation-override triggers — the ones
     /// with real pool content behind them. Deliberately curated: the full
@@ -161,7 +165,25 @@ struct SettingsView: View {
                 }
             }
 
+            Section("Weather") {
+                Toggle("Bill talks about the weather", isOn: $preferences.isWeatherEnabled)
+                Stepper(
+                    preferences.weatherAnnounceMinutes == 0
+                        ? "Report only on changes"
+                        : "Mention current weather every \(preferences.weatherAnnounceMinutes) min",
+                    value: $preferences.weatherAnnounceMinutes,
+                    in: AppPreferences.weatherAnnounceRange,
+                    step: 15
+                )
+                Text("Pulls keyless Open-Meteo nowcast every 5 minutes — rain announced as it starts. Steady weather gets a mention on your interval instead of silence.")
+                    .font(.caption).foregroundStyle(.secondary)
+                Button("Test weather now") { onTestWeather?() }
+            }
+
             Section("Prompts") {
+                Button("Open the Quotes Manager…") { onOpenQuotesManager?() }
+                Text("Every pool, every line, where each came from — authored (A), ChatGPT-generated (G), or personalized to your apps (P) — plus one-click refresh and clear logs.")
+                    .font(.caption).foregroundStyle(.secondary)
                 Stepper(
                     "Refresh Bill's lines \(preferences.promptRefreshesPerDay)x per day",
                     value: $preferences.promptRefreshesPerDay,

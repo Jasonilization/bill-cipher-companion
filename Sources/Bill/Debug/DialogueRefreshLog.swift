@@ -27,6 +27,22 @@ struct DialogueRefreshLogEntry: Identifiable, Codable {
     var durationSeconds: Double?
 
     var succeeded: Bool { failureReason == nil && (!linesAdded.isEmpty || !appDescriptionsAdded.isEmpty) }
+
+    /// One-line, plain-words summary for log strips — the "clear refresh
+    /// logs" ask: every entry should read as what happened at a glance.
+    var summarized: String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "HH:mm:ss"
+        let stamp = formatter.string(from: date)
+        let headline = linesAdded.first ?? ""
+        if let failureReason {
+            return "\(stamp) · \(trigger) · FAILED: \(failureReason)"
+        }
+        if succeeded {
+            return "\(stamp) · \(trigger) · OK — \(headline.isEmpty ? "\(appDescriptionsAdded.count) app descriptions" : headline)"
+        }
+        return "\(stamp) · \(trigger) · nothing landed"
+    }
 }
 
 /// Observable, persisted store for the refresh log.

@@ -67,10 +67,10 @@ enum SystemEvent: Sendable {
     /// A wall-clock half hour just passed.
     case halfHour(hour: Int, minute: Int)
     case timeOfDayChanged(TimeOfDay)
-    /// A successful weather pull whose condition differs from the last one
-    /// announced (see `WeatherMonitor.onConditionChanged` — a temperature
-    /// drift within the same condition is deliberately not an event).
-    case weatherChanged(WeatherSnapshot)
+    /// A weather report is due — see `WeatherMonitor.onReport` for the
+    /// four reasons (first pull, condition change, user's periodic
+    /// interval, forced test).
+    case weatherChanged(WeatherSnapshot, WeatherMonitor.ReportReason)
 }
 
 /// Coarse link quality. Deliberately four wide tiers rather than a number:

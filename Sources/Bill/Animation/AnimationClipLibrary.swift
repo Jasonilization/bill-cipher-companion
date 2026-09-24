@@ -138,6 +138,7 @@ enum AnimationClipLibrary {
         case .grumpEyes: return grumpEyes
         case .zipAround: return zipAround
         case .rampaging: return rampaging
+        case .ritualBuildup: return ritualBuildup
         case .crouching: return crouching
         case .launching: return launching
         case .rising: return rising
@@ -165,7 +166,7 @@ enum AnimationClipLibrary {
         case .sleeping: return .zzz
         case .celebrating: return .confettiAndSparkle
         case .happy, .smug, .caneFlourish, .meltdown: return .sparkle
-        case .powerSurge, .zodiacVision, .summonRitual: return .sparkle
+        case .powerSurge, .zodiacVision, .summonRitual, .ritualBuildup: return .sparkle
         default: return nil
         }
     }
@@ -750,6 +751,19 @@ enum AnimationClipLibrary {
     static let rampaging = AnimationClip(
         textures: holdLast(BillSpriteCatalog.rampaging, extra: 3),
         frameDuration: 0.11,
+        loop: .once
+    )
+
+    /// The retired pre-audit summoning pair, given its own beat: three
+    /// near-identical stand-still frames (the only motion a one-pixel eye
+    /// glint — a focused channel), then the classic summoning circle snaps
+    /// in around him and holds. Forward-only + holdLast like every other
+    /// committed reveal (the circle appearing is directional; ping-ponging
+    /// it would un-summon it), and paced at `summonRitual`'s own ritual
+    /// tempo so the two beats feel like siblings.
+    static let ritualBuildup = AnimationClip(
+        textures: holdLast(BillSpriteCatalog.summonBuild + BillSpriteCatalog.summonHold, extra: 8),
+        frameDuration: 0.25,
         loop: .once
     )
 

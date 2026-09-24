@@ -62,6 +62,7 @@ enum DialogueKey: String, CaseIterable, Codable, Sendable {
     case pushingCode
     case rampaging
     case returningFavorite
+    case ritualBuildup
     case roamFellOffWorld
     case roamHardLanding
     case roamLedgeGrab

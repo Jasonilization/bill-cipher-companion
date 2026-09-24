@@ -81,16 +81,41 @@ struct WeatherSnapshot: Sendable, Equatable {
 /// into anything user-visible.
 @MainActor
 final class WeatherMonitor {
-    /// Fires when a fetch succeeds and the *condition* changed since the
-    /// last one announced (temperature drift alone would nag constantly).
-    var onConditionChanged: ((WeatherSnapshot) -> Void)?
+    /// Why a weather report is being announced.
+    enum ReportReason: Sendable, Equatable {
+        /// The first successful pull of the session — announced at always
+        /// importance so the pipeline is visibly working from launch.
+        case firstPull
+        /// The condition changed since the last announcement.
+        case conditionChange
+        /// The user's periodic announce interval elapsed (steady weather
+        /// must not mean silence — the "I never saw him say anything about
+        /// the weather" report).
+        case periodic
+        /// The user pressed the Test button — always at always importance,
+        /// never cooldown-gated.
+        case forcedTest
+    }
+
+    /// Fires when a fetch succeeds and a report is due, with the reason.
+    var onReport: ((WeatherSnapshot, ReportReason) -> Void)?
     /// Fires on every successful fetch — the snapshot provider for chat
     /// context (`CharacterWindowController.contextualized`).
     var onSnapshot: ((WeatherSnapshot) -> Void)?
 
+    /// Set by `AppDelegate` from `AppPreferences.isWeatherEnabled` — when
+    /// off, the monitor doesn't even fetch: no announcements, no context.
+    var isEnabledProvider: (() -> Bool)?
+    /// Set by `AppDelegate` from `AppPreferences.weatherAnnounceMinutes`;
+    /// 0 disables periodic reports (condition changes still announce).
+    var announceIntervalMinutesProvider: (() -> Int)?
+
     private(set) var latest: WeatherSnapshot?
     private var timer: Timer?
     private var lastAnnouncedCondition: WeatherSnapshot.Condition?
+    private var lastAnnouncedAt: Date?
+    private var hasAnnouncedFirstPull = false
+    private var isTestForced = false
     private static let fetchInterval: TimeInterval = 5 * 60
 
     func start() {
@@ -110,17 +135,54 @@ final class WeatherMonitor {
         timer = nil
     }
 
+    /// Settings/menu "Test weather now": force a pull and announce the
+    /// result loudly whatever it says, bypassing the enable gate the way
+    /// an explicit user action should.
+    func testNow() {
+        isTestForced = true
+        fetch()
+    }
+
     private func fetch() {
+        let forced = isTestForced
+        let enabled = isEnabledProvider?() ?? true
+        guard forced || enabled else { return }
         Task { [weak self] in
             guard let snapshot = await Self.pull() else { return }
             guard let self else { return }
             self.latest = snapshot
             self.onSnapshot?(snapshot)
-            if snapshot.condition != self.lastAnnouncedCondition {
+
+            let reason = self.reportReason(for: snapshot, forced: forced)
+            if let reason {
                 self.lastAnnouncedCondition = snapshot.condition
-                self.onConditionChanged?(snapshot)
+                self.lastAnnouncedAt = Date()
+                self.onReport?(snapshot, reason)
             }
         }
+    }
+
+    /// Which report (if any) this fetch owes: first pull wins, then
+    /// condition changes, then the user's periodic interval. A forced test
+    /// always reports.
+    private func reportReason(for snapshot: WeatherSnapshot, forced: Bool) -> ReportReason? {
+        if forced {
+            isTestForced = false
+            return .forcedTest
+        }
+        if !hasAnnouncedFirstPull {
+            hasAnnouncedFirstPull = true
+            return .firstPull
+        }
+        if snapshot.condition != lastAnnouncedCondition {
+            return .conditionChange
+        }
+        let intervalMinutes = announceIntervalMinutesProvider?() ?? 0
+        guard intervalMinutes > 0 else { return nil }
+        if let lastAnnouncedAt, Date().timeIntervalSince(lastAnnouncedAt) < TimeInterval(intervalMinutes) * 60 {
+            return nil
+        }
+        return .periodic
     }
 
     // MARK: - Network

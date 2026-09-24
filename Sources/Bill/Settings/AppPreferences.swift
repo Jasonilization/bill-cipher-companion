@@ -23,6 +23,8 @@ final class AppPreferences: ObservableObject {
         static let customAnimationMap = "billCustomAnimationMap"
         static let promptRefreshesPerDay = "billPromptRefreshesPerDay"
         static let promptExtraInstructions = "billPromptExtraInstructions"
+        static let weatherEnabled = "billWeatherEnabled"
+        static let weatherAnnounceMinutes = "billWeatherAnnounceMinutes"
     }
 
     @Published var isRoamingEnabled: Bool {
@@ -139,6 +141,22 @@ final class AppPreferences: ObservableObject {
         didSet { UserDefaults.standard.set(promptExtraInstructions, forKey: Keys.promptExtraInstructions) }
     }
 
+    // MARK: - Weather
+
+    /// Master switch for all weather commentary. Off means the monitor
+    /// doesn't even fetch — no announcement, no chat context blurb.
+    @Published var isWeatherEnabled: Bool {
+        didSet { UserDefaults.standard.set(isWeatherEnabled, forKey: Keys.weatherEnabled) }
+    }
+    /// How often (minutes) Bill mentions the current weather *regardless of
+    /// change* — the fix for "I never saw him say anything about the
+    /// weather": steady-weather days previously meant silence after the
+    /// first pull. 0 = off; condition changes always announce anyway.
+    @Published var weatherAnnounceMinutes: Int {
+        didSet { UserDefaults.standard.set(weatherAnnounceMinutes, forKey: Keys.weatherAnnounceMinutes) }
+    }
+    static let weatherAnnounceRange: ClosedRange<Int> = 0...240
+
     @Published private(set) var launchAtLoginStatus: SMAppService.Status
 
     init() {
@@ -157,6 +175,11 @@ final class AppPreferences: ObservableObject {
         customAnimationMap = defaults.dictionary(forKey: Keys.customAnimationMap) as? [String: String] ?? [:]
         promptRefreshesPerDay = (defaults.object(forKey: Keys.promptRefreshesPerDay) as? Int) ?? 3
         promptExtraInstructions = defaults.string(forKey: Keys.promptExtraInstructions) ?? ""
+        isWeatherEnabled = (defaults.object(forKey: Keys.weatherEnabled) as? Bool) ?? true
+        weatherAnnounceMinutes = min(
+            max((defaults.object(forKey: Keys.weatherAnnounceMinutes) as? Int) ?? 60, Self.weatherAnnounceRange.lowerBound),
+            Self.weatherAnnounceRange.upperBound
+        )
         let disabledRaw = defaults.stringArray(forKey: Keys.disabledCategories) ?? []
         disabledCategories = Set(disabledRaw.compactMap(AppCategory.init(rawValue:)))
         let storedScale = (defaults.object(forKey: Keys.characterScale) as? Double) ?? 1.0

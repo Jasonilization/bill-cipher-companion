@@ -82,6 +82,7 @@ enum BillState: String, CaseIterable, Sendable {
     case grumpEyes
     case zipAround
     case rampaging
+    case ritualBuildup
 
     // Desktop-roaming physics beats (see `GravitySimulator`/`RoamingController`).
     // Every one of these is backed by real sprite art already exported from
@@ -140,7 +141,8 @@ enum BillState: String, CaseIterable, Sendable {
              .presenting, .guilty, .dreading, .grooving, .dispatching, .ambushed, .stressed,
              .watched, .flinching, .huffy, .pushingCode, .browsingStore, .dancing:
             return 50
-        case .caneTwist, .hookCane, .conjuring, .tumbling, .dashTarget, .grumpEyes, .zipAround, .rampaging:
+        case .caneTwist, .hookCane, .conjuring, .tumbling, .dashTarget, .grumpEyes, .zipAround, .rampaging,
+             .ritualBuildup:
             return 85
         // Above every ambient/app reaction (50) but below emotional spikes:
         // once Bill is genuinely mid-air, the animation has to stay in sync
@@ -176,6 +178,7 @@ enum BillState: String, CaseIterable, Sendable {
              .dreading, .grooving, .dispatching, .ambushed, .stressed, .watched, .flinching,
              .huffy, .dancing,
              .caneTwist, .hookCane, .conjuring, .tumbling, .dashTarget, .grumpEyes, .zipAround, .rampaging,
+             .ritualBuildup,
              .crouching, .launching, .landingSoft, .landingHard, .ledgeGrabbing, .edgePeek:
             return false
         }
@@ -241,5 +244,6 @@ enum BillState: String, CaseIterable, Sendable {
     static let rareEasterEggs: [BillState] = [
         .powerSurge, .zodiacVision, .summonRitual, .ghostPale, .glitchForm, .shadowHands, .meltdown,
         .caneTwist, .hookCane, .conjuring, .tumbling, .dashTarget, .grumpEyes, .zipAround, .rampaging,
+        .ritualBuildup,
     ]
 }

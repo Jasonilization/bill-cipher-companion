@@ -180,7 +180,10 @@ final class DialogueLibrary {
     }
 
     func report() -> [(key: String, any: Int, morning: Int, midday: Int, afternoon: Int, night: Int, generated: Int)] {
-        pools.keys.sorted().map { key in
+        var keys = Set(pools.keys)
+        keys.formUnion(generated.keys)
+        keys.formUnion(personalized.keys)
+        return keys.sorted().map { key in
             let p = pools[key] ?? DialoguePool()
             return (
                 key: key,
@@ -192,5 +195,49 @@ final class DialogueLibrary {
                 generated: generated[key]?.lineCount ?? 0
             )
         }
+    }
+
+    // MARK: - Quotes Manager support
+
+    /// Total lines reachable under `key` right now, across all three
+    /// sources (authored, daily-refresh generated, personalized).
+    func totalLines(for key: String) -> Int {
+        (pools[key]?.lineCount ?? 0)
+            + (generated[key]?.lineCount ?? 0)
+            + (personalized[key]?.lineCount ?? 0)
+    }
+
+    /// Which sources feed `key`, for the manager's A/G/P badges.
+    func sourceCounts(for key: String) -> (authored: Int, generated: Int, personalized: Int) {
+        (
+            pools[key]?.lineCount ?? 0,
+            generated[key]?.lineCount ?? 0,
+            personalized[key]?.lineCount ?? 0
+        )
+    }
+
+    /// Every line under `key`, bucket by bucket, tagged with its source —
+    /// the quotes manager's detail pane.
+    func poolDetail(_ key: String) -> [(bucket: String, source: String, line: String)] {
+        var result: [(String, String, String)] = []
+        let buckets: [(String, (DialoguePool) -> [String])] = [
+            ("any", { $0.any }),
+            ("morning", { $0.morning }),
+            ("midday", { $0.midday }),
+            ("afternoon", { $0.afternoon }),
+            ("night", { $0.night }),
+        ]
+        for (name, slice) in buckets {
+            for line in slice(pools[key] ?? DialoguePool()) {
+                result.append((name, "authored", line))
+            }
+            for line in slice(generated[key] ?? DialoguePool()) {
+                result.append((name, "generated", line))
+            }
+            for line in slice(personalized[key] ?? DialoguePool()) {
+                result.append((name, "personalized", line))
+            }
+        }
+        return result
     }
 }

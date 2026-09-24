@@ -18,6 +18,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var chatPanelController: ChatPanelController!
     private var settingsWindowController: SettingsWindowController!
     private var personalizationSetupController: PersonalizationSetupController!
+    private var quotesManagerController: QuotesManagerController!
     private var dialogueRefreshLogWindowController: DialogueRefreshLogWindowController!
     private var cancellables = Set<AnyCancellable>()
 
@@ -55,6 +56,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         personalizationSetupController = PersonalizationSetupController(
             model: characterWindowController.personalizationEngine.model
         )
+        personalizationSetupController.onPresent = { [weak self] in
+            self?.characterWindowController.personalizationEngine.previewDetectedApps()
+        }
         personalizationSetupController.onStart = { [weak self] in
             self?.characterWindowController.runPersonalizationSetup()
         }
@@ -66,6 +70,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             memoryStore: memoryStore,
             onSignOut: { [weak self] in self?.chatBridge.signOut() }
         )
+        settingsWindowController.onTestWeather = { [weak self] in
+            self?.testWeatherNow()
+        }
+        settingsWindowController.onOpenQuotesManager = { [weak self] in
+            self?.openQuotesManager()
+        }
+        quotesManagerController = QuotesManagerController()
+        quotesManagerController.refreshStore = characterWindowController.dialogueRefreshStore
+        quotesManagerController.onRefreshAll = { [weak self] in
+            self?.characterWindowController.refreshDialogueNow()
+        }
+        quotesManagerController.onShowLog = { [weak self] in
+            self?.dialogueRefreshLogWindowController.show()
+        }
         dialogueRefreshLogWindowController = DialogueRefreshLogWindowController(characterWindowController: characterWindowController)
         statusItemController = StatusItemController(
             appDelegate: self,
@@ -202,12 +220,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         systemMonitor.start()
 
-        // Weather: fires only on a real condition change (rain starting,
-        // skies clearing) and rides into chat context via
-        // `weatherBlurbProvider` above. Keyless services (Open-Meteo +
-        // geojs) — verified live during development.
-        weatherMonitor.onConditionChanged = { [weak self] snapshot in
-            self?.reactionRouter.handle(.weatherChanged(snapshot))
+        // Weather: reports through the monitor's four-reason callback;
+        // gated by the Settings enable toggle, periodic interval honored
+        // for steady-weather days. The Test button forces a loud report.
+        weatherMonitor.onReport = { [weak self] snapshot, reason in
+            self?.reactionRouter.handle(.weatherChanged(snapshot, reason))
+        }
+        weatherMonitor.isEnabledProvider = { [weak self] in
+            self?.preferences.isWeatherEnabled ?? true
+        }
+        weatherMonitor.announceIntervalMinutesProvider = { [weak self] in
+            self?.preferences.weatherAnnounceMinutes ?? 0
         }
         weatherMonitor.start()
 
@@ -231,6 +254,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// shows its live progress.
     func openPersonalizationSetup() {
         personalizationSetupController?.present()
+    }
+
+    /// Settings/menu "Test weather now" — force a pull and announce it
+    /// loudly, whatever the current condition happens to be.
+    func testWeatherNow() {
+        weatherMonitor.testNow()
+    }
+
+    /// Opens the quotes manager: every pool, every line, source badges
+    /// (authored/generated/personalized), refresh-everything, and the
+    /// recent log strip.
+    func openQuotesManager() {
+        quotesManagerController?.present()
     }
 
     /// Nothing used to run at shutdown at all — no monitors stopped, no state

@@ -41,16 +41,28 @@ enum BillSpriteCatalog {
     static let powerSurgeClose = loadFrames("bill_powersurgeclose", count: 1)
     static let portalRing = loadFrames("bill_portalring", count: 8)
     static let zodiac = loadFrames("bill_zodiac", count: 8)
-    /// Replaces the old `summonBuild`(3)+`summonHold`(1) pair — the
-    /// animation-director audit found the sheet's actual "glowing ritual
-    /// circle" (8 identical clone-triangles arranged in a ring, matching the
-    /// classic Bill-Cipher summoning motif) elsewhere on the sheet, a
-    /// stronger match for `summonRitual`'s own name/doc-comment than the
-    /// growth sequence previously backing it. Frame 1 is the full static
-    /// ring (curated as one merged frame, not an animatable sequence in its
-    /// own right); frames 2-4 are alternate eye-render variants of Bill
-    /// standing in it.
+    /// Replaced the old `summonBuild`(3)+`summonHold`(1) pair as this
+    /// state's source — the animation-director audit found the sheet's
+    /// actual "glowing ritual circle" (8 identical clone-triangles arranged
+    /// in a ring, matching the classic Bill-Cipher summoning motif)
+    /// elsewhere on the sheet, a stronger match for `summonRitual`'s own
+    /// name/doc-comment than the growth sequence previously backing it.
+    /// Frame 1 is the full static ring (curated as one merged frame, not an
+    /// animatable sequence in its own right); frames 2-4 are alternate
+    /// eye-render variants of Bill standing in it. The retired pair was
+    /// later given its own beat (`ritualBuildup`, registered just below)
+    /// rather than left dead in the bundle.
     static let summonRitual = loadFrames("bill_summonritual", count: 4)
+    /// The pre-audit summoning pair itself: three near-identical
+    /// stand-still frames whose only motion is a one-pixel eye glint
+    /// (a focused "channeling the summons" hold), then the payoff frame —
+    /// Bill snapped inside a ring of little triangle-clones, the classic
+    /// summoning-circle motif in pink and white. A quiet-buildup arc, the
+    /// opposite of `summonRitual`'s ring-first reveal, so the two read as
+    /// distinct beats rather than duplicates (4271 of the hold frame's
+    /// pixels differ from `summonritual`'s merged ring).
+    static let summonBuild = loadFrames("bill_summonbuild", count: 3, anchorShift: -2)
+    static let summonHold = loadFrames("bill_summonhold", count: 1, anchorShift: -2)
     /// Re-exported through the corrected pipeline — was 5 frames (the pale
     /// materialize-in only); the sheet's white box actually continues for 3
     /// more frames (solid yellow true-form, a mark across the body, settling
@@ -144,9 +156,9 @@ enum BillSpriteCatalog {
     /// beams and portals keep flying around him.
     ///
     /// Measured values: scanning −10.3, transferring −6.0, channeling −2.8,
-    /// dispatching +3.2, conjuring −1.1, summoning −1.1 (positive = drawn
-    /// right of the idle anchor, so the shift is the negation, rounded to
-    /// whole pixels).
+    /// dispatching +3.2, conjuring −1.1, summoning −1.1, summonBuild +2.2,
+    /// summonHold +1.8 (positive = drawn right of the idle anchor, so the
+    /// shift is the negation, rounded to whole pixels).
     ///
     /// `charged` was measured too but excluded: every frame's yellow mass is
     /// dominated by the lightning-bolt effect, leaving no trustworthy body
