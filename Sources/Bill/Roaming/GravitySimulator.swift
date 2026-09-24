@@ -314,6 +314,40 @@ final class GravitySimulator {
         fallStartY = feet.y
     }
 
+    /// Frees him only when he's actually clinging to something. `release()`
+    /// alone is unsafe to call blindly — it un-grounds a resting Bill and
+    /// starts him falling — so beat boundaries use this instead.
+    func releaseIfHanging() {
+        guard grabbedSolid != nil else { return }
+        release()
+    }
+
+    /// The never-stuck guarantee: clinging to nothing (the climb command
+    /// never came), or airborne with ~zero velocity (an edge case the
+    /// planners didn't cover, e.g. geometry shifting mid-grab near a screen
+    /// edge), for this long means no planner is coming to rescue him on
+    /// this beat — drop out of it and let gravity re-take him. Normal
+    /// hangs last well under a second (the climb step is planned the very
+    /// tick after the grab), so six is unreachably conservative.
+    private var stuckSeconds: TimeInterval = 0
+    private static let stuckThreshold: TimeInterval = 6
+
+    private func watchdog(dt: TimeInterval) {
+        let airborne = !isGrounded
+        let frozen = abs(velocity.dx) < 1 && abs(velocity.dy) < 1
+        let clinging = grabbedSolid != nil
+        if clinging || (airborne && frozen) {
+            stuckSeconds += dt
+            if stuckSeconds > Self.stuckThreshold {
+                stuckSeconds = 0
+                release()
+                pendingEvents.append(.walkedOffEdge)
+            }
+        } else {
+            stuckSeconds = 0
+        }
+    }
+
     // MARK: - Integration
 
     /// Advances the simulation and returns everything notable that happened.
@@ -323,6 +357,7 @@ final class GravitySimulator {
     func step(dt: TimeInterval) -> [RoamEvent] {
         pendingEvents.removeAll(keepingCapacity: true)
         let d = CGFloat(dt)
+        watchdog(dt: dt)
 
         if grabbedSolid != nil {
             stepClimbing(d)

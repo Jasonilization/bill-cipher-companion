@@ -77,7 +77,12 @@ enum BarkBubble {
     /// should always show in full.
     private static let maxLines = 14
 
-    static func makeNode(text: String, maxWidth: CGFloat, tailOffsetUnits: CGFloat = 0) -> SKNode {
+    static func makeNode(
+        text: String,
+        maxWidth: CGFloat,
+        maxHeight: CGFloat = .greatestFiniteMagnitude,
+        tailOffsetUnits: CGFloat = 0
+    ) -> SKNode {
         // Honor the caller's measured on-screen room: the caller
         // (`BillStateMachine.present`) passes the width of the window's
         // on-screen region so a bubble placed while Bill stands at a
@@ -88,7 +93,19 @@ enum BarkBubble {
         let chromeUnits = paddingX * 2 + CGFloat(borderThickness + accentThickness) * 2
         let roomUnits = Int((maxWidth / effectivePixelScale).rounded(.down)) - Int(chromeUnits)
         let textColumnUnits = min(maxTextWidthUnits, max(minTextWidthUnits, roomUnits))
-        let lines = PixelFont.wrap(normalize(text.uppercased()), maxWidthUnits: textColumnUnits, maxLines: maxLines)
+        // Height cap: the text-size Settings knob multiplies the whole
+        // bitmap, so the old flat 14-line limit could grow a bubble taller
+        // than the character window's bark headroom — clipping the top
+        // against the window's own edge. The caller passes the *measured*
+        // rig-space height it actually has; the line budget shrinks to fit
+        // it exactly, whatever the scale.
+        let heightBudgetUnits = (maxHeight / effectivePixelScale).rounded(.down) - tailHeight - paddingY * 2
+        let lineBudget = max(1, Int(heightBudgetUnits / PixelFont.lineHeight))
+        let lines = PixelFont.wrap(
+            normalize(text.uppercased()),
+            maxWidthUnits: textColumnUnits,
+            maxLines: min(maxLines, lineBudget)
+        )
 
         let textBlockWidth = CGFloat(lines.map(PixelFont.lineWidth).max() ?? 0)
         let textBlockHeight = CGFloat(lines.count) * PixelFont.lineHeight - PixelFont.lineSpacing

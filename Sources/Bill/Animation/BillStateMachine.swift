@@ -150,8 +150,10 @@ final class BillStateMachine {
         // now (see `availableBarkWidth`) — a bubble that fits where it's
         // going can never be clipped by the window's own edge, which is
         // the "invisible border hides part of the message" failure the
-        // old always-full-width bubble produced at screen edges.
-        var bubble = BarkBubble.makeNode(text: text, maxWidth: availableBarkWidth())
+        // old always-full-width bubble produced at screen edges. The
+        // height is measured too, so the text-size knob can't grow the
+        // bubble past the window's headroom either.
+        var bubble = makeBarkNode(text: text, tailOffsetUnits: 0)
         bubble.position = CGPoint(x: 0, y: 128)
         bubble.alpha = 0
         bubble.zPosition = 10
@@ -253,12 +255,40 @@ final class BillStateMachine {
         // moves by the negated shift. 1 bitmap unit = 1 BarkBubble
         // `effectivePixelScale` of on-screen point (text-size knob included).
         let tailUnits = -dx / rigScaleX / BarkBubble.effectivePixelScale
-        let shifted = BarkBubble.makeNode(text: text, maxWidth: availableBarkWidth(), tailOffsetUnits: tailUnits)
+        let shifted = makeBarkNode(text: text, tailOffsetUnits: tailUnits)
         shifted.position = CGPoint(x: bubble.position.x + dx / rigScaleX, y: 128)
         shifted.alpha = bubble.alpha
         shifted.zPosition = 10
         rig.root.addChild(shifted)
         return shifted
+    }
+
+    /// One builder for both the initial centered bubble and the shifted
+    /// rebuild, so width, height and tail knobs can never drift apart
+    /// between the two call sites.
+    private func makeBarkNode(text: String, tailOffsetUnits: CGFloat) -> SKNode {
+        BarkBubble.makeNode(
+            text: text,
+            maxWidth: availableBarkWidth(),
+            maxHeight: availableBarkHeight(),
+            tailOffsetUnits: tailOffsetUnits
+        )
+    }
+
+    /// The vertical room the bark bubble can occupy, in rig points: from
+    /// its anchor above Bill's head (rig y=128) up to the on-screen top of
+    /// the window. The bubble bitmap plus its `effectivePixelScale`
+    /// multiplier must fit inside this, whatever the text-size setting.
+    private func availableBarkHeight() -> CGFloat {
+        guard
+            let scene = rig.root.scene,
+            let window = scene.view?.window,
+            let visible = (window.screen ?? NSScreen.main)?.visibleFrame
+        else { return 340 }
+        let rigScaleY = abs(rig.root.yScale) != 0 ? abs(rig.root.yScale) : 1
+        let regionMaxY = min(scene.frame.height, visible.maxY - window.frame.minY)
+        let bubbleBaseSceneY = 128 * rigScaleY
+        return max(60, (regionMaxY - bubbleBaseSceneY) / rigScaleY)
     }
 
     /// Slides a just-placed bark bubble back into the *window's on-screen

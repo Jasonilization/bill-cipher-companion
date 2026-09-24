@@ -375,18 +375,22 @@ final class RoamingController {
             .platforms(excludingWindowNumber: panel.windowNumber)
             .compactMap { platform -> RoamSolid? in
                 // Clamp every solid into the *walkable* world (the screen's
-                // visible frame, which excludes the menu-bar strip). A
-                // window whose top edge reaches into that strip — a
-                // fullscreen-adjacent app, a "maximize" that keeps the bar —
-                // was previously solid above the ceiling: the side-grab
-                // could catch it, Bill would climb toward a top edge the
-                // ceiling clamp refuses to let him reach, and he ping-ponged
-                // in a grab-clamp-fall loop right under the menu bar — the
-                // "stuck on the menu" report. After the clamp, no solid
-                // exists above the ceiling at all: the climb tops out
-                // exactly at the walkable top edge.
+                // visible frame, which excludes the menu-bar strip) — and
+                // then drop any solid whose top edge still sits flush with
+                // the ceiling. A window reaching the working area's top is
+                // not furniture: nothing up there is worth standing on,
+                // grabbing, or colliding with, and every path that made him
+                // linger in the menu-bar zone (side-grab top-outs, swept
+                // landings on sliver-shaped strips) started with one of
+                // these. The earlier "stuck on the menu" reports traced to
+                // exactly this class of solid; with them gone from the
+                // world entirely, the menu-bar zone is unreachable by
+                // construction, not just unattractive as a goal.
                 let rect = platform.rect.intersection(visible)
-                guard !rect.isEmpty, rect.height > 4 else { return nil }
+                guard !rect.isEmpty,
+                      rect.height > 8,
+                      rect.maxY < visible.maxY - 8
+                else { return nil }
                 return RoamSolid(rect: rect)
             }
     }
@@ -670,11 +674,16 @@ final class RoamingController {
     }
 
     private func endBeat() {
-        log("end feet=(\(Int(sim.feet.x)),\(Int(sim.feet.y))) grounded=\(sim.isGrounded)")
+        log("end feet=(\(Int(sim.feet.x)),\(Int(sim.feet.y)) grounded=\(sim.isGrounded)")
         tick?.invalidate(); tick = nil
         step = .done
         goal = nil
         pendingDropX = nil
+        // The single most-reported "stuck" shape: a beat that ends while
+        // he's mid-grab on a window's side left `grabbedSolid` set, hanging
+        // him in mid-air *between* beats — nothing ticks between beats, so
+        // nothing ever released him. Every beat boundary frees him.
+        sim.releaseIfHanging()
         sim.stop()
         applyState(.idle)
         scheduleNextBeat()
