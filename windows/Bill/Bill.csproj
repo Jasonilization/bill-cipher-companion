@@ -12,12 +12,16 @@
     <AssemblyName>Bill</AssemblyName>
     <RootNamespace>Bill</RootNamespace>
     <InvariantGlobalization>true</InvariantGlobalization>
-    <Version>0.1.0</Version>
+    <Version>0.2.0</Version>
     <Product>Bill Cipher — Windows Preview</Product>
   </PropertyGroup>
 
   <ItemGroup>
     <Resource Include="Sprites\*.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Dialogue\dialogue.json" CopyToOutputDirectory="PreserveNewest"/>
   </ItemGroup>
 
 </Project>

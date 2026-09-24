@@ -1,7 +1,7 @@
 using System;
-using System.IO;
 using System.Runtime.InteropServices;
 using System.Windows;
+using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -10,78 +10,66 @@ using System.Windows.Threading;
 namespace Bill;
 
 /// <summary>
-/// Milestone W1 of the Windows port (see Docs/notes/WindowsPortPlan.md):
-/// a layered, always-on-top, click-through-outside-the-silhouette window
-/// playing Bill's pixel sprites — the macOS panel equivalent.
-///
-/// Deliberately preview-scoped: idle + walk cycles, drag-to-move with the
-/// walk animation, per-pixel hit-testing, a context menu. Chat, awareness,
-/// roaming physics and settings are later milestones and intentionally
-/// absent, and the app says so plainly rather than shipping dead buttons.
+/// The pet window — milestone W1 (layered, always-on-top, per-pixel
+/// click-through outside Bill's silhouette) now driven by the milestone-W2
+/// brain: the full 66-family animation library plays through
+/// `BillStateMachine`, and barks surface as pixel speech bubbles above him
+/// (`BubbleWindow` + `BarkBubble`), voiced from the same dialogue.json the
+/// Mac app reads. See Docs/notes/WindowsPortPlan.md for what comes next:
+/// roaming physics, the chat bridge, and awareness.
 /// </summary>
 public partial class PetWindow : Window
 {
     private const int WM_NCHITTEST = 0x0084;
     private const int HTTRANSPARENT = -1;
-
-    // Frame pacing mirrors the macOS clip library exactly.
-    private static readonly TimeSpan IdleFrame = TimeSpan.FromMilliseconds(150);
-    private static readonly TimeSpan WalkFrame = TimeSpan.FromMilliseconds(140);
-    private static readonly TimeSpan WalkCooldown = TimeSpan.FromSeconds(2.5);
-
-    private readonly DispatcherTimer _timer = new() { Interval = IdleFrame };
-    private readonly BitmapSource[] _idleFrames;
-    private readonly BitmapSource[] _walkFrames;
-    private readonly byte[] _idleAlpha;
-    private int _frameIndex;
-    private bool _walking;
-    private readonly DispatcherTimer _walkReturn = new() { Interval = WalkCooldown };
-
     private const int SpriteWidth = 118;
     private const int SpriteHeight = 111;
+    private const byte AlphaThreshold = 40;
+    private const float BubbleScale = 3f;
+
+    private readonly DialogueLibrary _dialogue = new();
+    private readonly BillStateMachine _state;
+    private readonly BubbleWindow _bubble = new();
+    private readonly byte[] _idleAlpha;
+    private readonly DispatcherTimer _dragWalkReturn = new() { Interval = TimeSpan.FromSeconds(1.2) };
 
     public PetWindow()
     {
         InitializeComponent();
-        _idleFrames = LoadFrames("bill_idle", 7);
-        _walkFrames = LoadFrames("bill_walk", 6);
-        _idleAlpha = ExtractAlpha(_idleFrames[0]);
+        RenderOptions.SetBitmapScalingMode(Sprite, BitmapScalingMode.NearestNeighbor);
 
         Left = SystemParameters.WorkArea.Right - Width - 40;
         Top = SystemParameters.WorkArea.Bottom - Height - 20;
 
-        _timer.Tick += (_, _) => AdvanceFrame();
-        _walkReturn.Tick += (_, _) => SwitchToWalking(false);
-        _timer.Start();
-        Sprite.Source = _idleFrames[0];
+        _state = new BillStateMachine(_dialogue);
+        _state.OnFrame += frame => Dispatcher.Invoke(() => Sprite.Source = frame);
+        _state.OnBark += text => Dispatcher.Invoke(() => ShowBark(text));
+
+        _idleAlpha = ExtractAlpha(LoadFrame("bill_idle", 1));
+        _dragWalkReturn.Tick += (_, _) => _state.Request("idle");
 
         Loaded += (_, _) => HookHitTest();
     }
 
-    private static BitmapSource[] LoadFrames(string family, int count)
+    private void ShowBark(string text)
     {
-        var frames = new BitmapSource[count];
-        for (int i = 1; i <= count; i++)
-        {
-            var uri = new Uri($"pack://application:,,,/Sprites/{family}_{i:D2}.png");
-            var bmp = new BitmapImage(uri);
-            // Everything downstream (hit-test alpha, rendering) wants
-            // BGRA32; the sprites are plain RGBA PNGs.
-            BitmapSource frame = bmp.Format == PixelFormats.Bgra32
-                ? bmp
-                : new FormatConvertedBitmap(bmp, PixelFormats.Bgra32, null, 0);
-            frame.Freeze();
-            frames[i - 1] = frame;
-        }
-        return frames;
+        if (string.IsNullOrWhiteSpace(text)) return;
+        // The bubble is measured against a sensible desktop width; the
+        // bitmap is composed at BubbleScale source pixels per unit.
+        var bubble = BarkBubble.Make(text, maxWidthPx: 220, pixelScale: BubbleScale);
+        _bubble.ShowAbove(this, bubble);
     }
 
-    /// <summary>
-    /// The first idle frame's alpha channel, for per-pixel click-through:
-    /// outside the silhouette the window is HTTRANSPARENT so clicks reach
-    /// the desktop, inside it he is grabbable — the same rule the macOS
-    /// app's `BillHitTestView` enforces.
-    /// </summary>
+    private static BitmapSource LoadFrame(string family, int index)
+    {
+        var bmp = new BitmapImage(new Uri($"pack://application:,,,/Sprites/{family}_{index:D2}.png"));
+        BitmapSource frame = bmp.Format == System.Windows.Media.PixelFormats.Bgra32
+            ? bmp
+            : new System.Windows.Media.Imaging.FormatConvertedBitmap(bmp, System.Windows.Media.PixelFormats.Bgra32, null, 0);
+        frame.Freeze();
+        return frame;
+    }
+
     private static byte[] ExtractAlpha(BitmapSource frame)
     {
         var pixels = new byte[SpriteWidth * SpriteHeight * 4];
@@ -107,16 +95,11 @@ public partial class PetWindow : Window
             return IntPtr.Zero;
         }
 
-        // lParam packs screen coordinates in the low/high 16 bits.
         var raw = lParam.ToInt64();
         var screenX = (short)(raw & 0xFFFF);
         var screenY = (short)((raw >> 16) & 0xFFFF);
         var point = Sprite.PointFromScreen(new Point(screenX, screenY));
 
-        // Window DIP -> sprite source pixels (sprite is scaled 2x, and the
-        // window may be DPI-scaled above that — Visual.PointFromScreen
-        // returns DIPs, so dividing by the layout scale lands in source
-        // space).
         var scale = SpriteScale.ScaleX;
         var px = (int)(point.X / scale);
         var py = (int)(point.Y / scale);
@@ -125,8 +108,7 @@ public partial class PetWindow : Window
             handled = true;
             return (IntPtr)HTTRANSPARENT;
         }
-        const byte alphaThreshold = 40;
-        if (_idleAlpha[py * SpriteWidth + px] < alphaThreshold)
+        if (_idleAlpha[py * SpriteWidth + px] < AlphaThreshold)
         {
             handled = true;
             return (IntPtr)HTTRANSPARENT;
@@ -134,56 +116,61 @@ public partial class PetWindow : Window
         return IntPtr.Zero;
     }
 
-    private void AdvanceFrame()
+    private void OnSpriteLeftDown(object sender, MouseButtonEventArgs e)
     {
-        var frames = _walking ? _walkFrames : _idleFrames;
-        _frameIndex = (_frameIndex + 1) % frames.Length;
-        Sprite.Source = frames[_frameIndex];
-        _timer.Interval = _walking ? WalkFrame : IdleFrame;
-    }
-
-    private void SwitchToWalking(bool walking)
-    {
-        if (_walking == walking)
+        _state.Request("walk");
+        _dragWalkReturn.Stop();
+        try
         {
-            return;
+            DragMove();
         }
-        _walking = walking;
-        _frameIndex = 0;
-        _walkReturn.Stop();
-        if (walking)
+        catch (InvalidOperationException)
         {
-            _walkReturn.Start();
+            // Drag cancelled by the system (focus theft etc.) — harmless.
+        }
+        finally
+        {
+            _dragWalkReturn.Start();
         }
     }
 
-    private void OnSpriteLeftDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
-    {
-        SwitchToWalking(true);
-        DragMove();
-    }
-
-    private void OnSpriteRightUp(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    private void OnSpriteRightUp(object sender, MouseButtonEventArgs e)
     {
         ContextMenu.IsOpen = true;
     }
 
-    private void OnWalkDemo(object sender, RoutedEventArgs e)
+    private void OnBarkNow(object sender, RoutedEventArgs e)
     {
-        SwitchToWalking(true);
+        var line = _dialogue.FirstLine(new[]
+        {
+            "clock." + DialogueLibrary.CurrentTimeOfDay().ToString().ToLowerInvariant(),
+            "day.greeting",
+            "poked",
+            "userReturned",
+        });
+        if (line != null) ShowBark(line);
+    }
+
+    private void OnRandomAnim(object sender, RoutedEventArgs e)
+    {
+        var all = AnimationCatalog.All;
+        _state.Request(all[new Random().Next(all.Length)].Name);
     }
 
     private void OnAbout(object sender, RoutedEventArgs e)
     {
         MessageBox.Show(
-            "Bill Cipher — Windows PREVIEW (port milestone W1)\n\n" +
+            "Bill Cipher — Windows PREVIEW (port milestones W1+W2)\n\n" +
             "What works right now: the layered always-on-top window, " +
-            "per-pixel click-through outside Bill's silhouette, idle and " +
-            "walk animation, drag-to-move (he walks while you drag).\n\n" +
+            "per-pixel click-through outside Bill's silhouette, the full " +
+            "66-family animation library at authentic pacing, ambient " +
+            "idle beats and rare events, and pixel speech bubbles voiced " +
+            "from the same dialogue file the Mac app uses. Drag him around " +
+            "— he walks while you drag.\n\n" +
             "What is NOT here yet (later milestones): chat, roaming " +
-            "physics, awareness, settings, the minimize prank.\n\n" +
+            "physics, app/window awareness, settings, the minimize prank.\n\n" +
             "Unofficial fan project. Bill Cipher & Gravity Falls © Disney.",
-            "Windows Preview",
+            "Windows Preview 0.2",
             MessageBoxButton.OK,
             MessageBoxImage.Information);
     }
@@ -192,7 +179,4 @@ public partial class PetWindow : Window
     {
         Application.Current.Shutdown();
     }
-
-    [DllImport("user32.dll")]
-    private static extern IntPtr DefWindowProc(IntPtr hWnd, int msg, IntPtr wParam, IntPtr lParam);
 }
