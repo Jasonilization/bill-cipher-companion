@@ -13,7 +13,6 @@
         WindowStartupLocation="Manual">
     <Grid>
         <Image x:Name="Sprite"
-               RenderOptions.BitmapScalingMode="NearestNeighbor"
                Stretch="None"
                IsHitTestVisible="True"
                MouseLeftButtonDown="OnSpriteLeftDown"
@@ -22,26 +21,14 @@
                 <ScaleTransform x:Name="SpriteScale" ScaleX="2" ScaleY="2"/>
             </Image.LayoutTransform>
         </Image>
-        <Button x:Name="QuitButton"
-                Content="x"
-                FontFamily="Consolas"
-                FontSize="11"
-                FontWeight="Bold"
-                Foreground="#FF121217"
-                Background="#FFD800"
-                BorderBrush="Black"
-                Width="18" Height="18"
-                HorizontalAlignment="Right"
-                VerticalAlignment="Top"
-                Margin="0,2,2,0"
-                Visibility="Collapsed"
-                Click="OnQuit"/>
     </Grid>
     <Window.ContextMenu>
         <ContextMenu>
+            <MenuItem Header="Say something" Click="OnBarkNow"/>
+            <MenuItem Header="Play a random animation" Click="OnRandomAnim"/>
+            <Separator/>
             <MenuItem Header="About the Windows preview…" Click="OnAbout"/>
             <Separator/>
-            <MenuItem Header="Walk for a bit" Click="OnWalkDemo"/>
             <MenuItem Header="Quit Bill" Click="OnQuit" InputGestureText="Esc"/>
         </ContextMenu>
     </Window.ContextMenu>
