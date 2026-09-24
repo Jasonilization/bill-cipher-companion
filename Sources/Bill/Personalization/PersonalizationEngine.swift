@@ -23,6 +23,13 @@ final class PersonalizationModel: ObservableObject {
     @Published var appCount: Int = 0
     @Published var batchIndex: Int = 0
     @Published var batchCount: Int = 0
+    /// The guided-setup visibility set: every app the engine detected on
+    /// this Mac (names, in generation order), published before the first
+    /// batch is even sent.
+    @Published var detectedApps: [String] = []
+    /// App name → lines accepted so far, updated as each batch lands —
+    /// the "you get to see all the quotes for apps it detects" ask.
+    @Published var studiedApps: [String: Int] = [:]
 }
 
 /// The first-run "let Bill study your apps" flow.
@@ -122,6 +129,14 @@ final class PersonalizationEngine {
 
     // MARK: - Run control
 
+    /// Guided setup: fills `model.detectedApps` without starting a run, so
+    /// the list is visible in the intro before the user commits to
+    /// anything. `begin()` re-enumerates freshly regardless.
+    func previewDetectedApps() {
+        guard !isRunning else { return }
+        model.detectedApps = Self.enumerateApps(prioritizingOn: memoryStore).map(\.name)
+    }
+
     func begin() {
         guard !isRunning else { return }
         isRunning = true
@@ -134,6 +149,11 @@ final class PersonalizationEngine {
         model.batchCount = batches.count + (transitionPairs.isEmpty ? 0 : 1)
         model.batchIndex = 0
         model.progress = 0
+        // Guided setup: the detected list is visible before anything is
+        // generated, so "it sees all your apps" is a claim the user can
+        // check, not a promise they have to trust.
+        model.detectedApps = apps.map(\.name)
+        model.studiedApps = [:]
         if batches.isEmpty {
             finish()
             return
@@ -396,7 +416,9 @@ final class PersonalizationEngine {
 
     private func parseAppBatch(_ text: String) {
         let expected = Set(pendingBatch.map(\.bundleID))
+        let namesByBundle = Dictionary(uniqueKeysWithValues: pendingBatch.map { ($0.bundleID, $0.name) })
         var linesParsed = 0
+        var acceptedByApp: [String: Int] = [:]
         for rawLine in text.split(whereSeparator: \.isNewline) {
             let fields = rawLine.split(separator: "|", omittingEmptySubsequences: false).map(String.init)
             switch fields.first {
@@ -407,6 +429,7 @@ final class PersonalizationEngine {
                 guard !cleaned.isEmpty, cleaned.count <= Self.maxLineLength else { continue }
                 store.mergeAppLines(bundleID: bundleID, bucket: bucket.lowercased(), lines: [cleaned])
                 linesParsed += 1
+                acceptedByApp[bundleID, default: 0] += 1
             case "DESC" where fields.count == 3:
                 let (_, bundleID, description) = (fields[0], fields[1], fields[2])
                 guard expected.contains(bundleID) else { continue }
@@ -421,6 +444,13 @@ final class PersonalizationEngine {
         if linesParsed > 0 {
             store.publishToDialogueLibrary()
             model.statusText = "Studied \(linesParsed) lines' worth of apps."
+            // Live per-app counts for the guided view — the user sees the
+            // quotes land for the apps it detected, batch by batch.
+            for (bundleID, count) in acceptedByApp {
+                if let name = namesByBundle[bundleID] {
+                    model.studiedApps[name, default: 0] += count
+                }
+            }
         }
         model.progress = Double(model.batchIndex) / Double(max(1, model.batchCount))
     }

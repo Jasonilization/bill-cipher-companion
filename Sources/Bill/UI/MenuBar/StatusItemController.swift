@@ -47,6 +47,16 @@ final class StatusItemController: NSObject {
         let refreshContextItem = NSMenuItem(title: "Refresh Bill's Context Now", action: #selector(refreshDialogue), keyEquivalent: "")
         refreshContextItem.target = self
         menu.addItem(refreshContextItem)
+        let quotesManagerItem = NSMenuItem(title: "Quotes Manager…", action: #selector(openQuotesManager), keyEquivalent: "")
+        quotesManagerItem.target = self
+        menu.addItem(quotesManagerItem)
+        let personalizeItem = NSMenuItem(title: "Personalize Bill's Commentary…", action: #selector(personalize), keyEquivalent: "")
+        personalizeItem.target = self
+        menu.addItem(personalizeItem)
+        menu.addItem(.separator())
+        let weatherTestItem = NSMenuItem(title: "Test Weather Now", action: #selector(testWeather), keyEquivalent: "")
+        weatherTestItem.target = self
+        menu.addItem(weatherTestItem)
         menu.addItem(.separator())
 
         // The only checkmark item in this menu. Its title carries the
@@ -224,6 +234,25 @@ final class StatusItemController: NSObject {
 
     @objc private func refreshDialogue() {
         characterWindowController.refreshDialogueNow()
+    }
+
+    /// Opens the first-run/personalization setup window — the flow that
+    /// has ChatGPT write Bill's per-app, per-time-of-day commentary for
+    /// the apps actually on this Mac.
+    @objc private func personalize() {
+        appDelegate?.openPersonalizationSetup()
+    }
+
+    /// Opens the quotes manager — every pool, every line, sources, the
+    /// refresh-everything button and the log strip.
+    @objc private func openQuotesManager() {
+        appDelegate?.openQuotesManager()
+    }
+
+    /// Forces a weather pull and a loud announcement — the on-demand
+    /// pipeline check.
+    @objc private func testWeather() {
+        appDelegate?.testWeatherNow()
     }
 
     @objc private func openSettings() {

@@ -211,7 +211,7 @@ final class CharacterEngine {
 
         // `coverage.pick` rather than `randomElement`: it will not hand back
         // whatever played last, and it prefers eggs that have not been seen
-        // today, so the fifteen of them cycle rather than clustering.
+        // today, so the sixteen of them cycle rather than clustering.
         guard let event = coverage.pick(from: BillState.rareEasterEggs) else { return false }
         lastRareEventDate = Date()
         stateMachine.request(event, force: true)

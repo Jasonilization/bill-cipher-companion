@@ -31,7 +31,7 @@ enum BillSpriteCatalog {
     static let smug = loadFrames("bill_smug", count: 2)
     static let snap = loadFrames("bill_snap", count: 3)
     static let focused = loadFrames("bill_focused", count: 4)
-    static let channeling = loadFrames("bill_channeling", count: 9)
+    static let channeling = loadFrames("bill_channeling", count: 9, anchorShift: 3)
     static let celebrating = loadFrames("bill_celebrating", count: 5)
     static let curious = loadFrames("bill_curious", count: 4)
     static let cane = loadFrames("bill_cane", count: 8)
@@ -41,16 +41,28 @@ enum BillSpriteCatalog {
     static let powerSurgeClose = loadFrames("bill_powersurgeclose", count: 1)
     static let portalRing = loadFrames("bill_portalring", count: 8)
     static let zodiac = loadFrames("bill_zodiac", count: 8)
-    /// Replaces the old `summonBuild`(3)+`summonHold`(1) pair — the
-    /// animation-director audit found the sheet's actual "glowing ritual
-    /// circle" (8 identical clone-triangles arranged in a ring, matching the
-    /// classic Bill-Cipher summoning motif) elsewhere on the sheet, a
-    /// stronger match for `summonRitual`'s own name/doc-comment than the
-    /// growth sequence previously backing it. Frame 1 is the full static
-    /// ring (curated as one merged frame, not an animatable sequence in its
-    /// own right); frames 2-4 are alternate eye-render variants of Bill
-    /// standing in it.
+    /// Replaced the old `summonBuild`(3)+`summonHold`(1) pair as this
+    /// state's source — the animation-director audit found the sheet's
+    /// actual "glowing ritual circle" (8 identical clone-triangles arranged
+    /// in a ring, matching the classic Bill-Cipher summoning motif)
+    /// elsewhere on the sheet, a stronger match for `summonRitual`'s own
+    /// name/doc-comment than the growth sequence previously backing it.
+    /// Frame 1 is the full static ring (curated as one merged frame, not an
+    /// animatable sequence in its own right); frames 2-4 are alternate
+    /// eye-render variants of Bill standing in it. The retired pair was
+    /// later given its own beat (`ritualBuildup`, registered just below)
+    /// rather than left dead in the bundle.
     static let summonRitual = loadFrames("bill_summonritual", count: 4)
+    /// The pre-audit summoning pair itself: three near-identical
+    /// stand-still frames whose only motion is a one-pixel eye glint
+    /// (a focused "channeling the summons" hold), then the payoff frame —
+    /// Bill snapped inside a ring of little triangle-clones, the classic
+    /// summoning-circle motif in pink and white. A quiet-buildup arc, the
+    /// opposite of `summonRitual`'s ring-first reveal, so the two read as
+    /// distinct beats rather than duplicates (4271 of the hold frame's
+    /// pixels differ from `summonritual`'s merged ring).
+    static let summonBuild = loadFrames("bill_summonbuild", count: 3, anchorShift: -2)
+    static let summonHold = loadFrames("bill_summonhold", count: 1, anchorShift: -2)
     /// Re-exported through the corrected pipeline — was 5 frames (the pale
     /// materialize-in only); the sheet's white box actually continues for 3
     /// more frames (solid yellow true-form, a mark across the body, settling
@@ -74,12 +86,12 @@ enum BillSpriteCatalog {
     static let hollowed = loadFrames("bill_hollowed", count: 11)
     static let cultLeader = loadFrames("bill_cultleader", count: 8)
     static let spooked = loadFrames("bill_spooked", count: 5)
-    static let scanning = loadFrames("bill_scanning", count: 8)
+    static let scanning = loadFrames("bill_scanning", count: 8, anchorShift: 10)
     static let sneaking = loadFrames("bill_sneaking", count: 6)
     static let glitching = loadFrames("bill_glitching", count: 4)
     static let charged = loadFrames("bill_charged", count: 6)
-    static let transferring = loadFrames("bill_transferring", count: 12)
-    static let summoning = loadFrames("bill_summoning", count: 8)
+    static let transferring = loadFrames("bill_transferring", count: 12, anchorShift: 6)
+    static let summoning = loadFrames("bill_summoning", count: 8, anchorShift: 1)
     static let sculpting = loadFrames("bill_sculpting", count: 14)
     static let kinship = loadFrames("bill_kinship", count: 5)
     static let fractaling = loadFrames("bill_fractaling", count: 3)
@@ -87,7 +99,7 @@ enum BillSpriteCatalog {
     static let guilty = loadFrames("bill_guilty", count: 3)
     static let dreading = loadFrames("bill_dreading", count: 4)
     static let grooving = loadFrames("bill_grooving", count: 3)
-    static let dispatching = loadFrames("bill_dispatching", count: 4)
+    static let dispatching = loadFrames("bill_dispatching", count: 4, anchorShift: -3)
     static let ambushed = loadFrames("bill_ambushed", count: 8)
     static let stressed = loadFrames("bill_stressed", count: 7)
     static let watched = loadFrames("bill_watched", count: 5)
@@ -102,7 +114,7 @@ enum BillSpriteCatalog {
     // forced trigger, per "not every animation needs to be common."
     static let caneTwist = loadFrames("bill_canetwist", count: 8)
     static let hookCane = loadFrames("bill_hookcane", count: 5)
-    static let conjuring = loadFrames("bill_conjuring", count: 18)
+    static let conjuring = loadFrames("bill_conjuring", count: 18, anchorShift: 1)
     static let tumbling = loadFrames("bill_tumbling", count: 4)
     static let dashTarget = loadFrames("bill_dashtarget", count: 4)
     static let grumpEyes = loadFrames("bill_grumpeyes", count: 6)
@@ -112,7 +124,7 @@ enum BillSpriteCatalog {
     /// The single frame everything else falls back to / settles on.
     static var restTexture: SKTexture { idle[0] }
 
-    private static func loadFrames(_ prefix: String, count: Int) -> [SKTexture] {
+    private static func loadFrames(_ prefix: String, count: Int, anchorShift: Int = 0) -> [SKTexture] {
         (1...count).compactMap { i -> SKTexture? in
             let name = String(format: "%@_%02d", prefix, i)
             guard
@@ -122,9 +134,60 @@ enum BillSpriteCatalog {
                 print("BillSpriteCatalog: missing sprite frame \(name)")
                 return nil
             }
-            let texture = SKTexture(image: image)
+            // A non-zero `anchorShift` re-anchors this family's body to the
+            // same on-canvas spot the idle frame uses (see `shifted`).
+            let anchored = anchorShift == 0 ? image : shifted(image, dx: CGFloat(anchorShift))
+            let texture = SKTexture(image: anchored)
             texture.filteringMode = .nearest
             return texture
         }
+    }
+
+    /// Whole-pixel horizontal corrections for the "shooting"-style reaction
+    /// families, measured off the shipped PNGs: the median center-of-mass of
+    /// each frame's yellow *body* pixels (filtering out frames whose yellow
+    /// pixel count strays far from the idle frame's — those have yellow
+    /// effects like lightning bolts and portal gems baked in, which would
+    /// pollute the measurement) versus the idle frame's body center. A body
+    /// drawn off-center in the shared canvas made Bill visibly slide away
+    /// from where he was standing whenever one of these animations played
+    /// — the "shooting animations push Bill back" report — so each family's
+    /// frames get their pixels nudged back onto the idle anchor while the
+    /// beams and portals keep flying around him.
+    ///
+    /// Measured values: scanning −10.3, transferring −6.0, channeling −2.8,
+    /// dispatching +3.2, conjuring −1.1, summoning −1.1, summonBuild +2.2,
+    /// summonHold +1.8 (positive = drawn right of the idle anchor, so the
+    /// shift is the negation, rounded to whole pixels).
+    ///
+    /// `charged` was measured too but excluded: every frame's yellow mass is
+    /// dominated by the lightning-bolt effect, leaving no trustworthy body
+    /// signal — and its bbox sits centered like the idle frames, so there
+    /// is nothing visibly wrong to fix there anyway.
+    private static func shifted(_ image: NSImage, dx: CGFloat) -> NSImage {
+        guard
+            let source = image.cgImage(forProposedRect: nil, context: nil, hints: nil)
+        else { return image }
+        let width = source.width
+        let height = source.height
+        guard
+            let ctx = CGContext(
+                data: nil,
+                width: width,
+                height: height,
+                bitsPerComponent: 8,
+                bytesPerRow: 0,
+                space: CGColorSpace(name: CGColorSpace.sRGB) ?? CGColorSpaceCreateDeviceRGB(),
+                bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+            )
+        else { return image }
+        // Exact 1:1 pixel move — no interpolation, so the pixel art never
+        // resamples or blurs. Canvas dimensions stay identical to the
+        // source frame, keeping the shared-canvas invariant (see the type
+        // comment) intact.
+        ctx.interpolationQuality = .none
+        ctx.draw(source, in: CGRect(x: dx, y: 0, width: CGFloat(width), height: CGFloat(height)))
+        guard let output = ctx.makeImage() else { return image }
+        return NSImage(cgImage: output, size: NSSize(width: width, height: height))
     }
 }

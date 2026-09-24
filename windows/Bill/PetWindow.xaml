@@ -1,0 +1,48 @@
+<Window x:Class="Bill.PetWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Bill Cipher — Windows Preview"
+        Width="236" Height="222"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        Topmost="True"
+        ShowInTaskbar="False"
+        ResizeMode="NoResize"
+        ShowActivated="False"
+        WindowStartupLocation="Manual">
+    <Grid>
+        <Image x:Name="Sprite"
+               RenderOptions.BitmapScalingMode="NearestNeighbor"
+               Stretch="None"
+               IsHitTestVisible="True"
+               MouseLeftButtonDown="OnSpriteLeftDown"
+               MouseRightButtonUp="OnSpriteRightUp">
+            <Image.LayoutTransform>
+                <ScaleTransform x:Name="SpriteScale" ScaleX="2" ScaleY="2"/>
+            </Image.LayoutTransform>
+        </Image>
+        <Button x:Name="QuitButton"
+                Content="x"
+                FontFamily="Consolas"
+                FontSize="11"
+                FontWeight="Bold"
+                Foreground="#FF121217"
+                Background="#FFD800"
+                BorderBrush="Black"
+                Width="18" Height="18"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Top"
+                Margin="0,2,2,0"
+                Visibility="Collapsed"
+                Click="OnQuit"/>
+    </Grid>
+    <Window.ContextMenu>
+        <ContextMenu>
+            <MenuItem Header="About the Windows preview…" Click="OnAbout"/>
+            <Separator/>
+            <MenuItem Header="Walk for a bit" Click="OnWalkDemo"/>
+            <MenuItem Header="Quit Bill" Click="OnQuit" InputGestureText="Esc"/>
+        </ContextMenu>
+    </Window.ContextMenu>
+</Window>

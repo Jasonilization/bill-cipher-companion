@@ -30,6 +30,12 @@ final class DialogueLibrary {
     /// Lines learned from ChatGPT, kept separate so a refresh can replace them
     /// wholesale without touching the authored set.
     private var generated: [String: DialoguePool] = [:]
+    /// Lines personalized to *this user's* apps by the first-run setup flow
+    /// (`PersonalizationEngine` → `PersonalizedDialogueStore`), under their
+    /// own `papp.` / `ptransapp.` key family. Kept separate from `generated`
+    /// because the daily refresh replaces *that* dictionary wholesale and
+    /// must not nuke the personalization.
+    private var personalized: [String: DialoguePool] = [:]
     /// Last line returned per key, so a pool never repeats itself back-to-back.
     private var lastLine: [String: String] = [:]
 
@@ -65,6 +71,13 @@ final class DialogueLibrary {
         generated = new
     }
 
+    /// Replaces the personalized half. Called by
+    /// `PersonalizedDialogueStore.publishToDialogueLibrary` at launch and
+    /// after each setup-flow batch lands.
+    func setPersonalized(_ new: [String: DialoguePool]) {
+        personalized = new
+    }
+
     var generatedLineCount: Int {
         generated.values.reduce(0) { $0 + $1.lineCount }
     }
@@ -82,6 +95,16 @@ final class DialogueLibrary {
         substitutions: [String: String] = [:]
     ) -> String? {
         let bucket = time ?? TimeOfDayCache.current
+
+        // Personalized lines are the *point* of their key — the router only
+        // reaches a `papp.`/`ptransapp.` key when it decided this app
+        // deserves one — so they win their key outright rather than blending
+        // into the authored pool the way daily-refresh lines do.
+        if let personal = personalized[key]?.lines(for: bucket), !personal.isEmpty {
+            let chosen = Self.pick(personal, avoiding: lastLine[key])
+            lastLine[key] = chosen
+            return Self.resolve(chosen, substitutions: substitutions)
+        }
 
         var candidates = pools[key]?.lines(for: bucket) ?? []
         let generatedCandidates = generated[key]?.lines(for: bucket) ?? []
@@ -133,6 +156,17 @@ final class DialogueLibrary {
         return result
     }
 
+    /// Picks a random line, avoiding the last one served from this key when
+    /// there is any other option — the same no-repeat rule the main lookup
+    /// path applies, factored out so the personalized branch shares it.
+    private static func pick(_ lines: [String], avoiding last: String?) -> String {
+        var pool = lines
+        if pool.count > 1, let last, !last.isEmpty {
+            pool.removeAll { $0 == last }
+        }
+        return pool.randomElement() ?? lines[0]
+    }
+
     // MARK: - Reporting
 
     func has(_ key: String) -> Bool {
@@ -146,7 +180,10 @@ final class DialogueLibrary {
     }
 
     func report() -> [(key: String, any: Int, morning: Int, midday: Int, afternoon: Int, night: Int, generated: Int)] {
-        pools.keys.sorted().map { key in
+        var keys = Set(pools.keys)
+        keys.formUnion(generated.keys)
+        keys.formUnion(personalized.keys)
+        return keys.sorted().map { key in
             let p = pools[key] ?? DialoguePool()
             return (
                 key: key,
@@ -158,5 +195,49 @@ final class DialogueLibrary {
                 generated: generated[key]?.lineCount ?? 0
             )
         }
+    }
+
+    // MARK: - Quotes Manager support
+
+    /// Total lines reachable under `key` right now, across all three
+    /// sources (authored, daily-refresh generated, personalized).
+    func totalLines(for key: String) -> Int {
+        (pools[key]?.lineCount ?? 0)
+            + (generated[key]?.lineCount ?? 0)
+            + (personalized[key]?.lineCount ?? 0)
+    }
+
+    /// Which sources feed `key`, for the manager's A/G/P badges.
+    func sourceCounts(for key: String) -> (authored: Int, generated: Int, personalized: Int) {
+        (
+            pools[key]?.lineCount ?? 0,
+            generated[key]?.lineCount ?? 0,
+            personalized[key]?.lineCount ?? 0
+        )
+    }
+
+    /// Every line under `key`, bucket by bucket, tagged with its source —
+    /// the quotes manager's detail pane.
+    func poolDetail(_ key: String) -> [(bucket: String, source: String, line: String)] {
+        var result: [(String, String, String)] = []
+        let buckets: [(String, (DialoguePool) -> [String])] = [
+            ("any", { $0.any }),
+            ("morning", { $0.morning }),
+            ("midday", { $0.midday }),
+            ("afternoon", { $0.afternoon }),
+            ("night", { $0.night }),
+        ]
+        for (name, slice) in buckets {
+            for line in slice(pools[key] ?? DialoguePool()) {
+                result.append((name, "authored", line))
+            }
+            for line in slice(generated[key] ?? DialoguePool()) {
+                result.append((name, "generated", line))
+            }
+            for line in slice(personalized[key] ?? DialoguePool()) {
+                result.append((name, "personalized", line))
+            }
+        }
+        return result
     }
 }

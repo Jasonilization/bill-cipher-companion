@@ -1862,6 +1862,25 @@
    "{app} AT NIGHT AGAIN. IT'S BASICALLY A RITUAL NOW. I APPROVE OF RITUALS."
   ]
  },
+ "ritualBuildup": {
+  "afternoon": [
+   "AN AFTERNOON SUMMONING. WEIRDMAGEDDON WAS ORIGINALLY SCHEDULED FOR THIS SLOT."
+  ],
+  "any": [
+   "Hold still. A circle is being summoned. It's very sensitive work.",
+   "Three... two... one... and NOW the chorus of tiny triangles.",
+   "Every good ritual opens with a dramatic pause. For ambiance. Mostly menace."
+  ],
+  "midday": [
+   "HIGH NOON FOR FORBIDDEN GEOMETRY. THE ZODIAC ISN'T GOING TO WORSHIP ITSELF."
+  ],
+  "morning": [
+   "A DAWN SUMMONING. EVEN JOURNAL 3 SAYS THAT'S SHOWING OFF."
+  ],
+  "night": [
+   "MIDNIGHT IS PRIME SUMMONING HOURS. IF A HANDSOME TRIANGLE APPEARS, THAT'S JUST ME."
+  ]
+ },
  "roamFellOffWorld": {
   "afternoon": [],
   "any": [

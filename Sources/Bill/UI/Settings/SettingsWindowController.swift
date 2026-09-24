@@ -10,6 +10,11 @@ final class SettingsWindowController: NSObject {
     private let preferences: AppPreferences
     private let memoryStore: MemoryStore
     private let onSignOut: () -> Void
+    /// Set by `AppDelegate` — forces a weather pull + loud report (the
+    /// Settings "Test weather now" button).
+    var onTestWeather: (() -> Void)?
+    /// Set by `AppDelegate` — opens the quotes manager window.
+    var onOpenQuotesManager: (() -> Void)?
 
     init(preferences: AppPreferences, memoryStore: MemoryStore, onSignOut: @escaping () -> Void) {
         self.preferences = preferences
@@ -23,7 +28,9 @@ final class SettingsWindowController: NSObject {
                 preferences: preferences,
                 memoryStore: memoryStore,
                 onSignOut: { [weak self] in self?.onSignOut() },
-                onResetMemory: { [weak self] in self?.memoryStore.reset() }
+                onResetMemory: { [weak self] in self?.memoryStore.reset() },
+                onTestWeather: { [weak self] in self?.onTestWeather?() },
+                onOpenQuotesManager: { [weak self] in self?.onOpenQuotesManager?() }
             )
             let hosting = NSHostingController(rootView: view)
             let win = NSWindow(contentViewController: hosting)

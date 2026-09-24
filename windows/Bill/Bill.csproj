@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Bill Cipher desktop companion — Windows preview (port Milestone W1).
+       Built on any OS (EnableWindowsTargeting lets macOS/Linux build the
+       WPF app for Windows; see Docs/notes/WindowsPortPlan.md). -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <Nullable>enable</Nullable>
+    <AssemblyName>Bill</AssemblyName>
+    <RootNamespace>Bill</RootNamespace>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <Version>0.1.0</Version>
+    <Product>Bill Cipher — Windows Preview</Product>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Resource Include="Sprites\*.png" />
+  </ItemGroup>
+
+</Project>

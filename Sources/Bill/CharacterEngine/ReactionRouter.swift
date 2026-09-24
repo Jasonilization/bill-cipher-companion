@@ -165,26 +165,31 @@ final class ReactionRouter {
             // to announce here beyond what the half-hour chime already says.
             break
 
-        case .weatherChanged(let snapshot):
-            handleWeatherChanged(snapshot)
+        case .weatherChanged(let snapshot, let reason):
+            handleWeatherReport(snapshot, reason: reason)
         }
     }
 
     // MARK: - Weather
 
-    /// Weather commentary, at most once per cooldown window per *condition*
-    /// change — the monitor already only fires on a condition transition,
-    /// but the first successful pull of every launch also counts as one, so
-    /// a restart loop must not re-announce "IT IS RAINING" every time.
+    /// Cooldown applies only to the quiet, non-urgent report paths; a
+    /// first-pull or an explicit user test always speaks.
     private var lastWeatherBarkAt: Date?
 
-    private func handleWeatherChanged(_ snapshot: WeatherSnapshot) {
-        if let lastWeatherBarkAt, Date().timeIntervalSince(lastWeatherBarkAt) < Self.weatherBarkCooldown {
+    private func handleWeatherReport(_ snapshot: WeatherSnapshot, reason: WeatherMonitor.ReportReason) {
+        let loud = reason == .firstPull || reason == .forcedTest
+        if !loud,
+           let lastWeatherBarkAt, Date().timeIntervalSince(lastWeatherBarkAt) < Self.weatherBarkCooldown {
             return
         }
         lastWeatherBarkAt = Date()
         let temp = String(format: "%.0f", snapshot.temperatureC.rounded())
-        play(Self.weatherStates, keys: ["weather.\(snapshot.condition.rawValue)"], substitutions: ["temp": temp])
+        play(
+            Self.weatherStates,
+            keys: ["weather.\(snapshot.condition.rawValue)"],
+            substitutions: ["temp": temp],
+            importance: loud ? .always : .normal
+        )
     }
 
     private static let weatherBarkCooldown: TimeInterval = 10 * 60
