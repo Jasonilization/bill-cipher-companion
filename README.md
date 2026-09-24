@@ -10,7 +10,7 @@
 
 <p align="center">
   <a href="https://github.com/Jasonilization/bill-cipher-companion/releases/latest"><img src="https://img.shields.io/github/v/release/Jasonilization/bill-cipher-companion?style=flat-square" alt="Release"></a>
-  <a href="https://github.com/Jasonilization/bill-cipher-companion/releases"><img src="https://img.shields.io/badge/platform-macOS%2026%2B-333333?style=flat-square&logo=apple&logoColor=white" alt="macOS 26+"></a>
+  <a href="https://github.com/Jasonilization/bill-cipher-companion/releases"><img src="https://img.shields.io/badge/platform-macOS%2014%2B-333333?style=flat-square&logo=apple&logoColor=white" alt="macOS 14+"></a>
   <a href="https://github.com/Jasonilization/bill-cipher-companion/actions"><img src="https://img.shields.io/github/actions/workflow/status/Jasonilization/bill-cipher-companion/ci.yml?branch=main&style=flat-square&label=CI" alt="CI"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-000000?style=flat-square" alt="MIT"></a>
 </p>
@@ -54,7 +54,7 @@ Settings is a proper control surface now: recolour his speech bubbles, scale the
 
 | | |
 |---|---|
-| **OS** | macOS 26 (Tahoe) or newer — he uses Liquid Glass, the new `WebView` API, and Vision OCR |
+| **OS** | macOS 14 (Sonoma) or newer. On the newest systems Bill gets Liquid Glass and the modern WebKit `WebPage` engine; on older Macs he automatically falls back to a classic `WKWebView` bridge and material chrome — same behavior, same tricks, no setup |
 | **Chat** | a logged-in [chatgpt.com](https://chatgpt.com) account (Bill opens his own browser window for the one-time sign-in) |
 | **Perms** | Accessibility (window titles), optional Screen & Audio capture (OCR) — asked for on first use |
 
@@ -76,7 +76,7 @@ swift build                # debug
 ./Scripts/bundle.sh release  # → Bill.app, ad-hoc signed
 ```
 
-No Xcode project — a pure SwiftPM package (`swift-tools-version: 6.2`, `.macOS(.v26)`).
+No Xcode project — a pure SwiftPM package (`swift-tools-version: 6.2`, deployment target `.macOS(.v14)`).
 
 ## How it's put together
 

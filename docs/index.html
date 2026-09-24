@@ -60,6 +60,27 @@
     100% { transform: translate(45vw, 34vh); opacity: 0; }
   }
 
+  /* Faded Bill, walking around back there. Three depths, all behind the
+     content and all well below reading contrast — ambience, not noise.
+     The walk gif pingpongs, and the CSS flips him at each screen edge so
+     the return trip reads as walking back, not moonwalking. */
+  .walker {
+    position: fixed; left: 0; z-index: 0; pointer-events: none;
+    height: 96px; image-rendering: pixelated;
+    opacity: 0.13; filter: blur(0.4px);
+    animation: walk-across 44s linear infinite;
+    will-change: transform;
+  }
+  .walker.mid   { bottom: 4vh; height: 78px; opacity: 0.10; animation-duration: 58s; animation-delay: -26s; }
+  .walker.far   { bottom: 16vh; height: 58px; opacity: 0.06; animation-duration: 74s; animation-delay: -51s; filter: blur(0.8px); }
+  @keyframes walk-across {
+    0%   { transform: translateX(-160px) scaleX(1); }
+    49%  { transform: translateX(100vw) scaleX(1); }
+    50%  { transform: translateX(100vw) scaleX(-1); }
+    99%  { transform: translateX(-160px) scaleX(-1); }
+    100% { transform: translateX(-160px) scaleX(1); }
+  }
+
   main { position: relative; z-index: 1; }
   .wrap { max-width: 1000px; margin: 0 auto; padding: 0 24px; }
 
@@ -180,6 +201,9 @@
 <div class="stars two"></div>
 <div class="meteor"></div>
 <div class="meteor b"></div>
+<img class="walker" src="assets/bill-walk.gif" alt="" aria-hidden="true">
+<img class="walker mid" src="assets/bill-walk.gif" alt="" aria-hidden="true">
+<img class="walker far" src="assets/bill-walk.gif" alt="" aria-hidden="true">
 <main>
   <div class="wrap">
 
@@ -192,7 +216,7 @@
           <a class="btn btn-ghost" href="https://github.com/Jasonilization/bill-cipher-companion">View on GitHub</a>
         </div>
         <div class="badges">
-          <span class="badge">macOS 26+</span>
+          <span class="badge">macOS 14+</span>
           <span class="badge">MIT</span>
         </div>
       </div>
@@ -254,8 +278,8 @@ swift build                  # debug
       <h2>Platform<span class="y">s</span></h2>
       <div class="plat-grid">
         <div class="plat">
-          <div class="os"><span class="ok">&#10003;</span> macOS 26+</div>
-          <p>Native and first-class. Liquid Glass, the new WebView API, Vision OCR — this is where he lives. Download it right now.</p>
+          <div class="os"><span class="ok">&#10003;</span> macOS 14+</div>
+          <p>Native and first-class. On the newest systems he gets Liquid Glass and the modern WebKit engine; on older Sonoma+ Macs he falls back to classic WebKit and material chrome — same Bill, same tricks, no feature left behind. Download it right now.</p>
         </div>
         <div class="plat">
           <span class="ribbon">SOON</span>
