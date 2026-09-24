@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Every Animation — Bill Cipher for macOS</title>
+<meta name="description" content="All 66 hand-drawn pixel-art animation families — 380 sprites — from the Bill Cipher desktop companion, looping live.">
+<link rel="icon" type="image/png" href="assets/bill-hero.png">
+<link rel="stylesheet" href="">
+<style>
+  :root {
+    --yellow: #fac726;
+    --ink: #121217;
+    --ink-2: #1a1a22;
+    --paper: #faf9f5;
+    --muted: #9b9aa5;
+    --line: #2c2c36;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--ink); color: var(--paper);
+    font: 16px/1.6 -apple-system, "SF Pro Text", "Helvetica Neue", sans-serif;
+    -webkit-font-smoothing: antialiased; overflow-x: hidden;
+  }
+  a { color: var(--yellow); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .stars { position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background-image:
+      radial-gradient(1px 1px at 20% 30%, #fff8 50%, transparent 50%),
+      radial-gradient(1px 1px at 80% 20%, #fff5 50%, transparent 50%),
+      radial-gradient(1px 1px at 60% 70%, #fff6 50%, transparent 50%),
+      radial-gradient(1px 1px at 45% 12%, #fff3 50%, transparent 50%);
+    animation: twinkle 7s ease-in-out infinite;
+  }
+  @keyframes twinkle { 0%,100% { opacity: 1; } 50% { opacity: .4; } }
+  .walker {
+    position: fixed; left: 0; bottom: 5vh; z-index: 0; pointer-events: none;
+    height: 84px; image-rendering: pixelated; opacity: .09;
+    animation: walk-across 52s linear infinite;
+  }
+  @keyframes walk-across {
+    0% { transform: translateX(-160px) scaleX(1); }
+    49% { transform: translateX(100vw) scaleX(1); }
+    50% { transform: translateX(100vw) scaleX(-1); }
+    99% { transform: translateX(-160px) scaleX(-1); }
+    100% { transform: translateX(-160px) scaleX(1); }
+  }
+  main { position: relative; z-index: 1; }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
+
+  header.hero { padding: 64px 0 28px; }
+  h1 { font-size: clamp(26px, 4vw, 40px); }
+  h1 .y { color: var(--yellow); }
+  .tagline { margin-top: 10px; color: #cfcedd; max-width: 40em; }
+  .crumb { margin-top: 14px; font-size: 13px; color: var(--muted); }
+
+  .group-title { font-size: 19px; margin: 44px 0 4px; }
+  .group-blurb { color: var(--muted); font-size: 13px; margin-bottom: 16px; }
+  .clips {
+    display: grid; gap: 16px;
+    grid-template-columns: repeat(4, 1fr);
+  }
+  .clip {
+    background: var(--ink-2); border: 1px solid var(--line);
+    padding: 14px; display: flex; flex-direction: column; gap: 6px;
+    animation: fadeUp .4s ease-out both;
+    transition: transform .18s ease, border-color .18s ease;
+  }
+  .clip:hover { transform: translateY(-3px); border-color: color-mix(in srgb, var(--yellow) 45%, var(--line)); }
+  .clip img { image-rendering: pixelated; width: 100%; background: #0d0d12; border: 1px solid var(--line); }
+  .clip h3 { font: 600 13px "SF Mono", ui-monospace, monospace; color: var(--yellow); }
+  .clip p { font-size: 12px; color: #b9b8c6; flex: 1; }
+  .clip .meta { font: 11px "SF Mono", ui-monospace, monospace; color: var(--muted); opacity: .7; }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; } }
+
+  footer { border-top: 1px solid var(--line); margin-top: 56px; padding: 32px 0 56px; color: var(--muted); font-size: 13px; }
+  footer .sig { font-family: "SF Mono", monospace; color: var(--yellow); margin-top: 8px; }
+
+  @media (max-width: 980px) { .clips { grid-template-columns: repeat(3, 1fr); } }
+  @media (max-width: 720px) { .clips { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 480px) { .clips { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="stars"></div>
+<img class="walker" src="assets/bill-walk.gif" alt="" aria-hidden="true">
+<main>
+  <div class="wrap">
+    <header class="hero">
+      <h1>Every <span class="y">animation</span> in the library.</h1>
+      <p class="tagline">All 66 hand-drawn pixel-art families — 380 sprites — from the Bill Cipher desktop companion, looping right here. Nothing on this page is a mockup: every GIF is rendered from the exact sprites the app plays.</p>
+      <p class="crumb"><a href="./">&larr; back to the front page</a> &middot; <a href="https://github.com/Jasonilization/bill-cipher-companion">GitHub</a> &middot; loops are pingpong — forward, then reverse.</p>
+    </header>
+
+      <h2 class="group-title">Core personality</h2>
+      <p class="group-blurb">The everyday moods — the states Bill lives in between events.</p>
+      <div class="clips">
+        <div class="clip">
+          <img src="assets/anims/idle.gif" alt="The sheet&#x27;s own 7-frame idle-float cycle (legs paddling gently), plus the breathing bob layered on top of it." loading="lazy">
+          <h3>idle</h3>
+          <p>The sheet&#x27;s own 7-frame idle-float cycle (legs paddling gently), plus the breathing bob layered on top of it.</p>
+          <span class="meta">7 frames &middot; pingpong loop</span>
+        </div>
+        <div class="clip">
+          <img src="assets/anims/walk.gif" alt="Walk." loading="lazy">
+          <h3>walk</h3>
+          <p>Walk.</p>
+          <span class="meta">6 frames &middot; pingpong loop</span>
+        </div>
+        <div class="clip">
+          <img src="assets/anims/annoyed.gif" alt="The sheet&#x27;s full escalating point-and-lecture cycle (left-facing, then a mirrored right-facing repeat)." loading="lazy">
+          <h3>annoyed</h3>
+          <p>The sheet&#x27;s full escalating point-and-lecture cycle (left-facing, then a mirrored right-facing repeat).</p>
+          <span class="meta">6 frames &middot; pingpong loop</span>
+        </div>
+        <div class="clip">
+          <img src="assets/anims/happy.gif" alt="Happy." loading="lazy">
+          <h3>happy</h3>
+          <p>Happy.</p>
+          <span class="meta">2 frames &middot; pingpong loop</span>
+        </div>
+        <div class="clip">
+          <img src="assets/anims/confused.gif" alt="Four real frames of mounting confusion, not a single static &quot;?&quot;." loading="lazy">
+          <h3>confused</h3>
+          <p>Four real frames of mounting confusion, not a single static &quot;?&quot;.</p>
+          <span class="meta">4 frames &middot; pingpong loop</span>
+        </div>
+        <div class="clip">
+          <img src="assets/anims/heating.gif" alt="Heating." loading="lazy">
+          <h3>heating</h3>
+          <p>Heating.</p>
+          <span class="meta">7 frames &middot; pingpong loop</span>
+        </div>
+        <div class="clip">
+          <img src="assets/anims/charging.gif" alt="The sheet&#x27;s own lounge-chair-and-popcorn pose." loading="lazy">
+          <h3>charging</h3>
+          <p>The sheet&#x27;s own lounge-chair-and-popcorn pose.</p>
+          <span class="meta">1 frames &middot; pingpong loop</span>
+        </div>
+        <div class="clip">
+          <img src="assets/anims/surprised.gif" alt="Normal → shocked → hat-flies-off, held on the collapse frame." loading="lazy">
+          <h3>surprised</h3>
+          <p>Normal → shocked → hat-flies-off, held on the collapse frame.</p>
+          <span class="meta">3 frames &middot; pingpong loop</span>
+        </div>
+        <div class="clip">
+          <img src="assets/anims/poked.gif" alt="Poked." loading="lazy">
+          <h3>poked</h3>
+          <p>Poked.</p>
+          <span class="meta">4 frames &middot; pingpong loop</span>
+        </div>
+        <div class="clip">
+          <img src="assets/anims/dazed.gif" alt="Dazed." loading="lazy">
+          <h3>dazed</h3>
+          <p>Dazed.</p>
+          <span class="meta">2 frames &middot; pingpong loop</span>
+        </div>
+        <div class="clip">
+          <img src="assets/anims/sleeping.gif" alt="The sheet&#x27;s actual lying-down pose, combined with a slow breathing bob and the existing Zzz particle overlay." loading="lazy">
+          <h3>sleeping</h3>
+          <p>The sheet&#x27;s actual lying-down pose, combined with a slow breathing bob and the existing Zzz particle overlay.</p>
+          <span class="meta">1 frames &middot; pingpong loop</span>
+        </div>
+        <div class="clip">
+          <img src="assets/anims/thinking.gif" alt="The sheet&#x27;s dedicated hand-to-chin pondering sequence." loading="lazy">
+          <h3>thinking</h3>
+          <p>The sheet&#x27;s dedicated hand-to-chin pondering sequence.</p>
+          <span class="meta">4 frames &middot; pingpong loop</span>
+        </div>
+        <div class="clip">
+          <img src="assets/anims/coding.gif" alt="The sheet&#x27;s own crouched, hands-out pose, alternated at a brisk pace." loading="lazy">
+          <h3>coding</h3>
+          <p>The sheet&#x27;s own crouched, hands-out pose, alternated at a brisk pace.</p>
+          <span class="meta">2 frames &middot; pingpong loop</span>
+        </div>
+        <div class="clip">
+          <img src="assets/anims/talking.gif" alt="The sheet&#x27;s hand-raised explaining/waving gesture." loading="lazy">
+          <h3>talking</h3>
+          <p>The sheet&#x27;s hand-raised explaining/waving gesture.</p>
+          <span class="meta">3 frames &middot; pingpong loop</span>
+        </div>
+        <div class="clip">
+          <img src="assets/anims/smug.gif" alt="A finger-snap (&quot;SNAP!&quot;, complete with its own tiny sparkle) leading into the confident closed-eye grin." loading="lazy">
+          <h3>smug</h3>
+          <p>A finger-snap (&quot;SNAP!&quot;, complete with its own tiny sparkle) leading into the confident closed-eye grin.</p>
+          <span class="meta">2 frames &middot; pingpong loop</span>
+        </div>
+        <div class="clip">
+          <img src="assets/anims/snap.gif" alt="Snap." loading="lazy">
+          <h3>snap</h3>
+          <p>Snap.</p>
+          <span class="meta">3 frames &middot; pingpong loop</span>
+        </div>
+        <div class="clip">
+          <img src="assets/anims/focused.gif" alt="The sheet&#x27;s focused-concentration pose." loading="lazy">
+          <h3>focused</h3>
+          <p>The sheet&#x27;s focused-concentration pose.</p>
+          <span class="meta">4 frames &middot; pingpong loop</span>
+        </div>
+        <div class="clip">
+          <img src="assets/anims/channeling.gif" alt="The sheet&#x27;s channeling/spellcasting pose." loading="lazy">
+          <h3>channeling</h3>
+          <p>The sheet&#x27;s channeling/spellcasting pose.</p>
+          <span class="meta">9 frames &middot; pingpong loop</span>
+        </div>
+        <div class="clip">
+          <img src="assets/anims/celebrating.gif" alt="The sheet&#x27;s lean-and-arms-up beat spinning into a dynamic leap and a triumphant landing." loading="lazy">
+          <h3>celebrating</h3>
+          <p>The sheet&#x27;s lean-and-arms-up beat spinning into a dynamic leap and a triumphant landing.</p>
+          <span class="meta">5 frames &middot; pingpong loop</span>
+        </div>
+        <div class="clip">
+          <img src="assets/anims/curious.gif" alt="Curious." loading="lazy">
+          <h3>curious</h3>
+          <p>Curious.</p>
+          <span class="meta">4 frames &middot; pingpong loop</span>
+        </div>
+        <div class="clip">
+          <img src="assets/anims/cane.gif" alt="Cane." loading="lazy">
+          <h3>cane</h3>
+          <p>Cane.</p>
+          <span class="meta">8 frames &middot; pingpong loop</span>
+        </div>
+      </div>
+      <h2 class="group-title">Rare events & the true form</h2>
+      <p class="group-blurb">Dramatic one-offs, held deliberately rare so they keep their punch.</p>
+      <div class="clips">
+        <div class="clip">
+          <img src="assets/anims/powerSurge.gif" alt="A portal of rings widens, the ancient eye-and-bolt &quot;true form&quot; holds (ping-ponged once), then the portal closes back down." loading="lazy">
+          <h3>powerSurge</h3>
+          <p>A portal of rings widens, the ancient eye-and-bolt &quot;true form&quot; holds (ping-ponged once), then the portal closes back down.</p>
+          <span class="meta">4 frames &middot; pingpong loop</span>
+        </div>
+        <div class="clip">
+          <img src="assets/anims/powerSurgeClose.gif" alt="Powersurgeclose." loading="lazy">
+          <h3>powerSurgeClose</h3>
+          <p>Powersurgeclose.</p>
+          <span class="meta">1 frames &middot; pingpong loop</span>
+        </div>
+        <div class="clip">
+          <img src="assets/anims/portalRing.gif" alt="Portalring." loading="lazy">
+          <h3>portalRing</h3>
+          <p>Portalring.</p>
+          <span class="meta">8 frames &middot; pingpong loop</span>
+        </div>
+        <div class="clip">
+          <img src="assets/anims/zodiac.gif" alt="Zodiac." loading="lazy">
+          <h3>zodiac</h3>
+          <p>Zodiac.</p>
+          <span class="meta">8 frames &middot; pingpong loop</span>
+        </div>
+        <div class="clip">
+          <img src="assets/anims/summonRitual.gif" alt="The full ring formation holds first (the actual dramatic reveal." loading="lazy">
+          <h3>summonRitual</h3>
+          <p>The full ring formation holds first (the actual dramatic reveal.</p>
+          <span class="meta">4 frames &middot; pingpong loop</span>
+        </div>
+        <div class="clip">
+          <img src="assets/anims/ghost.gif" alt="Ghost." loading="lazy">
+          <h3>ghost</h3>
+          <p>Ghost.</p>
+          <span class="meta">8 frames &middot; pingpong loop</span>
+        </div>
+        <div class="clip">
+          <img src="assets/anims/glitch.gif" alt="Glitch." loading="lazy">
+          <h3>glitch</h3>
+          <p>Glitch.</p>
+          <span class="meta">4 frames &middot; pingpong loop</span>
+        </div>
+        <div class="clip">
+          <img src="assets/anims/shadowA.gif" alt="Shadowa." loading="lazy">
+          <h3>shadowA</h3>
+          <p>Shadowa.</p>
+          <span class="meta">5 frames &middot; pingpong loop</span>
+        </div>
+        <div class="clip">
+          <img src="assets/anims/shadowB.gif" alt="Shadowb." loading="lazy">
+          <h3>shadowB</h3>
+          <p>Shadowb.</p>
+          <span class="meta">4 frames &middot; pingpong loop</span>
+        </div>
+        <div class="clip">
+          <img src="assets/anims/meltdown.gif" alt="The sheet&#x27;s berserk buildup." loading="lazy">
+          <h3>meltdown</h3>
+          <p>The sheet&#x27;s berserk buildup.</p>
+          <span class="meta">8 frames &middot; pingpong loop</span>
+        </div>
+      </div>
+      <h2 class="group-title">One for every app in the dock</h2>
+      <p class="group-blurb">Distinct hand-drawn reactions for the dock's more recognizable citizens.</p>
+      <div class="clips">
+        <div class="clip">
+          <img src="assets/anims/trickster.gif" alt="UNDERTALE — flex, then a chaotic scribble vortex, then a dazed emergence." loading="lazy">
+          <h3>trickster</h3>
+          <p>UNDERTALE — flex, then a chaotic scribble vortex, then a dazed emergence.</p>
+          <span class="meta">8 frames &middot; pingpong loop</span>
+        </div>
+        <div class="clip">
+          <img src="assets/anims/darkWorld.gif" alt="DELTARUNE — dark mask, feral crouch, lunges forward." loading="lazy">
+          <h3>darkWorld</h3>
+          <p>DELTARUNE — dark mask, feral crouch, lunges forward.</p>
+          <span class="meta">9 frames &middot; pingpong loop</span>
+        </div>
+        <div class="clip">
+          <img src="assets/anims/hollowed.gif" alt="Hollow Knight — the stone ziggurat tower materializes, gothic and imposing." loading="lazy">
+          <h3>hollowed</h3>
+          <p>Hollow Knight — the stone ziggurat tower materializes, gothic and imposing.</p>
+          <span class="meta">11 frames &middot; pingpong loop</span>
+        </div>
+        <div class="clip">
+          <img src="assets/anims/cultLeader.gif" alt="Cult Of The Lamb — ghostly triangle escalates into a full brick-bodied physical form." loading="lazy">
+          <h3>cultLeader</h3>
+          <p>Cult Of The Lamb — ghostly triangle escalates into a full brick-bodied physical form.</p>
+          <span class="meta">8 frames &middot; pingpong loop</span>
+        </div>
+        <div class="clip">
+          <img src="assets/anims/spooked.gif" alt="Baldi&#x27;s Basics — wide shocked eyes, a red spike aura." loading="lazy">
+          <h3>spooked</h3>
+          <p>Baldi&#x27;s Basics — wide shocked eyes, a red spike aura.</p>
+          <span class="meta">5 frames &middot; pingpong loop</span>
+        </div>
+        <div class="clip">
+          <img src="assets/anims/scanning.gif" alt="SDR++/SatDump — a shard shrinks and flies out as he channels a hypnotic-eye scan." loading="lazy">
+          <h3>scanning</h3>
+          <p>SDR++/SatDump — a shard shrinks and flies out as he channels a hypnotic-eye scan.</p>
+          <span class="meta">8 frames &middot; pingpong loop</span>
+        </div>
+        <div class="clip">
+          <img src="assets/anims/sneaking.gif" alt="Wireshark — low sneaking crouch, hood over one eye." loading="lazy">
+          <h3>sneaking</h3>
+          <p>Wireshark — low sneaking crouch, hood over one eye.</p>
+          <span class="meta">6 frames &middot; pingpong loop</span>
+        </div>
+        <div class="clip">
+          <img src="assets/anims/glitching.gif" alt="UTM — monochrome palette, red diamond eye." loading="lazy">
+          <h3>glitching</h3>
+          <p>UTM — monochrome palette, red diamond eye.</p>
+          <span class="meta">4 frames &middot; pingpong loop</span>
+        </div>
+        <div class="clip">
+          <img src="assets/anims/charged.gif" alt="QFlipper — lightning-bolt chest, escalating spark/star bursts." loading="lazy">
+          <h3>charged</h3>
+          <p>QFlipper — lightning-bolt chest, escalating spark/star bursts.</p>
+          <span class="meta">6 frames &middot; pingpong loop</span>
+        </div>
+        <div class="clip">
+          <img src="assets/anims/transferring.gif" alt="Raspberry Pi Imager/balenaEtcher." loading="lazy">
+          <h3>transferring</h3>
+          <p>Raspberry Pi Imager/balenaEtcher.</p>
+          <span class="meta">12 frames &middot; pingpong loop</span>
+        </div>
+        <div class="clip">
+          <img src="assets/anims/summoning.gif" alt="Docker Desktop — a kick blur, a spark, then SNAP as a container appears, then walks off." loading="lazy">
+          <h3>summoning</h3>
+          <p>Docker Desktop — a kick blur, a spark, then SNAP as a container appears, then walks off.</p>
+          <span class="meta">8 frames &middot; pingpong loop</span>
+        </div>
+        <div class="clip">
+          <img src="assets/anims/sculpting.gif" alt="Blender — a small floating triangle grows into a towering fanged true form." loading="lazy">
+          <h3>sculpting</h3>
+          <p>Blender — a small floating triangle grows into a towering fanged true form.</p>
+          <span class="meta">14 frames &middot; pingpong loop</span>
+        </div>
+        <div class="clip">
+          <img src="assets/anims/kinship.gif" alt="Pixelorama — a proud, showy cane flourish for a fellow pixel artist." loading="lazy">
+          <h3>kinship</h3>
+          <p>Pixelorama — a proud, showy cane flourish for a fellow pixel artist.</p>
+          <span class="meta">5 frames &middot; pingpong loop</span>
+        </div>
+        <div class="clip">
+          <img src="assets/anims/fractaling.gif" alt="Mandelbrot Explorer." loading="lazy">
+          <h3>fractaling</h3>
+          <p>Mandelbrot Explorer.</p>
+          <span class="meta">3 frames &middot; pingpong loop</span>
+        </div>
+        <div class="clip">
+          <img src="assets/anims/presenting.gif" alt="Canva — a presenting sway with a held object." loading="lazy">
+          <h3>presenting</h3>
+          <p>Canva — a presenting sway with a held object.</p>
+          <span class="meta">3 frames &middot; pingpong loop</span>
+        </div>
+        <div class="clip">
+          <img src="assets/anims/guilty.gif" alt="Duolingo — a green, half-lidded, faintly guilty eye." loading="lazy">
+          <h3>guilty</h3>
+          <p>Duolingo — a green, half-lidded, faintly guilty eye.</p>
+          <span class="meta">3 frames &middot; pingpong loop</span>
+        </div>
+        <div class="clip">
+          <img src="assets/anims/dreading.gif" alt="School portals/Classroom." loading="lazy">
+          <h3>dreading</h3>
+          <p>School portals/Classroom.</p>
+          <span class="meta">4 frames &middot; pingpong loop</span>
+        </div>
+        <div class="clip">
+          <img src="assets/anims/grooving.gif" alt="YouTube — a calm wave, a snap on the beat, calm again." loading="lazy">
+          <h3>grooving</h3>
+          <p>YouTube — a calm wave, a snap on the beat, calm again.</p>
+          <span class="meta">3 frames &middot; pingpong loop</span>
+        </div>
+        <div class="clip">
+          <img src="assets/anims/dispatching.gif" alt="Mail — a quick cable-cast, dispatching a message." loading="lazy">
+          <h3>dispatching</h3>
+          <p>Mail — a quick cable-cast, dispatching a message.</p>
+          <span class="meta">4 frames &middot; pingpong loop</span>
+        </div>
+        <div class="clip">
+          <img src="assets/anims/ambushed.gif" alt="App Store — a startled puff/BANG at a new app appearing, then walks it off." loading="lazy">
+          <h3>ambushed</h3>
+          <p>App Store — a startled puff/BANG at a new app appearing, then walks it off.</p>
+          <span class="meta">8 frames &middot; pingpong loop</span>
+        </div>
+        <div class="clip">
+          <img src="assets/anims/stressed.gif" alt="Activity Monitor — confusion, a flash of fire, an ashen aftermath." loading="lazy">
+          <h3>stressed</h3>
+          <p>Activity Monitor — confusion, a flash of fire, an ashen aftermath.</p>
+          <span class="meta">7 frames &middot; pingpong loop</span>
+        </div>
+        <div class="clip">
+          <img src="assets/anims/watched.gif" alt="System Settings — a dark claw grows and covers his eye." loading="lazy">
+          <h3>watched</h3>
+          <p>System Settings — a dark claw grows and covers his eye.</p>
+          <span class="meta">5 frames &middot; pingpong loop</span>
+        </div>
+        <div class="clip">
+          <img src="assets/anims/flinching.gif" alt="Photo Booth — a 3-stage flinch/duck, camera-shy." loading="lazy">
+          <h3>flinching</h3>
+          <p>Photo Booth — a 3-stage flinch/duck, camera-shy.</p>
+          <span class="meta">3 frames &middot; pingpong loop</span>
+        </div>
+        <div class="clip">
+          <img src="assets/anims/huffy.gif" alt="AppCleaner — a whip-crack windup into an indignant stagger." loading="lazy">
+          <h3>huffy</h3>
+          <p>AppCleaner — a whip-crack windup into an indignant stagger.</p>
+          <span class="meta">6 frames &middot; pingpong loop</span>
+        </div>
+        <div class="clip">
+          <img src="assets/anims/pushingCode.gif" alt="GitHub — a diagonal sprint lean." loading="lazy">
+          <h3>pushingCode</h3>
+          <p>GitHub — a diagonal sprint lean.</p>
+          <span class="meta">6 frames &middot; pingpong loop</span>
+        </div>
+        <div class="clip">
+          <img src="assets/anims/browsingStore.gif" alt="Steam (the storefront itself, not a specific game)." loading="lazy">
+          <h3>browsingStore</h3>
+          <p>Steam (the storefront itself, not a specific game).</p>
+          <span class="meta">3 frames &middot; pingpong loop</span>
+        </div>
+        <div class="clip">
+          <img src="assets/anims/dancing.gif" alt="Spotify — an overhead cable flourish, like conducting." loading="lazy">
+          <h3>dancing</h3>
+          <p>Spotify — an overhead cable flourish, like conducting.</p>
+          <span class="meta">7 frames &middot; pingpong loop</span>
+        </div>
+      </div>
+      <h2 class="group-title">Movement & mischief</h2>
+      <p class="group-blurb">Flourishes, blasts, and full-body chaos.</p>
+      <div class="clips">
+        <div class="clip">
+          <img src="assets/anims/caneTwist.gif" alt="Cane cable spins out fully as his eye slips into a sleepy half-moon, then reopens." loading="lazy">
+          <h3>caneTwist</h3>
+          <p>Cane cable spins out fully as his eye slips into a sleepy half-moon, then reopens.</p>
+          <span class="meta">8 frames &middot; pingpong loop</span>
+        </div>
+        <div class="clip">
+          <img src="assets/anims/hookCane.gif" alt="A hooked cane held in a couple of positions." loading="lazy">
+          <h3>hookCane</h3>
+          <p>A hooked cane held in a couple of positions.</p>
+          <span class="meta">5 frames &middot; pingpong loop</span>
+        </div>
+        <div class="clip">
+          <img src="assets/anims/conjuring.gif" alt="Reaches out with an empty hand; a small shaggy grey mass grows in his grip, then settles by his feet." loading="lazy">
+          <h3>conjuring</h3>
+          <p>Reaches out with an empty hand; a small shaggy grey mass grows in his grip, then settles by his feet.</p>
+          <span class="meta">18 frames &middot; pingpong loop</span>
+        </div>
+        <div class="clip">
+          <img src="assets/anims/tumbling.gif" alt="An off-balance, legs-up tumble with a dazed X-eye and one comic close-up-eyeball beat." loading="lazy">
+          <h3>tumbling</h3>
+          <p>An off-balance, legs-up tumble with a dazed X-eye and one comic close-up-eyeball beat.</p>
+          <span class="meta">4 frames &middot; pingpong loop</span>
+        </div>
+        <div class="clip">
+          <img src="assets/anims/dashTarget.gif" alt="A dash/lean lunge that picks up a circular target emblem on his chest partway through." loading="lazy">
+          <h3>dashTarget</h3>
+          <p>A dash/lean lunge that picks up a circular target emblem on his chest partway through.</p>
+          <span class="meta">4 frames &middot; pingpong loop</span>
+        </div>
+        <div class="clip">
+          <img src="assets/anims/grumpEyes.gif" alt="Walking with escalating gritted-teeth anger, until his eyes go wide and round with a spark." loading="lazy">
+          <h3>grumpEyes</h3>
+          <p>Walking with escalating gritted-teeth anger, until his eyes go wide and round with a spark.</p>
+          <span class="meta">6 frames &middot; pingpong loop</span>
+        </div>
+        <div class="clip">
+          <img src="assets/anims/zipAround.gif" alt="Idle, then a quick blurred dash out and back, then idle again." loading="lazy">
+          <h3>zipAround</h3>
+          <p>Idle, then a quick blurred dash out and back, then idle again.</p>
+          <span class="meta">11 frames &middot; pingpong loop</span>
+        </div>
+        <div class="clip">
+          <img src="assets/anims/rampaging.gif" alt="A red palette-swap rampage run, dust kicking up with each stride." loading="lazy">
+          <h3>rampaging</h3>
+          <p>A red palette-swap rampage run, dust kicking up with each stride.</p>
+          <span class="meta">10 frames &middot; pingpong loop</span>
+        </div>
+      </div>
+
+    <footer>
+      <p>Unofficial, non-commercial fan project. Bill Cipher and Gravity Falls are &copy; Disney; the pixel sprites here are original fan art made for this project.</p>
+      <p class="sig">REALITY IS AN ILLUSION, THE UNIVERSE IS A HOLOGRAM, BUY GOLD, BYE!</p>
+    </footer>
+  </div>
+</main>
+</body>
+</html>
