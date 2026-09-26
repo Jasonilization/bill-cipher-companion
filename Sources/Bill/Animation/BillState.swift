@@ -36,6 +36,9 @@ enum BillState: String, CaseIterable, Sendable {
     case powerSurge
     case zodiacVision
     case summonRitual
+    case zodiacRage
+    case prismDance
+    case zodiacCrimson
     case ghostPale
     case glitchForm
     case shadowHands
@@ -122,10 +125,13 @@ enum BillState: String, CaseIterable, Sendable {
         case .meltdown: return 99
         case .powerSurge: return 98
         case .glitchForm: return 97
+        case .zodiacRage, .zodiacCrimson: return 96
+        case .prismDance: return 93
         case .ghostPale: return 94
         case .zodiacVision: return 92
         case .shadowHands: return 91
         case .summonRitual: return 90
+        case .ritualBuildup: return 89
         case .celebrating: return 89
         case .caneFlourish: return 82
         case .heatingUp: return 80
@@ -141,8 +147,8 @@ enum BillState: String, CaseIterable, Sendable {
              .presenting, .guilty, .dreading, .grooving, .dispatching, .ambushed, .stressed,
              .watched, .flinching, .huffy, .pushingCode, .browsingStore, .dancing:
             return 50
-        case .caneTwist, .hookCane, .conjuring, .tumbling, .dashTarget, .grumpEyes, .zipAround, .rampaging,
-             .ritualBuildup:
+        case .caneTwist, .hookCane, .conjuring, .tumbling, .dashTarget, .grumpEyes, .zipAround,
+             .rampaging, .ritualBuildup:
             return 85
         // Above every ambient/app reaction (50) but below emotional spikes:
         // once Bill is genuinely mid-air, the animation has to stay in sync
@@ -177,8 +183,8 @@ enum BillState: String, CaseIterable, Sendable {
              .transferring, .summoning, .sculpting, .kinship, .fractaling, .presenting, .guilty,
              .dreading, .grooving, .dispatching, .ambushed, .stressed, .watched, .flinching,
              .huffy, .dancing,
-             .caneTwist, .hookCane, .conjuring, .tumbling, .dashTarget, .grumpEyes, .zipAround, .rampaging,
-             .ritualBuildup,
+             .caneTwist, .hookCane, .conjuring, .tumbling, .dashTarget, .grumpEyes, .zipAround,
+             .rampaging, .ritualBuildup, .zodiacRage, .prismDance, .zodiacCrimson,
              .crouching, .launching, .landingSoft, .landingHard, .ledgeGrabbing, .edgePeek:
             return false
         }
@@ -243,7 +249,7 @@ enum BillState: String, CaseIterable, Sendable {
     /// idle roll rather than any normal reaction path.
     static let rareEasterEggs: [BillState] = [
         .powerSurge, .zodiacVision, .summonRitual, .ghostPale, .glitchForm, .shadowHands, .meltdown,
-        .caneTwist, .hookCane, .conjuring, .tumbling, .dashTarget, .grumpEyes, .zipAround, .rampaging,
-        .ritualBuildup,
+        .caneTwist, .hookCane, .conjuring, .tumbling, .dashTarget, .grumpEyes, .zipAround,
+        .ritualBuildup, .zodiacRage, .prismDance, .zodiacCrimson,
     ]
 }

@@ -99,7 +99,9 @@ Sources/Bill/
 
 ## License
 
-Code is released under the [MIT License](LICENSE). The character Bill Cipher and all Gravity Falls references belong to Disney; the pixel sprites here are original fan art made for this project.
+Code is released under the [MIT License](LICENSE). The character Bill Cipher and all Gravity Falls references belong to Disney. The pixel sprites are used for this non-commercial fan project with credit to their creators:
+
+**Bill Cipher sprite artwork** — original artwork by **Kelly Nora** ([@kiernenking](https://www.deviantart.com/kiernenking)); sprite sheet by **JayHyperStarX**, from [“Bill Cipher – Sprite Sheet” on DeviantArt](https://www.deviantart.com/jayhyperstarx/art/Bill-Cipher---Sprite-Sheet-910916786).
 
 ---
 

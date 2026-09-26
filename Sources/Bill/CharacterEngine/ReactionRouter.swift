@@ -290,9 +290,21 @@ final class ReactionRouter {
             }
         }
 
-        // Then the app's own reaction. A personalized line for this exact
-        // app wins before the special-state/category buckets — that's the
-        // entire point of the setup flow.
+        // Then the app's own reaction. Ladder: the user's explicit per-app
+        // assignment (Settings → Per-app animations) first, then the
+        // personalized line for this exact app, then the special-state and
+        // category buckets.
+        if let assigned = preferences.perAppAnimations[bundleID],
+           let state = BillState(rawValue: assigned) {
+            _ = goToApp?(pid)
+            characterEngine.request(state, force: true)
+            if let special = SpecialAppMapper.state(bundleID: bundleID, name: name) {
+                speak([PersonalizedDialogueStore.shared.appKey(for: bundleID), special.rawValue], substitutions: ["app": name])
+            } else {
+                speak(["appLaunchGeneric"], substitutions: ["app": name])
+            }
+            return
+        }
         if let special = SpecialAppMapper.state(bundleID: bundleID, name: name) {
             _ = goToApp?(pid)
             characterEngine.request(special, force: true)

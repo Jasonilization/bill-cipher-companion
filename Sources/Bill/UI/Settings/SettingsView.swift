@@ -63,6 +63,15 @@ struct SettingsView: View {
                             .frame(width: 46, alignment: .trailing)
                     }
                 }
+                // Live preview: the real bark-bubble renderer drawing with the
+                // current accent, text scale, rounded corners and outlined
+                // tail — exactly what will pop over Bill's head.
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Bubble preview")
+                        .font(.system(size: 12, weight: .semibold))
+                    bubblePreview
+                        .frame(maxWidth: .infinity)
+                }
                 HStack {
                     Text("Bubble colour")
                     Spacer()
@@ -203,6 +212,26 @@ struct SettingsView: View {
                 }
             }
 
+            Section("Per-app animations") {
+                Text("Assign a signature reaction to any app Bill has seen you open. Automatic = his usual pools.")
+                    .font(.caption).foregroundStyle(.secondary)
+                let apps = memoryStore.knownApps()
+                if apps.isEmpty {
+                    Text("Open a few apps and Bill will list them here.")
+                        .font(.system(size: 12))
+                        .foregroundStyle(.secondary)
+                } else {
+                    ForEach(apps.prefix(24), id: \.bundleID) { app in
+                        Picker("\(app.name) (\(app.opens)×)", selection: perAppBinding(for: app.bundleID)) {
+                            Text("Automatic").tag("")
+                            ForEach(BillState.allCases, id: \.self) { state in
+                                Text(state.rawValue).tag(state.rawValue)
+                            }
+                        }
+                    }
+                }
+            }
+
             Section("Reactions") {
                 ForEach(AppCategory.allCases, id: \.self) { category in
                     Toggle(category.displayName, isOn: preferences.binding(for: category))
@@ -218,12 +247,48 @@ struct SettingsView: View {
                     .foregroundStyle(.secondary)
                 Button("Reset memory", action: onResetMemory)
             }
+
+            Section("Credits") {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Bill Cipher sprite artwork")
+                        .font(.system(size: 12, weight: .semibold))
+                    Text("Original artwork: Kelly Nora (@kiernenking)")
+                    Text("Sprite sheet: JayHyperstarX — “Bill Cipher – Sprite Sheet” (DeviantArt)")
+                    if let url = URL(string: "https://www.deviantart.com/jayhyperstarx/art/Bill-Cipher---Sprite-Sheet-910916786") {
+                        Link("deviantart.com/jayhyperstarx/art/Bill-Cipher---Sprite-Sheet-910916786", destination: url)
+                            .font(.system(size: 11))
+                    }
+                    Text("Unofficial, non-commercial fan project. Bill Cipher and Gravity Falls are © Disney. Not affiliated with or endorsed by Disney. Code is MIT.")
+                        .font(.system(size: 11))
+                        .foregroundStyle(.secondary)
+                        .padding(.top, 2)
+                }
+                .font(.system(size: 11))
+                .textSelection(.enabled)
+            }
         }
         .formStyle(.grouped)
         .frame(width: 480, height: 720)
     }
 
     /// `""` (Automatic) when unset, so the picker reads honestly.
+    /// The live bark-bubble preview: the real renderer, the real accent,
+    /// the real text-size knob — regenerated on every Settings change
+    /// because the whole view re-renders with `preferences`.
+    private var bubblePreview: some View {
+        let image = BarkBubble.makePreviewImage(text: "HELLO, PINE TREE.")
+        let scale = BarkBubble.effectivePixelScale
+        return Image(nsImage: image)
+            .interpolation(.none)
+            .resizable()
+            .frame(
+                width: image.size.width * scale,
+                height: image.size.height * scale
+            )
+            .frame(maxWidth: .infinity)
+            .alignmentGuide(.leading) { d in d[.leading] }
+    }
+
     private func animationBinding(for key: String) -> Binding<String> {
         Binding(
             get: { preferences.customAnimationMap[key] ?? "" },
@@ -235,6 +300,23 @@ struct SettingsView: View {
                     map[key] = rawValue
                 }
                 preferences.customAnimationMap = map
+            }
+        )
+    }
+
+    /// Same shape as `animationBinding`, keyed by bundle ID for the
+    /// per-app section.
+    private func perAppBinding(for bundleID: String) -> Binding<String> {
+        Binding(
+            get: { preferences.perAppAnimations[bundleID] ?? "" },
+            set: { rawValue in
+                var map = preferences.perAppAnimations
+                if rawValue.isEmpty {
+                    map.removeValue(forKey: bundleID)
+                } else {
+                    map[bundleID] = rawValue
+                }
+                preferences.perAppAnimations = map
             }
         )
     }

@@ -53,6 +53,23 @@ enum BillSpriteCatalog {
     /// later given its own beat (`ritualBuildup`, registered just below)
     /// rather than left dead in the bundle.
     static let summonRitual = loadFrames("bill_summonritual", count: 4)
+    /// A red-zodiac complex sitting directly below the normal zodiac row in
+    /// the source sheet — a 10-frame escalation across two rows (a sparse
+    /// ring-form opener, then the full red geometry). Extracted in the
+    /// second analysis pass; the sheet's glow rows above each cell are
+    /// trimmed to keep the shared 111-tall canvas. Anchor +4: the frames'
+    /// opaque mass sits ~4px left of the idle body center.
+    static let zodiacRage = loadFrames("bill_zodiacrage", count: 10, anchorShift: 4)
+    /// The small multicolour animation from the sheet's bottom-right — a
+    /// compact 5-frame prism/shimmer beat. Centered within 1px of the
+    /// idle body anchor, so no shift.
+    static let prismDance = loadFrames("bill_prismdance", count: 5)
+    /// The separate red zodiac from the sheet's bottom-right corner — six
+    /// frames of a red-and-white ring at ~108×128 on the sheet. The
+    /// circle's thin top/bottom caps are symmetrically trimmed (9/8 rows)
+    /// to fit the shared 111-tall canvas, keeping the ring centered the
+    /// way the normal zodiac's ring sits.
+    static let zodiacCrimson = loadFrames("bill_zodiaccrimson", count: 6)
     /// The pre-audit summoning pair itself: three near-identical
     /// stand-still frames whose only motion is a one-pixel eye glint
     /// (a focused "channeling the summons" hold), then the payoff frame —

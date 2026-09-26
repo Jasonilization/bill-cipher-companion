@@ -714,6 +714,15 @@ final class RoamingController {
     private func driveStep() {
         switch step {
         case .approach(let x, let running):
+            // The stationary rule: a reaction clip that fires mid-beat must
+            // pause the walk — Bill only moves while the walk (or a roam
+            // motion) is actually playing. The sim freezes in place for as
+            // long as the animation holds, then the planner resumes.
+            let current = characterEngine.stateMachine.currentState
+            guard current == .idle || current.isRoamingMotion else {
+                sim.stop()
+                return
+            }
             let delta = x - sim.feet.x
             if abs(delta) <= Self.arrivalTolerance || !sim.isGrounded {
                 if sim.isGrounded {
@@ -887,10 +896,16 @@ final class RoamingController {
     // MARK: - Panel <-> simulation
 
     /// Bill's feet in screen coordinates, derived from the panel's origin.
+    /// Set by `CharacterWindowController` when a directional bark widens
+    /// the panel LEFT: the origin shifts left by the growth, so the feet
+    /// inset must grow by the same amount or the sim thinks Bill
+    /// teleported. Right growth needs no adjustment (origin is fixed).
+    var feetInsetAdjustment: CGFloat = 0
+
     private func feetPosition(panel: NSPanel) -> CGPoint {
         let s = preferences.characterScale
         return CGPoint(
-            x: panel.frame.minX + Self.centerInsetX * s,
+            x: panel.frame.minX + Self.centerInsetX * s + feetInsetAdjustment,
             y: panel.frame.minY + Self.feetInsetY * s
         )
     }
@@ -906,7 +921,7 @@ final class RoamingController {
     private func writeBack(panel: NSPanel) {
         let s = preferences.characterScale
         let origin = NSPoint(
-            x: sim.feet.x - Self.centerInsetX * s,
+            x: sim.feet.x - Self.centerInsetX * s - feetInsetAdjustment,
             y: sim.feet.y - Self.feetInsetY * s
         )
         // Direct `setFrameOrigin`, deliberately NOT `animator().setFrameOrigin`

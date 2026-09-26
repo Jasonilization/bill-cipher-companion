@@ -160,13 +160,27 @@ final class CharacterWindowController: NSObject {
         characterEngine.stateMachine.onBarkVisibilityChanged = { [weak self] isShowing in
             self?.setPanelExpanded(isShowing)
         }
+        // Directional barks: widen the panel on the chosen side so a
+        // bubble directly left/right of Bill has somewhere to render.
+        characterEngine.stateMachine.onBarkCanvasWiden = { [weak self] right, growth in
+            self?.widenPanelForSideBark(right: right, growth: growth)
+        }
 
         // Keep the speech bubble glued to Bill wherever he ends up — roaming,
         // a drag, or a window shoving him all move the panel.
         NotificationCenter.default.addObserver(
             forName: NSWindow.didMoveNotification, object: panel, queue: .main
         ) { [weak self] _ in
-            Task { @MainActor in self?.followBubbleToBill() }
+            Task { @MainActor in
+                self?.followBubbleToBill()
+                // A showing bark travels with the window — this is the
+                // cheap re-clamp that keeps it (and its tail) inside the
+                // on-screen region as Bill moves, without a bitmap rebuild.
+                self?.characterEngine.stateMachine.reclampVisibleBark()
+                // The Settings drop-by Easter egg: dragged onto the
+                // Settings window, he comments on the control room.
+                self?.checkSettingsDropBy()
+            }
         }
 
         applyCharacterScale(preferences.characterScale, keepingCurrentPosition: false)
@@ -198,6 +212,11 @@ final class CharacterWindowController: NSObject {
     /// `.resizeFill` and the rig is anchored from the bottom, so nothing about
     /// Bill's own position or scale changes.
     private func setPanelExpanded(_ expanded: Bool) {
+        // Directional barks widen the window on one side; collapse always
+        // restores the base width and clears the roaming inset adjustment.
+        if !expanded {
+            collapseBarkSideWiden()
+        }
         guard expanded != isPanelExpanded else { return }
         isPanelExpanded = expanded
         let scale = preferences.characterScale
@@ -206,6 +225,48 @@ final class CharacterWindowController: NSObject {
         let origin = panel.frame.origin
         panel.setFrame(NSRect(x: origin.x, y: origin.y, width: width, height: height), display: false)
         hitView.frame = NSRect(origin: .zero, size: NSSize(width: width, height: height))
+    }
+
+    /// How much the panel is currently widened for a side bark, and on
+    /// which side. Left growth shifts the window origin, so the roaming
+    /// controller's feet inset must shift with it or the sim thinks Bill
+    /// teleported.
+    private var barkSideWiden: CGFloat = 0
+    private var barkSideWidenIsRight = true
+
+    /// Grows the panel on one side for a side bark (called by the state
+    /// machine's `onBarkCanvasWiden` before placement). Right growth
+    /// keeps the origin (Bill stays put by construction); left growth
+    /// shifts the origin left and compensates the roaming feet inset by
+    /// the same amount.
+    private func widenPanelForSideBark(right: Bool, growth: CGFloat) {
+        // Undo any previous widen first (e.g. queued barks alternating
+        // sides) so growth is always measured from the base width.
+        collapseBarkSideWiden()
+        guard growth > 0 else { return }
+        barkSideWiden = growth
+        barkSideWidenIsRight = right
+        let frame = panel.frame
+        if right {
+            panel.setFrame(NSRect(x: frame.minX, y: frame.minY, width: frame.width + growth, height: frame.height), display: false)
+        } else {
+            panel.setFrame(NSRect(x: frame.minX - growth, y: frame.minY, width: frame.width + growth, height: frame.height), display: false)
+            roaming?.feetInsetAdjustment = growth
+        }
+        hitView.frame = NSRect(origin: .zero, size: panel.frame.size)
+    }
+
+    private func collapseBarkSideWiden() {
+        guard barkSideWiden > 0 else { return }
+        let frame = panel.frame
+        if barkSideWidenIsRight {
+            panel.setFrame(NSRect(x: frame.minX, y: frame.minY, width: frame.width - barkSideWiden, height: frame.height), display: false)
+        } else {
+            panel.setFrame(NSRect(x: frame.minX + barkSideWiden, y: frame.minY, width: frame.width - barkSideWiden, height: frame.height), display: false)
+            roaming?.feetInsetAdjustment = 0
+        }
+        barkSideWiden = 0
+        hitView.frame = NSRect(origin: .zero, size: panel.frame.size)
     }
 
     private func applyCharacterScale(_ scale: CGFloat, keepingCurrentPosition: Bool) {
@@ -1068,6 +1129,40 @@ final class CharacterWindowController: NSObject {
     /// (if open) after a width/accent change.
     func relayoutChatBubble() {
         chatBubble.refresh()
+    }
+
+    /// Set by `AppDelegate` — the Settings window's frame, so Bill can
+    /// react when you drag him onto it (the "drag him into the preview
+    /// window and he reacts" ask).
+    var settingsWindowFrameProvider: (() -> NSRect?)?
+
+    /// Diagnostic only (`BILL_BARK_DIAGNOSTIC`): parks Bill at the visible
+    /// frame's right edge so the next bark demonstrates the directional
+    /// bubble — shifted left, tail still over him.
+    func debugParkNearScreenEdge() {
+        guard let screen = panel.screen ?? NSScreen.main else { return }
+        let visible = screen.visibleFrame
+        let size = panel.frame.size
+        // Hang 150pt of the window off the right edge — deep enough that
+        // the on-screen region can't hold a centered bubble, so the next
+        // bark visibly shifts left with the tail tracking Bill.
+        panel.setFrameOrigin(NSPoint(x: visible.maxX - size.width + 150, y: visible.minY + 24))
+    }
+
+    private var lastSettingsDropByAt: Date?
+    private static let settingsDropByCooldown: TimeInterval = 60
+
+    private func checkSettingsDropBy() {
+        guard let frame = settingsWindowFrameProvider?(),
+              frame.intersects(panel.frame)
+        else { return }
+        guard Date().timeIntervalSince(lastSettingsDropByAt ?? .distantPast) > Self.settingsDropByCooldown
+        else { return }
+        lastSettingsDropByAt = Date()
+        characterEngine.request(.smug, force: true)
+        if let line = DialogueLibrary.shared.line("settings.visit") {
+            characterEngine.bark(line, importance: .always)
+        }
     }
 
     private func handleRoamEvent(_ event: RoamEvent) {

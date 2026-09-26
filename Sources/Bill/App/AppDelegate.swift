@@ -76,6 +76,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         settingsWindowController.onOpenQuotesManager = { [weak self] in
             self?.openQuotesManager()
         }
+        characterWindowController.settingsWindowFrameProvider = { [weak self] in
+            self?.settingsWindowController?.contentFrame()
+        }
         quotesManagerController = QuotesManagerController()
         quotesManagerController.refreshStore = characterWindowController.dialogueRefreshStore
         quotesManagerController.onRefreshAll = { [weak self] in
@@ -189,6 +192,29 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 print(report)
                 print("=== end chat diagnostic ===")
                 self?.chatPanelController.keepMounted = false
+            }
+        }
+        // `BILL_BARK_DIAGNOSTIC=1` showcases the bark bubble end-to-end from
+        // a terminal: a long multi-line centered bark first (wrapping,
+        // rounded corners, outlined tail, near-hat gap), then Bill is
+        // parked at the screen's right edge and barks again — the bubble
+        // shifts left to stay on screen with the tail tracking him, which
+        // is the directional-placement behavior in one screenshot.
+        if ProcessInfo.processInfo.environment["BILL_BARK_DIAGNOSTIC"] == "1" {
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                try? await Task.sleep(nanoseconds: 6_000_000_000)
+                self.characterWindowController.characterEngine.bark(
+                    "AH, A TEST SUBJECT. WATCH CLOSELY: THIS BUBBLE SITS RIGHT ABOVE MY HAT, WRAPS ITS TEXT PROPERLY, AND ITS TAIL IS PART OF THE BORDER.",
+                    importance: .always
+                )
+                try? await Task.sleep(nanoseconds: 7_000_000_000)
+                self.characterWindowController.debugParkNearScreenEdge()
+                try? await Task.sleep(nanoseconds: 1_000_000_000)
+                self.characterWindowController.characterEngine.bark(
+                    "NOW I'M AT THE SCREEN'S EDGE. NOTICE: THE BUBBLE SHIFTED LEFT, AND MY TAIL FOLLOWED ME. DIRECTIONAL. GEOMETRY IS A LIFESTYLE.",
+                    importance: .always
+                )
             }
         }
         if ProcessInfo.processInfo.environment["BILL_AWARENESS_DIAGNOSTIC"] == "1" {

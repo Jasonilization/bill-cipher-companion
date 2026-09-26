@@ -56,7 +56,11 @@ enum BarkBubble {
     private static let cornerRadius = 5
     private static let borderThickness = 1
     private static let accentThickness = 1
-    private static let tailHeight: CGFloat = 5
+    /// The tail is a 3-row outlined trapezoid, not a solid black wedge:
+    /// black outline + accent + fill continue down from the body so the
+    /// tail reads as part of the border — a proper pixel speech bubble
+    /// (the explicit ask).
+    private static let tailHeight: CGFloat = 3
     /// Keeps the widest possible bubble inside the 260pt-wide character
     /// window (the bubble is a child node of Bill's own scene, not a
     /// separate window, so anything wider gets clipped by the view bounds
@@ -77,10 +81,26 @@ enum BarkBubble {
     /// should always show in full.
     private static let maxLines = 14
 
+    /// Which edge of the bubble the tail is drawn on — the directional
+    /// speech ask: the bubble sits directly left/right of Bill (tail on
+    /// the edge facing him), below him (tail on top), or above (tail on
+    /// the bottom, the classic fallback).
+    enum TailEdge {
+        /// Tail on the bottom edge — bubble floats ABOVE Bill.
+        case above
+        /// Tail on the top edge — bubble sits BELOW Bill.
+        case below
+        /// Tail on the left edge — bubble sits to Bill's RIGHT.
+        case leftSide
+        /// Tail on the right edge — bubble sits to Bill's LEFT.
+        case rightSide
+    }
+
     static func makeNode(
         text: String,
         maxWidth: CGFloat,
         maxHeight: CGFloat = .greatestFiniteMagnitude,
+        tailEdge: TailEdge = .above,
         tailOffsetUnits: CGFloat = 0
     ) -> SKNode {
         // Honor the caller's measured on-screen room: the caller
@@ -112,7 +132,26 @@ enum BarkBubble {
 
         let bodyWidth = textBlockWidth + paddingX * 2
         let bodyHeight = textBlockHeight + paddingY * 2
-        let imageSize = CGSize(width: bodyWidth, height: bodyHeight + tailHeight)
+        var imageSize = CGSize(width: bodyWidth, height: bodyHeight)
+        var bodyRect: CGRect
+        switch tailEdge {
+        case .above:
+            // Tail rows hang below the body: body sits at the top of the
+            // bitmap.
+            imageSize.height += tailHeight
+            bodyRect = CGRect(x: 0, y: tailHeight, width: bodyWidth, height: bodyHeight)
+        case .below:
+            // Tail rows rise above the body: body sits at the bottom.
+            imageSize.height += tailHeight
+            bodyRect = CGRect(x: 0, y: 0, width: bodyWidth, height: bodyHeight)
+        case .leftSide:
+            // Tail columns extend left of the body.
+            imageSize.width += tailHeight
+            bodyRect = CGRect(x: tailHeight, y: 0, width: bodyWidth, height: bodyHeight)
+        case .rightSide:
+            imageSize.width += tailHeight
+            bodyRect = CGRect(x: 0, y: 0, width: bodyWidth, height: bodyHeight)
+        }
 
         let image = NSImage(size: imageSize, flipped: false) { _ in
             guard let ctx = NSGraphicsContext.current?.cgContext else { return false }
@@ -120,9 +159,8 @@ enum BarkBubble {
             ctx.setAllowsAntialiasing(false)
             ctx.interpolationQuality = .none
 
-            let bodyRect = CGRect(x: 0, y: tailHeight, width: bodyWidth, height: bodyHeight)
             let fillRect = drawLayeredBorder(ctx, bodyRect: bodyRect, cornerRadius: cornerRadius, borderThickness: borderThickness, accentThickness: accentThickness, accentColor: BillPalette.bubbleAccent)
-            drawTail(ctx, bodyRect: bodyRect, offsetUnits: tailOffsetUnits)
+            drawTail(ctx, bodyRect: bodyRect, edge: tailEdge, offsetUnits: tailOffsetUnits)
             PixelFont.drawCentered(ctx, lines: lines, in: fillRect, color: BillPalette.black)
 
             return true
@@ -132,8 +170,39 @@ enum BarkBubble {
         texture.filteringMode = .nearest
         let sprite = SKSpriteNode(texture: texture)
         sprite.setScale(effectivePixelScale)
-        sprite.anchorPoint = CGPoint(x: 0.5, y: 0)
+        // Center anchor for every orientation: the placement engine
+        // positions the bitmap center explicitly per edge, so one anchor
+        // rule serves all four.
+        sprite.anchorPoint = CGPoint(x: 0.5, y: 0.5)
         return sprite
+    }
+
+    /// Renders the same bubble as an `NSImage` (bitmap units — multiply the
+    /// display size by `effectivePixelScale` yourself). Extracted from
+    /// `makeNode` so Settings can show a live bubble preview — accent
+    /// colour, text scale, corner shape and the outlined tail — without
+    /// touching SpriteKit at all.
+    static func makePreviewImage(text: String) -> NSImage {
+        let lines = PixelFont.wrap(
+            normalize(text.uppercased()),
+            maxWidthUnits: maxTextWidthUnits,
+            maxLines: 6
+        )
+        let textBlockWidth = CGFloat(lines.map(PixelFont.lineWidth).max() ?? 0)
+        let textBlockHeight = CGFloat(lines.count) * PixelFont.lineHeight - PixelFont.lineSpacing
+        let bodyWidth = textBlockWidth + paddingX * 2
+        let bodyHeight = textBlockHeight + paddingY * 2
+        return NSImage(size: CGSize(width: bodyWidth, height: bodyHeight + tailHeight), flipped: false) { _ in
+            guard let ctx = NSGraphicsContext.current?.cgContext else { return false }
+            ctx.setShouldAntialias(false)
+            ctx.setAllowsAntialiasing(false)
+            ctx.interpolationQuality = .none
+            let bodyRect = CGRect(x: 0, y: tailHeight, width: bodyWidth, height: bodyHeight)
+            let fillRect = drawLayeredBorder(ctx, bodyRect: bodyRect, cornerRadius: cornerRadius, borderThickness: borderThickness, accentThickness: accentThickness, accentColor: BillPalette.bubbleAccent)
+            drawTail(ctx, bodyRect: bodyRect, edge: .above, offsetUnits: 0)
+            PixelFont.drawCentered(ctx, lines: lines, in: fillRect, color: BillPalette.black)
+            return true
+        }
     }
 
     /// ChatGPT/typed replies routinely contain curly quotes and en/em
@@ -152,21 +221,73 @@ enum BarkBubble {
         return result
     }
 
-    /// The tail's horizontal position within the body, in bitmap units.
-    /// Zero (the default) puts it dead center; a non-zero offset slides it
-    /// toward whichever side Bill actually stands on when the bubble itself
-    /// had to shift left/right to stay on screen — the tail points at Bill,
-    /// not at the bubble's own middle.
-    private static func drawTail(_ ctx: CGContext, bodyRect: CGRect, offsetUnits: CGFloat) {
-        ctx.setFillColor(BillPalette.black.cgColor)
-        // Clamped so the tail always stays under the body's rounded corner
-        // region rather than hanging off the bubble's edge.
-        let maxOffset = bodyRect.width / 2 - 5
-        let midX = bodyRect.midX + min(max(offsetUnits, -maxOffset), maxOffset)
-        ctx.fill([
-            CGRect(x: midX - 3, y: bodyRect.minY - 2, width: 6, height: 2),
-            CGRect(x: midX - 1, y: bodyRect.minY - tailHeight, width: 2, height: tailHeight - 2),
-        ])
+    /// The tail's position along its edge, in bitmap units — zero (the
+    /// default) puts it dead center; a non-zero offset slides it toward
+    /// wherever Bill actually is when the bubble itself had to be clamped
+    /// off-center — the tail points at Bill, not at the bubble's own
+    /// middle.
+    ///
+    /// Every orientation is the same 3-row/3-column outlined trapezoid —
+    /// each step is the same 3-layer black/accent/fill stack as the
+    /// body's border, narrowing to a solid black tip: the tail is part of
+    /// the border, never a solid wedge.
+    private static func drawTail(_ ctx: CGContext, bodyRect: CGRect, edge: TailEdge, offsetUnits: CGFloat) {
+        let white = NSColor(calibratedWhite: 0.98, alpha: 1).cgColor
+        let accent = BillPalette.bubbleAccent.cgColor
+        let black = BillPalette.black.cgColor
+
+        func layer(_ midX: CGFloat, _ y: CGFloat, _ blackW: CGFloat, _ accentW: CGFloat, _ fillW: CGFloat) {
+            ctx.setFillColor(black)
+            ctx.fill([CGRect(x: midX - blackW / 2, y: y, width: blackW, height: 1)])
+            ctx.setFillColor(accent)
+            ctx.fill([CGRect(x: midX - accentW / 2, y: y, width: accentW, height: 1)])
+            ctx.setFillColor(white)
+            ctx.fill([CGRect(x: midX - fillW / 2, y: y, width: fillW, height: 1)])
+        }
+
+        func layerV(_ midY: CGFloat, _ x: CGFloat, _ blackH: CGFloat, _ accentH: CGFloat, _ fillH: CGFloat) {
+            ctx.setFillColor(black)
+            ctx.fill([CGRect(x: x, y: midY - blackH / 2, width: 1, height: blackH)])
+            ctx.setFillColor(accent)
+            ctx.fill([CGRect(x: x, y: midY - accentH / 2, width: 1, height: accentH)])
+            ctx.setFillColor(white)
+            ctx.fill([CGRect(x: x, y: midY - fillH / 2, width: 1, height: fillH)])
+        }
+
+        switch edge {
+        case .above:
+            // Tail pointing DOWN from the body's bottom edge at Bill below.
+            let maxOffset = bodyRect.width / 2 - 5
+            let midX = bodyRect.midX + min(max(offsetUnits, -maxOffset), maxOffset)
+            layer(midX, bodyRect.minY - 1, 10, 8, 6)
+            layer(midX, bodyRect.minY - 2, 6, 4, 2)
+            ctx.setFillColor(black)
+            ctx.fill([CGRect(x: midX - 1, y: bodyRect.minY - 3, width: 2, height: 1)])
+        case .below:
+            // Tail pointing UP from the body's top edge at Bill above.
+            let maxOffset = bodyRect.width / 2 - 5
+            let midX = bodyRect.midX + min(max(offsetUnits, -maxOffset), maxOffset)
+            layer(midX, bodyRect.maxY + 1, 10, 8, 6)
+            layer(midX, bodyRect.maxY + 2, 6, 4, 2)
+            ctx.setFillColor(black)
+            ctx.fill([CGRect(x: midX - 1, y: bodyRect.maxY + 3, width: 2, height: 1)])
+        case .leftSide:
+            // Tail pointing LEFT from the body's left edge.
+            let maxOffset = bodyRect.height / 2 - 5
+            let midY = bodyRect.midY + min(max(offsetUnits, -maxOffset), maxOffset)
+            layerV(midY, bodyRect.minX - 1, 10, 8, 6)
+            layerV(midY, bodyRect.minX - 2, 6, 4, 2)
+            ctx.setFillColor(black)
+            ctx.fill([CGRect(x: bodyRect.minX - 3, y: midY - 1, width: 1, height: 2)])
+        case .rightSide:
+            // Tail pointing RIGHT from the body's right edge.
+            let maxOffset = bodyRect.height / 2 - 5
+            let midY = bodyRect.midY + min(max(offsetUnits, -maxOffset), maxOffset)
+            layerV(midY, bodyRect.maxX + 1, 10, 8, 6)
+            layerV(midY, bodyRect.maxX + 2, 6, 4, 2)
+            ctx.setFillColor(black)
+            ctx.fill([CGRect(x: bodyRect.maxX + 3, y: midY - 1, width: 1, height: 2)])
+        }
     }
 
     /// Rasterizes a rounded rect at unit-pixel granularity: each corner is a

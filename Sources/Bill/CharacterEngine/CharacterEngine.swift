@@ -45,8 +45,6 @@ final class CharacterEngine {
     /// uninterrupted idling, which is why so much of the library was never
     /// actually seen.
     private static let rareEventChance = 0.10
-    private static let caneFlourishChance = 0.10
-    private static let smugChance = 0.12
     private static let rareEventCooldown: TimeInterval = 3 * 60
 
     init() {
@@ -121,8 +119,11 @@ final class CharacterEngine {
         // Spacing knob first (motion pacing), frequency knob second (line
         // probability now lives entirely in `shouldSpeak`, but the beat
         // cadence still respects overall chattiness when the user leans on
-        // it hard).
-        let delay = max(0.5, baseDelay * ambientAnimationSpacingMultiplier / max(0.5, speakingFrequencyMultiplier))
+        // it hard). The hold extension guarantees a just-started clip
+        // finishes before the next beat fires ("not playing long enough").
+        let hold = pendingBeatExtension ?? 0
+        pendingBeatExtension = nil
+        let delay = max(baseDelay * ambientAnimationSpacingMultiplier / max(0.5, speakingFrequencyMultiplier), hold)
         idleBeatTimer = Timer.scheduledTimer(withTimeInterval: delay, repeats: false) { [weak self] _ in
             Task { @MainActor in
                 self?.fireIdleBeat()
@@ -138,28 +139,97 @@ final class CharacterEngine {
     /// 4-9s timer with no reference to anything happening on the machine,
     /// which is exactly the "idle non-contextual comments" that needed to go.
     /// Bill still moves just as often — he simply no longer narrates it.
+    /// The idle-beat rotation, restructured per the user's asks:
+    /// - **Every animation family is reachable from rest**, not just the
+    ///   old handful — tiered by rarity.
+    /// - **Red-chaos families stay genuinely rare** — the "don't have too
+    ///   much of the red shooting cloud" ask. Meltdown/rampaging/shadow
+    ///   hands live in the seldom tier *and* remain in the Easter-egg roll,
+    ///   never the common rotation.
+    /// - **Beats hold for the whole clip** plus a breathing gap — the
+    ///   "not playing long enough" fix: the next idle beat can no longer
+    ///   cut a showing animation short.
+    private static let idleCommonStates: [BillState] = [
+        .talking, .thinking, .happy, .smug, .confused, .dazed,
+        .poked, .surprised, .coding, .focused, .caneFlourish, .caneTwist,
+        .celebrating, .grumpEyes,
+    ]
+    private static let idleUncommonStates: [BillState] = [
+        .annoyed, .channeling, .gaming, .guilty, .dreading, .grooving,
+        .dispatching, .ambushed, .stressed, .watched, .flinching, .huffy,
+        .pushingCode, .browsingStore, .dancing, .sculpting, .kinship,
+        .fractaling, .presenting, .trickster, .darkWorld, .hollowed,
+        .cultLeader, .spooked, .scanning, .sneaking, .glitching, .charged,
+        .transferring, .summoning, .hookCane, .conjuring, .tumbling, .dashTarget,
+    ]
+    /// The red-shooting-cloud class — deliberately a small tier of their
+    /// own on top of the rare-egg roll.
+    /// Meltdown and shadow hands only — rampaging (the red shooting
+    /// cloud) is deliberately NOT in any random rotation: the explicit
+    /// "don't have too much of it" ask. It stays reachable through
+    /// per-trigger assignment in Settings and the daily showcase.
+    private static let idleSeldomStates: [BillState] = [
+        .meltdown, .shadowHands,
+    ]
+    private static let commonTierChance = 0.55
+    private static let seldomTierChance = 0.05
+
+    /// Set by `holdBeat(for:)` — extends the *next* idle beat's delay so
+    /// the clip that just started is guaranteed to finish (plus a gap)
+    /// before anything else fires.
+    private var pendingBeatExtension: TimeInterval?
+
     private func fireIdleBeat() {
         guard isRunning else { return }
         defer { scheduleNextIdleBeat() }
         guard stateMachine.currentState == .idle else { return }
 
+        if rollFanServiceBark() { return }
         if rollRareEvent() { return }
 
-        var roll = Double.random(in: 0..<1)
-
-        if roll < Self.caneFlourishChance {
-            stateMachine.request(.caneFlourish)
-            return
+        let roll = Double.random(in: 0..<1)
+        if roll < Self.commonTierChance {
+            playIdle(Self.idleCommonStates)
+        } else if roll < Self.commonTierChance + Self.seldomTierChance {
+            playIdle(Self.idleSeldomStates)
+        } else {
+            playIdle(Self.idleUncommonStates)
         }
-        roll -= Self.caneFlourishChance
+    }
 
-        if roll < Self.smugChance {
-            stateMachine.request(.smug)
-            return
-        }
+    /// Requests one of `states` (never the one that just played) and holds
+    /// the next idle beat for the clip's full duration plus a gap.
+    private func playIdle(_ states: [BillState]) {
+        let candidates = states.filter { $0 != lastIdleState }
+        guard let state = candidates.randomElement() ?? states.randomElement() else { return }
+        lastIdleState = state
+        stateMachine.request(state, force: true)
+        holdBeat(for: state)
+    }
 
-        let variant = AnimationClipLibrary.IdleVariant.allCases.randomElement()!
-        stateMachine.playIdleVariant(variant)
+    private var lastIdleState: BillState?
+
+    private func holdBeat(for state: BillState) {
+        let clip = AnimationClipLibrary.clip(for: state)
+        pendingBeatExtension = max(pendingBeatExtension ?? 0, clip.singlePassDuration + 0.8)
+    }
+
+    /// Pure-text fan-service beats — the Gravity Falls appeal layer:
+    /// occasionally the idle beat is a *line*, not a move. Deal offers
+    /// (the pinky-out handshake bit) and the rare Caesar-cipher message
+    /// straight out of Journal 3's cryptograms, hint included.
+    private static let fanServiceChance = 0.06
+    private static let cipherChance = 0.30
+
+    private func rollFanServiceBark() -> Bool {
+        guard Double.random(in: 0..<1) < Self.fanServiceChance else { return false }
+        let key = Double.random(in: 0..<1) < Self.cipherChance
+            ? "cipher.message"
+            : "deal.offer"
+        guard let line = DialogueLibrary.shared.line(key) else { return false }
+        bark(line, importance: .always)
+        pendingBeatExtension = max(pendingBeatExtension ?? 0, 2.5)
+        return true
     }
 
     // MARK: - Daily animation catch-up
@@ -211,10 +281,11 @@ final class CharacterEngine {
 
         // `coverage.pick` rather than `randomElement`: it will not hand back
         // whatever played last, and it prefers eggs that have not been seen
-        // today, so the sixteen of them cycle rather than clustering.
+        // today, so they cycle rather than clustering.
         guard let event = coverage.pick(from: BillState.rareEasterEggs) else { return false }
         lastRareEventDate = Date()
         stateMachine.request(event, force: true)
+        holdBeat(for: event)
         bark(BarkLines.random(from: BarkLines.rareEvent(for: event)))
         return true
     }
