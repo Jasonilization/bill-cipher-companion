@@ -166,7 +166,16 @@ final class CharacterWindowController: NSObject {
         NotificationCenter.default.addObserver(
             forName: NSWindow.didMoveNotification, object: panel, queue: .main
         ) { [weak self] _ in
-            Task { @MainActor in self?.followBubbleToBill() }
+            Task { @MainActor in
+                self?.followBubbleToBill()
+                // A showing bark travels with the window — this is the
+                // cheap re-clamp that keeps it (and its tail) inside the
+                // on-screen region as Bill moves, without a bitmap rebuild.
+                self?.characterEngine.stateMachine.reclampVisibleBark()
+                // The Settings drop-by Easter egg: dragged onto the
+                // Settings window, he comments on the control room.
+                self?.checkSettingsDropBy()
+            }
         }
 
         applyCharacterScale(preferences.characterScale, keepingCurrentPosition: false)
@@ -1068,6 +1077,27 @@ final class CharacterWindowController: NSObject {
     /// (if open) after a width/accent change.
     func relayoutChatBubble() {
         chatBubble.refresh()
+    }
+
+    /// Set by `AppDelegate` — the Settings window's frame, so Bill can
+    /// react when you drag him onto it (the "drag him into the preview
+    /// window and he reacts" ask).
+    var settingsWindowFrameProvider: (() -> NSRect?)?
+
+    private var lastSettingsDropByAt: Date?
+    private static let settingsDropByCooldown: TimeInterval = 60
+
+    private func checkSettingsDropBy() {
+        guard let frame = settingsWindowFrameProvider?(),
+              frame.intersects(panel.frame)
+        else { return }
+        guard Date().timeIntervalSince(lastSettingsDropByAt ?? .distantPast) > Self.settingsDropByCooldown
+        else { return }
+        lastSettingsDropByAt = Date()
+        characterEngine.request(.smug, force: true)
+        if let line = DialogueLibrary.shared.line("settings.visit") {
+            characterEngine.bark(line, importance: .always)
+        }
     }
 
     private func handleRoamEvent(_ event: RoamEvent) {

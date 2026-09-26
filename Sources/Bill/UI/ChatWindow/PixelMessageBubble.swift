@@ -44,7 +44,7 @@ final class PixelMessageBubbleView: NSView {
     /// blocky pixel art without the (real-font) text sitting inside it
     /// looking cramped.
     static let pixelScale: CGFloat = 2
-    private static let paddingX: CGFloat = 10
+    private static let paddingX: CGFloat = 12
     private static let paddingY: CGFloat = 8
     /// Reads as genuinely rounded rather than a small chamfer — the user
     /// flag was "make it look properly rounded," and at radius 3 the
@@ -68,7 +68,9 @@ final class PixelMessageBubbleView: NSView {
     private static let closeButtonSize: CGFloat = 14
     private static let closeGap: CGFloat = 5
     private static let userAccent = NSColor(calibratedRed: 0.36, green: 0.58, blue: 0.86, alpha: 1)
-    private static let font = NSFont.monospacedSystemFont(ofSize: 11, weight: .medium)
+    /// 12pt rather than the old 11 — the cramped complaint: chat replies
+    /// are paragraphs, and 11pt mono at 520 columns reads as fine print.
+    private static let font = NSFont.monospacedSystemFont(ofSize: 12, weight: .medium)
     /// Black border + accent ring, in points (already multiplied by
     /// `pixelScale`, since the border is drawn in a scaled unit space but
     /// the text view sits in plain point space) — how far the fill area's

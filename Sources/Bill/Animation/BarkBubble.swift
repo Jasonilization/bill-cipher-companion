@@ -56,7 +56,11 @@ enum BarkBubble {
     private static let cornerRadius = 5
     private static let borderThickness = 1
     private static let accentThickness = 1
-    private static let tailHeight: CGFloat = 5
+    /// The tail is a 3-row outlined trapezoid, not a solid black wedge:
+    /// black outline + accent + fill continue down from the body so the
+    /// tail reads as part of the border — a proper pixel speech bubble
+    /// (the explicit ask).
+    private static let tailHeight: CGFloat = 3
     /// Keeps the widest possible bubble inside the 260pt-wide character
     /// window (the bubble is a child node of Bill's own scene, not a
     /// separate window, so anything wider gets clipped by the view bounds
@@ -136,6 +140,34 @@ enum BarkBubble {
         return sprite
     }
 
+    /// Renders the same bubble as an `NSImage` (bitmap units — multiply the
+    /// display size by `effectivePixelScale` yourself). Extracted from
+    /// `makeNode` so Settings can show a live bubble preview — accent
+    /// colour, text scale, corner shape and the outlined tail — without
+    /// touching SpriteKit at all.
+    static func makePreviewImage(text: String) -> NSImage {
+        let lines = PixelFont.wrap(
+            normalize(text.uppercased()),
+            maxWidthUnits: maxTextWidthUnits,
+            maxLines: 6
+        )
+        let textBlockWidth = CGFloat(lines.map(PixelFont.lineWidth).max() ?? 0)
+        let textBlockHeight = CGFloat(lines.count) * PixelFont.lineHeight - PixelFont.lineSpacing
+        let bodyWidth = textBlockWidth + paddingX * 2
+        let bodyHeight = textBlockHeight + paddingY * 2
+        return NSImage(size: CGSize(width: bodyWidth, height: bodyHeight + tailHeight), flipped: false) { _ in
+            guard let ctx = NSGraphicsContext.current?.cgContext else { return false }
+            ctx.setShouldAntialias(false)
+            ctx.setAllowsAntialiasing(false)
+            ctx.interpolationQuality = .none
+            let bodyRect = CGRect(x: 0, y: tailHeight, width: bodyWidth, height: bodyHeight)
+            let fillRect = drawLayeredBorder(ctx, bodyRect: bodyRect, cornerRadius: cornerRadius, borderThickness: borderThickness, accentThickness: accentThickness, accentColor: BillPalette.bubbleAccent)
+            drawTail(ctx, bodyRect: bodyRect, offsetUnits: 0)
+            PixelFont.drawCentered(ctx, lines: lines, in: fillRect, color: BillPalette.black)
+            return true
+        }
+    }
+
     /// ChatGPT/typed replies routinely contain curly quotes and en/em
     /// dashes that a hand-built glyph table won't have bespoke entries for
     /// — normalize to the ASCII punctuation the font actually draws rather
@@ -157,16 +189,37 @@ enum BarkBubble {
     /// toward whichever side Bill actually stands on when the bubble itself
     /// had to shift left/right to stay on screen — the tail points at Bill,
     /// not at the bubble's own middle.
+    ///
+    /// Drawn as a 3-row outlined trapezoid: each row is the same 3-layer
+    /// black/accent/fill stack as the body's border, narrowing to a solid
+    /// black tip — the tail is part of the border, never a solid wedge.
     private static func drawTail(_ ctx: CGContext, bodyRect: CGRect, offsetUnits: CGFloat) {
         ctx.setFillColor(BillPalette.black.cgColor)
         // Clamped so the tail always stays under the body's rounded corner
         // region rather than hanging off the bubble's edge.
         let maxOffset = bodyRect.width / 2 - 5
         let midX = bodyRect.midX + min(max(offsetUnits, -maxOffset), maxOffset)
-        ctx.fill([
-            CGRect(x: midX - 3, y: bodyRect.minY - 2, width: 6, height: 2),
-            CGRect(x: midX - 1, y: bodyRect.minY - tailHeight, width: 2, height: tailHeight - 2),
-        ])
+
+        // Row 1 (widest, flush against the body's bottom border):
+        // black 10 wide, accent 8, fill 6.
+        ctx.setFillColor(BillPalette.black.cgColor)
+        ctx.fill([CGRect(x: midX - 5, y: bodyRect.minY - 1, width: 10, height: 1)])
+        ctx.setFillColor(BillPalette.bubbleAccent.cgColor)
+        ctx.fill([CGRect(x: midX - 4, y: bodyRect.minY - 1, width: 8, height: 1)])
+        ctx.setFillColor(NSColor(calibratedWhite: 0.98, alpha: 1).cgColor)
+        ctx.fill([CGRect(x: midX - 3, y: bodyRect.minY - 1, width: 6, height: 1)])
+
+        // Row 2: black 6, accent 4, fill 2.
+        ctx.setFillColor(BillPalette.black.cgColor)
+        ctx.fill([CGRect(x: midX - 3, y: bodyRect.minY - 2, width: 6, height: 1)])
+        ctx.setFillColor(BillPalette.bubbleAccent.cgColor)
+        ctx.fill([CGRect(x: midX - 2, y: bodyRect.minY - 2, width: 4, height: 1)])
+        ctx.setFillColor(NSColor(calibratedWhite: 0.98, alpha: 1).cgColor)
+        ctx.fill([CGRect(x: midX - 1, y: bodyRect.minY - 2, width: 2, height: 1)])
+
+        // Row 3: solid black tip.
+        ctx.setFillColor(BillPalette.black.cgColor)
+        ctx.fill([CGRect(x: midX - 1, y: bodyRect.minY - 3, width: 2, height: 1)])
     }
 
     /// Rasterizes a rounded rect at unit-pixel granularity: each corner is a

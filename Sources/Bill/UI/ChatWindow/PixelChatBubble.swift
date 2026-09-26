@@ -103,7 +103,6 @@ private final class PixelInputBubbleView: NSView {
     /// each layout pass so the Settings width slider applies immediately)
     /// rather than a construction-time `let`.
     var maxTextWidth: CGFloat
-    let closeButton = PixelCloseButton()
     /// Drawn under the (transparent) text view while it's empty, so the box
     /// reads as a place to type into instead of a blank white lozenge.
     var placeholderText: String? { didSet { needsDisplay = true } }
@@ -118,8 +117,6 @@ private final class PixelInputBubbleView: NSView {
     private static let cornerRadius = 6
     private static let borderThickness = 1
     private static let accentThickness = 1
-    private static let closeButtonSize: CGFloat = 14
-    private static let closeGap: CGFloat = 5
     private static let paddingX: CGFloat = 10
     private static let paddingY: CGFloat = 6
     private static let font = NSFont.monospacedSystemFont(ofSize: 13, weight: .medium)
@@ -132,7 +129,6 @@ private final class PixelInputBubbleView: NSView {
     init(maxTextWidth: CGFloat) {
         self.maxTextWidth = maxTextWidth
         super.init(frame: .zero)
-        addSubview(closeButton)
         updateSize(for: "")
     }
 
@@ -176,17 +172,12 @@ private final class PixelInputBubbleView: NSView {
         bodyWidthUnits = (textWidth + Self.paddingX * 2 + Self.borderInsetPoints * 2) / Self.pixelScale
         bodyHeightUnits = (textHeight + Self.paddingY * 2 + Self.borderInsetPoints * 2) / Self.pixelScale
 
+        // No more close-button strip squatting above the text box: the
+        // panel now owns a proper header row, so the composer's frame is
+        // exactly its own body — less dead space, no cramped look.
         let bodySize = NSSize(width: bodyWidthUnits * Self.pixelScale, height: bodyHeightUnits * Self.pixelScale)
-        let topStrip = Self.closeButtonSize + Self.closeGap * 2
-        let totalSize = NSSize(width: bodySize.width, height: bodySize.height + topStrip)
-        frame.size = totalSize
+        frame.size = bodySize
 
-        closeButton.frame = NSRect(
-            x: totalSize.width - Self.closeGap - Self.closeButtonSize,
-            y: totalSize.height - Self.closeGap - Self.closeButtonSize,
-            width: Self.closeButtonSize,
-            height: Self.closeButtonSize
-        )
         needsDisplay = true
         return frame.size != oldSize
     }
@@ -215,19 +206,45 @@ private final class PixelInputBubbleView: NSView {
         let bodyRect = CGRect(x: 0, y: 0, width: bodyWidthUnits, height: bodyHeightUnits)
         BarkBubble.drawLayeredBorder(ctx, bodyRect: bodyRect, cornerRadius: Self.cornerRadius, borderThickness: Self.borderThickness, accentThickness: Self.accentThickness, accentColor: BillPalette.bubbleAccent)
 
-        // Blocky tail on whichever edge faces Bill, same unit space as the
-        // border above so it reads as one continuous piece of chrome.
+        // Blocky tail on whichever edge faces Bill — the same outlined
+        // 3-layer treatment as the bark bubble's tail (black outline,
+        // accent, fill), rotated to point sideways: part of the border,
+        // never a solid black wedge.
         let midY = bodyRect.midY
-        ctx.setFillColor(BillPalette.black.cgColor)
         switch tailSide {
         case .left:
-            ctx.fill([CGRect(x: -3, y: midY - 3.5, width: 4, height: 7)])
+            // Column 1 flush against the body's left border.
+            ctx.setFillColor(BillPalette.black.cgColor)
+            ctx.fill([CGRect(x: -1, y: midY - 5, width: 1, height: 10)])
+            ctx.setFillColor(BillPalette.bubbleAccent.cgColor)
+            ctx.fill([CGRect(x: -1, y: midY - 4, width: 1, height: 8)])
             ctx.setFillColor(NSColor(calibratedWhite: 0.98, alpha: 1).cgColor)
-            ctx.fill([CGRect(x: -1, y: midY - 2, width: 2, height: 4)])
+            ctx.fill([CGRect(x: -1, y: midY - 3, width: 1, height: 6)])
+            // Column 2.
+            ctx.setFillColor(BillPalette.black.cgColor)
+            ctx.fill([CGRect(x: -2, y: midY - 3, width: 1, height: 6)])
+            ctx.setFillColor(BillPalette.bubbleAccent.cgColor)
+            ctx.fill([CGRect(x: -2, y: midY - 2, width: 1, height: 4)])
+            ctx.setFillColor(NSColor(calibratedWhite: 0.98, alpha: 1).cgColor)
+            ctx.fill([CGRect(x: -2, y: midY - 1, width: 1, height: 2)])
+            // Column 3: solid black tip.
+            ctx.setFillColor(BillPalette.black.cgColor)
+            ctx.fill([CGRect(x: -3, y: midY - 1, width: 1, height: 2)])
         case .right:
-            ctx.fill([CGRect(x: bodyRect.width - 1, y: midY - 3.5, width: 4, height: 7)])
+            ctx.setFillColor(BillPalette.black.cgColor)
+            ctx.fill([CGRect(x: bodyRect.width, y: midY - 5, width: 1, height: 10)])
+            ctx.setFillColor(BillPalette.bubbleAccent.cgColor)
+            ctx.fill([CGRect(x: bodyRect.width, y: midY - 4, width: 1, height: 8)])
             ctx.setFillColor(NSColor(calibratedWhite: 0.98, alpha: 1).cgColor)
-            ctx.fill([CGRect(x: bodyRect.width - 1, y: midY - 2, width: 2, height: 4)])
+            ctx.fill([CGRect(x: bodyRect.width, y: midY - 3, width: 1, height: 6)])
+            ctx.setFillColor(BillPalette.black.cgColor)
+            ctx.fill([CGRect(x: bodyRect.width + 1, y: midY - 3, width: 1, height: 6)])
+            ctx.setFillColor(BillPalette.bubbleAccent.cgColor)
+            ctx.fill([CGRect(x: bodyRect.width + 1, y: midY - 2, width: 1, height: 4)])
+            ctx.setFillColor(NSColor(calibratedWhite: 0.98, alpha: 1).cgColor)
+            ctx.fill([CGRect(x: bodyRect.width + 1, y: midY - 1, width: 1, height: 2)])
+            ctx.setFillColor(BillPalette.black.cgColor)
+            ctx.fill([CGRect(x: bodyRect.width + 2, y: midY - 1, width: 1, height: 2)])
         }
         ctx.restoreGState()
 
@@ -270,6 +287,10 @@ final class PixelChatBubble: NSObject, NSTextViewDelegate {
     private let container: NSView
     private let scrollView: NSScrollView
     private let stackView: MessageStackView
+    /// The panel's pixel title bar — "BILL" in dot-matrix, close button,
+    /// accent rule. Replaces the composer's old dead strip so the
+    /// conversation gets the room the strip was wasting.
+    private let header = PixelChatHeader()
     private let inputBubble: PixelInputBubbleView
     private let textView: NSTextView
 
@@ -290,7 +311,7 @@ final class PixelChatBubble: NSObject, NSTextViewDelegate {
     static var maxWidth: CGFloat = 600
     private static let minWidth: CGFloat = 260
     private static let panelPadding: CGFloat = 8
-    private static let bubbleSpacing: CGFloat = 8
+    private static let bubbleSpacing: CGFloat = 10
     private static let thinkingFrames = ["THINKING.", "THINKING..", "THINKING..."]
     private static let resizeAnimationDuration: TimeInterval = 0.22
     private static let placeholderText = "Talk to Bill…"
@@ -376,7 +397,6 @@ final class PixelChatBubble: NSObject, NSTextViewDelegate {
         textView.textContainer?.widthTracksTextView = false
         textView.textContainer?.heightTracksTextView = false
 
-        inputBubble.closeButton.onClick = { [weak self] in self?.hide() }
         inputBubble.onFocusRequest = { [weak self] in
             guard let self else { return }
             panel.makeFirstResponder(textView)
@@ -398,8 +418,10 @@ final class PixelChatBubble: NSObject, NSTextViewDelegate {
         scrollView.autohidesScrollers = true
         scrollView.documentView = stackView
 
+        header.closeButton.onClick = { [weak self] in self?.hide() }
         container.addSubview(scrollView)
         container.addSubview(inputBubble)
+        container.addSubview(header)
         panel.contentView = container
     }
 
@@ -617,10 +639,13 @@ final class PixelChatBubble: NSObject, NSTextViewDelegate {
 
     private func relayoutStack(animated: Bool) {
         let contentWidth = Self.maxWidth - Self.panelPadding * 2
-        // Keep the composer's wrap ceiling glued to the live panel width
-        // (Settings → chat bubble width) so typing can never grow a bubble
-        // past the panel's own edge.
-        inputBubble.maxTextWidth = max(120, contentWidth - 16)
+        // The composer's wrap ceiling must subtract its OWN chrome — the
+        // bubble draws ~28pt of border + padding around the text, and the
+        // old `contentWidth - 16` let a long line grow the bubble past the
+        // panel's edge, where the window's invisible frame cropped it. That
+        // was the recurring "cropped by an invisible box" bug in the Talk
+        // window: this ceiling is now measured chrome-out, with slack.
+        inputBubble.maxTextWidth = max(120, contentWidth - 44)
         let naturalStackHeight = rebuildMessageStack(contentWidth: contentWidth, animated: animated)
         let hasStackContent = naturalStackHeight > 0
 
@@ -635,19 +660,24 @@ final class PixelChatBubble: NSObject, NSTextViewDelegate {
             screenHeight * Self.maxStackHeightFraction
                 - inputBubble.frame.height
                 - Self.bubbleSpacing
+                - header.preferredHeight
                 - Self.panelPadding
         )
         let stackHeight = min(naturalStackHeight, maxStackHeight)
 
+        // Bottom-up layout: composer at the floor, the conversation above
+        // it, the header on top — each band separated by a comfortable gap
+        // rather than the old cramped 8pt everywhere.
         let totalHeight = inputBubble.frame.height
             + (hasStackContent ? Self.bubbleSpacing : 0)
             + stackHeight
+            + header.preferredHeight
             + Self.panelPadding
         let size = NSSize(width: Self.maxWidth, height: totalHeight)
 
         // Decide where the panel lands *before* positioning anything
-        // inside: `frame(for:)` picks the tail side (and now clamps into
-        // the screen, which can flip it), and the input bubble anchors to
+        // inside: `frame(for:)` picks the tail side (and clamps into the
+        // screen, which can flip it), and the input bubble anchors to
         // that same side so it always grows away from Bill.
         let targetFrame: NSRect?
         if let anchorFrame = lastAnchorFrame, let screen = lastScreen {
@@ -658,10 +688,7 @@ final class PixelChatBubble: NSObject, NSTextViewDelegate {
 
         // Anchored to whichever edge is closer to Bill (matching `tailSide`)
         // so typing more text grows the bubble *away* from him instead of
-        // toward/into his window — a fixed left origin here meant that in
-        // the `.right` case (Bill to the panel's right) the bubble grew
-        // rightward, straight into Bill, since its tail-side edge was the
-        // wrong one to hold fixed.
+        // toward/into his window.
         let inputX: CGFloat
         switch inputBubble.tailSide {
         case .left:
@@ -673,6 +700,12 @@ final class PixelChatBubble: NSObject, NSTextViewDelegate {
         let stackY = inputBubble.frame.height + (hasStackContent ? Self.bubbleSpacing : 0)
         scrollView.frame = NSRect(x: Self.panelPadding, y: stackY, width: contentWidth, height: stackHeight)
         stackView.frame = NSRect(x: 0, y: 0, width: contentWidth, height: max(naturalStackHeight, 1))
+        header.frame = NSRect(
+            x: Self.panelPadding,
+            y: stackY + stackHeight + (hasStackContent ? Self.bubbleSpacing : 4),
+            width: contentWidth,
+            height: header.preferredHeight
+        )
 
         let containerFrame = NSRect(origin: .zero, size: size)
         if let targetFrame {
