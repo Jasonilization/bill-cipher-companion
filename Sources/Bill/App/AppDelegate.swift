@@ -76,6 +76,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         settingsWindowController.onOpenQuotesManager = { [weak self] in
             self?.openQuotesManager()
         }
+        characterWindowController.settingsWindowFrameProvider = { [weak self] in
+            self?.settingsWindowController?.contentFrame()
+        }
         quotesManagerController = QuotesManagerController()
         quotesManagerController.refreshStore = characterWindowController.dialogueRefreshStore
         quotesManagerController.onRefreshAll = { [weak self] in

@@ -1,0 +1,90 @@
+{
+  "version": 3,
+  "targets": {
+    "net8.0-windows7.0": {},
+    "net8.0-windows7.0/win-x64": {}
+  },
+  "libraries": {},
+  "projectFileDependencyGroups": {
+    "net8.0-windows7.0": []
+  },
+  "packageFolders": {
+    "/Users/jasonilization/.nuget/packages/": {}
+  },
+  "project": {
+    "version": "0.2.0",
+    "restore": {
+      "projectUniqueName": "/Users/jasonilization/.codex/pets/.claude/worktrees/bill-cipher-companion/windows/Bill/Bill.csproj",
+      "projectName": "Bill",
+      "projectPath": "/Users/jasonilization/.codex/pets/.claude/worktrees/bill-cipher-companion/windows/Bill/Bill.csproj",
+      "packagesPath": "/Users/jasonilization/.nuget/packages/",
+      "outputPath": "/Users/jasonilization/.codex/pets/.claude/worktrees/bill-cipher-companion/windows/Bill/obj/",
+      "projectStyle": "PackageReference",
+      "configFilePaths": [
+        "/Users/jasonilization/.nuget/NuGet/NuGet.Config"
+      ],
+      "originalTargetFrameworks": [
+        "net8.0-windows"
+      ],
+      "sources": {
+        "https://api.nuget.org/v3/index.json": {}
+      },
+      "frameworks": {
+        "net8.0-windows7.0": {
+          "targetAlias": "net8.0-windows",
+          "projectReferences": {}
+        }
+      },
+      "warningProperties": {
+        "warnAsError": [
+          "NU1605"
+        ]
+      },
+      "restoreAuditProperties": {
+        "enableAudit": "true",
+        "auditLevel": "low",
+        "auditMode": "direct"
+      }
+    },
+    "frameworks": {
+      "net8.0-windows7.0": {
+        "targetAlias": "net8.0-windows",
+        "imports": [
+          "net461",
+          "net462",
+          "net47",
+          "net471",
+          "net472",
+          "net48",
+          "net481"
+        ],
+        "assetTargetFallback": true,
+        "warn": true,
+        "downloadDependencies": [
+          {
+            "name": "Microsoft.NETCore.App.Host.win-x64",
+            "version": "[8.0.31, 8.0.31]"
+          },
+          {
+            "name": "Microsoft.WindowsDesktop.App.Ref",
+            "version": "[8.0.31, 8.0.31]"
+          }
+        ],
+        "frameworkReferences": {
+          "Microsoft.NETCore.App": {
+            "privateAssets": "all"
+          },
+          "Microsoft.WindowsDesktop.App.WPF": {
+            "privateAssets": "none"
+          }
+        },
+        "runtimeIdentifierGraphPath": "/private/var/folders/f9/mtlpnmnx3zbfk4_3fjfxd8rc0000gn/T/opencode/dotnet/sdk/8.0.425/PortableRuntimeIdentifierGraph.json"
+      }
+    },
+    "runtimes": {
+      "win-x64": {
+        "#import": []
+      }
+    }
+  }
+}

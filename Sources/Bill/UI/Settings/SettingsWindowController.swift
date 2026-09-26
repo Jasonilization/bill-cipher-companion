@@ -16,6 +16,13 @@ final class SettingsWindowController: NSObject {
     /// Set by `AppDelegate` — opens the quotes manager window.
     var onOpenQuotesManager: (() -> Void)?
 
+    /// The window's frame in screen coordinates, or `nil` while closed —
+    /// Bill's drop-by Easter egg (drag him onto Settings, he reacts)
+    /// needs it.
+    func contentFrame() -> NSRect? {
+        window?.frame
+    }
+
     init(preferences: AppPreferences, memoryStore: MemoryStore, onSignOut: @escaping () -> Void) {
         self.preferences = preferences
         self.memoryStore = memoryStore

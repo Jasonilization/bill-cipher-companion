@@ -1,0 +1,6 @@
+/Users/jasonilization/.codex/pets/.claude/worktrees/bill-cipher-companion/build-assets/win-publish/Bill.exe
+/Users/jasonilization/.codex/pets/.claude/worktrees/bill-cipher-companion/build-assets/win-publish/Dialogue/dialogue.json
+/Users/jasonilization/.codex/pets/.claude/worktrees/bill-cipher-companion/build-assets/win-publish/Bill.dll
+/Users/jasonilization/.codex/pets/.claude/worktrees/bill-cipher-companion/build-assets/win-publish/Bill.deps.json
+/Users/jasonilization/.codex/pets/.claude/worktrees/bill-cipher-companion/build-assets/win-publish/Bill.runtimeconfig.json
+/Users/jasonilization/.codex/pets/.claude/worktrees/bill-cipher-companion/build-assets/win-publish/Bill.pdb

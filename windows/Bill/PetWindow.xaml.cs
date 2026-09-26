@@ -169,6 +169,9 @@ public partial class PetWindow : Window
             "— he walks while you drag.\n\n" +
             "What is NOT here yet (later milestones): chat, roaming " +
             "physics, app/window awareness, settings, the minimize prank.\n\n" +
+            "Credits: Bill Cipher sprite artwork — original artwork by " +
+            "Kelly Nora (@kiernenking); sprite sheet by JayHyperstarX " +
+            "(DeviantArt, 'Bill Cipher - Sprite Sheet').\n\n" +
             "Unofficial fan project. Bill Cipher & Gravity Falls © Disney.",
             "Windows Preview 0.2",
             MessageBoxButton.OK,

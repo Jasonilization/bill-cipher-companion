@@ -25,6 +25,7 @@ final class AppPreferences: ObservableObject {
         static let promptExtraInstructions = "billPromptExtraInstructions"
         static let weatherEnabled = "billWeatherEnabled"
         static let weatherAnnounceMinutes = "billWeatherAnnounceMinutes"
+        static let perAppAnimations = "billPerAppAnimations"
     }
 
     @Published var isRoamingEnabled: Bool {
@@ -157,6 +158,14 @@ final class AppPreferences: ObservableObject {
     }
     static let weatherAnnounceRange: ClosedRange<Int> = 0...240
 
+    /// Per-app animation overrides: bundle ID → `BillState.rawValue`.
+    /// The router consults this before the special-app mapper and category
+    /// pools when an app is activated, so any app on this Mac can have its
+    /// own signature reaction. Empty entry = automatic.
+    @Published var perAppAnimations: [String: String] {
+        didSet { UserDefaults.standard.set(perAppAnimations, forKey: Keys.perAppAnimations) }
+    }
+
     @Published private(set) var launchAtLoginStatus: SMAppService.Status
 
     init() {
@@ -180,6 +189,7 @@ final class AppPreferences: ObservableObject {
             max((defaults.object(forKey: Keys.weatherAnnounceMinutes) as? Int) ?? 60, Self.weatherAnnounceRange.lowerBound),
             Self.weatherAnnounceRange.upperBound
         )
+        perAppAnimations = defaults.dictionary(forKey: Keys.perAppAnimations) as? [String: String] ?? [:]
         let disabledRaw = defaults.stringArray(forKey: Keys.disabledCategories) ?? []
         disabledCategories = Set(disabledRaw.compactMap(AppCategory.init(rawValue:)))
         let storedScale = (defaults.object(forKey: Keys.characterScale) as? Double) ?? 1.0
