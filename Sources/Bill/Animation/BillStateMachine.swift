@@ -51,6 +51,13 @@ final class BillStateMachine {
     /// Fires when a speech bubble appears/disappears, so the host window can
     /// grow to make room for it and shrink back afterwards.
     var onBarkVisibilityChanged: ((Bool) -> Void)?
+    /// Directional barks: before placing, the state machine picks a side
+    /// (or below) from screen room and calls this so the character window
+    /// can grow that one side — the bubble renders inside the window, so
+    /// a bubble beside Bill physically needs the window widened. The
+    /// controller grows the panel synchronously and adjusts the roaming
+    /// feet inset when growing left.
+    var onBarkCanvasWiden: ((_ side: Bool, _ growthScreenPt: CGFloat) -> Void)?
 
     init(rig: BillRigNode) {
         self.rig = rig
@@ -146,25 +153,21 @@ final class BillStateMachine {
         barkNode?.removeFromParent()
         barkDismissWork?.cancel()
 
-        // Wrapped to the on-screen width Bill's window actually has right
-        // now (see `availableBarkWidth`) — a bubble that fits where it's
-        // going can never be clipped by the window's own edge, which is
-        // the "invisible border hides part of the message" failure the
-        // old always-full-width bubble produced at screen edges. The
-        // height is measured too, so the text-size knob can't grow the
-        // bubble past the window's headroom either.
-        var bubble = makeBarkNode(text: text, tailOffsetUnits: 0)
-        bubble.position = CGPoint(x: 0, y: barkBaseY())
-        bubble.alpha = 0
-        bubble.zPosition = 10
-        rig.root.addChild(bubble)
-        // One unified placement pass: measure the centered bubble against
-        // the window∩screen region and, if it doesn't fit, rebuild once
-        // with the tail tracking Bill at the shifted origin. Directional
-        // (left/right as room demands), never clipped, never doubled up
-        // with a second nudge pass.
-        bubble = placeBark(bubble, text: text)
+        // Directional placement — the explicit ask: the bubble sits
+        // directly left or right of Bill, or below him, whichever the
+        // on-screen region has room for, with the outlined tail pointing
+        // at him from whichever edge faces him. Above-his-head is the last
+        // resort, not the default.
+        //
+        // The engine measures the region first, builds the bubble for the
+        // chosen edge, and positions it in one pass. The pre-measure picks
+        // the side from SCREEN room (the window itself is only as wide as
+        // Bill, so side room inside the window is zero until it's widened),
+        // asks the host to widen the window that one side, then places.
+        preWidenCanvasForSideBark()
+        let (bubble, home) = makeDirectionalBark(text: text)
         barkNode = bubble
+        barkHome = home
 
         setBarkActive(true)
         bubble.run(.fadeIn(withDuration: 0.2))
@@ -203,174 +206,326 @@ final class BillStateMachine {
     /// width that is both visible and renderable. Falls back to the
     /// historical 220pt when there's no window/screen to measure against
     /// (shouldn't happen in practice; keeps the math total).
-    private func availableBarkWidth() -> CGFloat {
+    // MARK: - Directional bark placement
+    //
+    // The explicit ask, finally implemented as meant: the bubble sits
+    // directly left or right of Bill, or below him — comic-panel framing
+    // around the character — with the outlined tail pointing at him from
+    // whichever edge faces him. Above-his-head is the last resort when
+    // the region has no room on either side or below (e.g. Bill parked at
+    // a bottom corner).
+
+    /// The bubble's placed rig-space center — reclamps always recompute
+    /// from this rather than accumulating, so dragging Bill can never
+    /// leave the bubble drifted somewhere it wasn't placed.
+    private var barkHome: CGPoint = .zero
+
+    /// The window∩screen region in *scene* points, the one true
+    /// coordinate space for placement math. `calculateAccumulatedFrame()`
+    /// already returns scene-space rects — the old code converted them
+    /// *again* through the rig, double-applying the scale and anchor,
+    /// which is precisely why the bubble sat high and the directional
+    /// shift misfired.
+    private var barkRegionScene: CGRect? {
         guard
             let scene = rig.root.scene,
             let window = scene.view?.window,
             let visible = (window.screen ?? NSScreen.main)?.visibleFrame
-        else { return 220 }
+        else { return nil }
         let minX = max(0, visible.minX - window.frame.minX)
+        let minY = max(0, visible.minY - window.frame.minY)
         let maxX = min(scene.frame.width, visible.maxX - window.frame.minX)
-        return max(120, maxX - minX)
+        let maxY = min(scene.frame.height, visible.maxY - window.frame.minY)
+        guard maxX > minX, maxY > minY else { return nil }
+        return CGRect(x: minX, y: minY, width: maxX - minX, height: maxY - minY)
     }
 
-    /// The bark bubble's base (its tail tip) in rig units, derived from
-    /// Bill's *actual* on-screen silhouette top rather than the old fixed
-    /// 128 — so the gap between his hat and the bubble stays a couple of
-    /// rig units at any character scale, never "very high", and the whole
-    /// layout re-derives as he moves.
-    private func barkBaseY() -> CGFloat {
-        let spriteTopInScene = rig.root.calculateAccumulatedFrame().maxY
-        let rigScaleY = abs(rig.root.yScale) != 0 ? abs(rig.root.yScale) : 1
-        // Sprite top in rig units + a small hat-to-tail gap, in rig units
-        // so the gap scales with him.
-        return spriteTopInScene / rigScaleY + 2
-    }
-
-    /// One placement pass for a freshly-centered bark bubble: measure it in
-    /// scene space, shift left/right (and down, near the screen top) into
-    /// the window's on-screen region, and if any shift was needed rebuild
-    /// the bitmap once with the tail tracking Bill at the shifted origin.
-    ///
-    /// This replaces the old two-step nudge-then-reposition pair, whose
-    /// overlapping x-shifts were the "messed up / not directional" report:
-    /// exactly one authority on placement now.
-    private func placeBark(_ bubble: SKNode, text: String) -> SKNode {
-        guard
-            let scene = rig.root.scene,
-            let window = scene.view?.window,
-            let visible = (window.screen ?? NSScreen.main)?.visibleFrame
-        else { return bubble }
-        let rigScaleX = abs(rig.root.xScale) != 0 ? abs(rig.root.xScale) : 1
-        let rigScaleY = abs(rig.root.yScale) != 0 ? abs(rig.root.yScale) : 1
-
-        let localFrame = bubble.calculateAccumulatedFrame()
-        let left = scene.convert(CGPoint(x: localFrame.minX, y: 0), from: rig.root).x
-        let right = scene.convert(CGPoint(x: localFrame.maxX, y: 0), from: rig.root).x
-        let top = scene.convert(CGPoint(x: 0, y: localFrame.maxY), from: rig.root).y
-
-        let regionMinX = max(0, visible.minX - window.frame.minX)
-        let regionMaxX = min(scene.frame.width, visible.maxX - window.frame.minX)
-        let regionMaxY = min(scene.frame.height, visible.maxY - window.frame.minY)
-
-        var dx: CGFloat = 0
-        if right > regionMaxX {
-            dx = regionMaxX - right
-        } else if left < regionMinX {
-            dx = regionMinX - left
-        }
-        // Near the screen top the bubble slides down to stay visible; it
-        // still overlaps him slightly if that's what it takes — normal
-        // comic framing beats an unreadable line.
-        var dy: CGFloat = 0
-        if top > regionMaxY {
-            dy = regionMaxY - top
-        }
-        guard dx != 0 || dy != 0 else { return bubble }
-
-        bubble.removeFromParent()
-        // Tail offset in bitmap units: the tail must land over Bill, who
-        // stays at rig x=0, so in the shifted bitmap's own coordinates it
-        // moves by the negated shift. 1 bitmap unit = one
-        // `effectivePixelScale` of on-screen point.
-        let tailUnits = -dx / rigScaleX / BarkBubble.effectivePixelScale
-        let shifted = makeBarkNode(text: text, tailOffsetUnits: tailUnits)
-        shifted.position = CGPoint(
-            x: bubble.position.x + dx / rigScaleX,
-            y: bubble.position.y + dy / rigScaleY
+    /// The region mapped into rig space (the space bubble positions live
+    /// in): scene → rig via the rig root's position and scale.
+    private var barkRegionRig: CGRect? {
+        guard let region = barkRegionScene else { return nil }
+        let sx = rig.root.xScale == 0 ? 1 : abs(rig.root.xScale)
+        let sy = rig.root.yScale == 0 ? 1 : abs(rig.root.yScale)
+        let origin = rig.root.position
+        return CGRect(
+            x: (region.minX - origin.x) / sx,
+            y: (region.minY - origin.y) / sy,
+            width: region.width / sx,
+            height: region.height / sy
         )
-        shifted.alpha = bubble.alpha
-        shifted.zPosition = 10
-        rig.root.addChild(shifted)
-        return shifted
     }
 
-    /// Keeps a *showing* bark inside the region as Bill moves — the cheap
-    /// per-move half of placement (no bitmap rebuild; the tail keeps its
-    /// baked offset and stays over him because bubble and Bill shift
-    /// together). Called from the window's move path so a bark travels
-    /// with Bill smoothly instead of hanging off-screen while he walks.
-    func reclampVisibleBark() {
+    /// Bill's half-extents in rig space, from the body node's own frame —
+    /// exact and FX-independent.
+    private var bodyHalfWidth: CGFloat { rig.bodyNode.size.width / 2 }
+    private var bodyHalfHeight: CGFloat { rig.bodyNode.size.height / 2 }
+    /// Rig-space y of roughly his eye — side bubbles center on it so
+    /// they read as speaking toward his face.
+    private var eyeLevelY: CGFloat { bodyHalfHeight * 0.45 }
+    /// The gap between the tail tip and Bill, in rig units.
+    private static let barkGap: CGFloat = 4
+    /// Tail length in rig points (3 bitmap units × effective pixel scale).
+    private var barkTailLength: CGFloat {
+        3 * BarkBubble.effectivePixelScale
+    }
+
+    /// Builds and places the bark bubble for the room actually available,
+    /// choosing the edge by preference: roomier side → other side →
+    /// below → above. Returns the node (already added to the rig) and the
+    /// home center for the re-clamp contract.
+    private func makeDirectionalBark(text: String) -> (SKNode, CGPoint) {
+        // Pre-wrapped widths are measured against the *full* region so the
+        // wrap budgets below stay honest.
+        func regionWidth() -> CGFloat {
+            guard let region = barkRegionRig else { return 220 }
+            return max(120, region.width)
+        }
+        func aboveRoom() -> CGFloat {
+            guard let region = barkRegionRig else { return 340 }
+            return max(60, region.maxY)
+        }
+
+        let fallback: (SKNode, CGPoint) = {
+            let bubble = BarkBubble.makeNode(
+                text: text, maxWidth: regionWidth(),
+                maxHeight: aboveRoom(), tailEdge: .above
+            )
+            bubble.alpha = 0
+            bubble.zPosition = 10
+            let home = CGPoint(
+                x: 0,
+                y: bodyHalfHeight + Self.barkGap + barkTailLength
+                    + bubble.frame.height / 2
+            )
+            bubble.position = home
+            rig.root.addChild(bubble)
+            return (bubble, home)
+        }()
+
+        guard let region = barkRegionRig else { return fallback }
+
+        let tail = barkTailLength
+        let gap = Self.barkGap
+        let sideMinWidth: CGFloat = 108
+
+        // Room on each side, measured from his body edge to the region.
+        let roomRight = region.maxX - (bodyHalfWidth + gap + tail)
+        let roomLeft = (0 - bodyHalfWidth - gap - tail) - region.minX
+        let roomBelow = (0 - bodyHalfHeight - gap - tail) - region.minY
+        let roomAbove = region.maxY - (bodyHalfHeight + gap + tail)
+
+        func sideBubble(right: Bool) -> (SKNode, CGPoint)? {
+            let room = right ? roomRight : roomLeft
+            guard room >= sideMinWidth else { return nil }
+            let edge: BarkBubble.TailEdge = right ? .leftSide : .rightSide
+            let bubble = BarkBubble.makeNode(
+                text: text,
+                maxWidth: room,
+                maxHeight: aboveRoom(),
+                tailEdge: edge
+            )
+            bubble.alpha = 0
+            bubble.zPosition = 10
+            let halfW = bubble.frame.width / 2
+            let x = right
+                ? bodyHalfWidth + gap + tail + halfW
+                : -(bodyHalfWidth + gap + tail + halfW)
+            var home = CGPoint(x: x, y: eyeLevelY)
+            // Keep the bubble inside the region vertically; the tail
+            // offset keeps pointing at his eye level when clamped.
+            let halfH = bubble.frame.height / 2
+            var tailOffset: CGFloat = 0
+            if home.y - halfH < region.minY {
+                home.y = region.minY + halfH
+                tailOffset = (eyeLevelY - home.y) / BarkBubble.effectivePixelScale
+            } else if home.y + halfH > region.maxY {
+                home.y = region.maxY - halfH
+                tailOffset = (eyeLevelY - home.y) / BarkBubble.effectivePixelScale
+            }
+            if tailOffset != 0 {
+                bubble.removeFromParent()
+                let rebuilt = BarkBubble.makeNode(
+                    text: text,
+                    maxWidth: room,
+                    maxHeight: aboveRoom(),
+                    tailEdge: edge,
+                    tailOffsetUnits: tailOffset
+                )
+                rebuilt.alpha = 0
+                rebuilt.zPosition = 10
+                rebuilt.position = home
+                rig.root.addChild(rebuilt)
+                return (rebuilt, home)
+            }
+            bubble.position = home
+            rig.root.addChild(bubble)
+            return (bubble, home)
+        }
+
+        func belowBubble() -> (SKNode, CGPoint)? {
+            guard roomBelow >= 80 else { return nil }
+            let bubble = BarkBubble.makeNode(
+                text: text,
+                maxWidth: regionWidth(),
+                maxHeight: roomBelow,
+                tailEdge: .below
+            )
+            bubble.alpha = 0
+            bubble.zPosition = 10
+            let halfH = bubble.frame.height / 2
+            let home = CGPoint(
+                x: 0,
+                y: -(bodyHalfHeight + gap + tail + halfH)
+            )
+            bubble.position = home
+            rig.root.addChild(bubble)
+            return (bubble, home)
+        }
+
+        // Preference: the roomier side first, then the other side, then
+        // below, then above.
+        if roomRight >= roomLeft, let placed = sideBubble(right: true) {
+            return placed
+        }
+        if let placed = sideBubble(right: false) {
+            return placed
+        }
+        if let placed = belowBubble() {
+            return placed
+        }
+        if roomAbove <= 40 {
+            return fallback
+        }
+        // Above: the last resort, height-capped to the room actually
+        // there, tail tracking Bill if clamped sideways.
+        let bubble = BarkBubble.makeNode(
+            text: text,
+            maxWidth: regionWidth(),
+            maxHeight: roomAbove,
+            tailEdge: .above
+        )
+        bubble.alpha = 0
+        bubble.zPosition = 10
+        let halfW = bubble.frame.width / 2
+        var home = CGPoint(
+            x: 0,
+            y: bodyHalfHeight + gap + tail + bubble.frame.height / 2
+        )
+        var tailOffset: CGFloat = 0
+        if home.x - halfW < region.minX {
+            home.x = region.minX + halfW
+            tailOffset = -home.x / BarkBubble.effectivePixelScale
+        } else if home.x + halfW > region.maxX {
+            home.x = region.maxX - halfW
+            tailOffset = -home.x / BarkBubble.effectivePixelScale
+        }
+        if tailOffset != 0 {
+            bubble.removeFromParent()
+            let rebuilt = BarkBubble.makeNode(
+                text: text,
+                maxWidth: regionWidth(),
+                maxHeight: roomAbove,
+                tailEdge: .above,
+                tailOffsetUnits: tailOffset
+            )
+            rebuilt.alpha = 0
+            rebuilt.zPosition = 10
+            rebuilt.position = home
+            rig.root.addChild(rebuilt)
+            return (rebuilt, home)
+        }
+        bubble.position = home
+        rig.root.addChild(bubble)
+        return (bubble, home)
+    }
+
+
+    /// Picks the bark side from SCREEN room and asks the host to widen the
+    /// character window on that one side — the bubble renders inside the
+    /// window, so "directly left/right of Bill" is physically impossible in
+    /// the base window that is exactly as wide as him. Growth is capped to
+    /// the screen space actually available. Below/above barks need no
+    /// widening.
+    private func preWidenCanvasForSideBark() {
         guard
-            let bubble = barkNode,
             let scene = rig.root.scene,
             let window = scene.view?.window,
             let visible = (window.screen ?? NSScreen.main)?.visibleFrame
         else { return }
-        let rigScaleX = abs(rig.root.xScale) != 0 ? abs(rig.root.xScale) : 1
-        let rigScaleY = abs(rig.root.yScale) != 0 ? abs(rig.root.yScale) : 1
+        let s = rig.root.xScale == 0 ? 1 : abs(rig.root.xScale)
 
-        let localFrame = bubble.calculateAccumulatedFrame()
-        let left = scene.convert(CGPoint(x: localFrame.minX, y: 0), from: rig.root).x
-        let right = scene.convert(CGPoint(x: localFrame.maxX, y: 0), from: rig.root).x
-        let top = scene.convert(CGPoint(x: 0, y: localFrame.maxY), from: rig.root).y
+        // Bill's screen-space edges (rig extents × scale, window centers him).
+        let center = window.frame.midX
+        let billRight = center + bodyHalfWidth * s
+        let billLeft = center - bodyHalfWidth * s
+        let lead = (Self.barkGap + barkTailLength) * s
 
-        let regionMinX = max(0, visible.minX - window.frame.minX)
-        let regionMaxX = min(scene.frame.width, visible.maxX - window.frame.minX)
-        let regionMaxY = min(scene.frame.height, visible.maxY - window.frame.minY)
+        let roomRightScreen = visible.maxX - billRight - lead
+        let roomLeftScreen = billLeft - visible.minX - lead
+        guard roomRightScreen > 54 || roomLeftScreen > 54 else { return }
+
+        let rightPreferred = roomRightScreen >= roomLeftScreen
+        let roomScreen = rightPreferred ? roomRightScreen : roomLeftScreen
+        // Cap the side bubble to a comfortable max (~300 rig points) and
+        // to whatever screen room exists.
+        let bubbleRig = min(300, roomScreen / s)
+        guard bubbleRig >= 108 else { return }
+
+        // How far past the window's edge on the chosen side the bubble
+        // must reach.
+        let windowEdge = rightPreferred ? window.frame.maxX : window.frame.minX
+        let edgeDistance = rightPreferred
+            ? windowEdge - billRight
+            : billLeft - windowEdge
+        let neededScreen = bubbleRig * s + lead - edgeDistance + 8
+        guard neededScreen > 0 else { return }
+        onBarkCanvasWiden?(rightPreferred, neededScreen)
+    }
+
+    /// Keeps a *showing* bark inside the region as Bill moves — the cheap
+    /// per-move half of placement (no bitmap rebuild). Always recomputed
+    /// from the placed home center, never by accumulating increments: a
+    /// bubble clamped at a screen edge returns to its home placement the
+    /// moment Bill is back in open space — it can never be "pushed" and
+    /// left somewhere.
+    func reclampVisibleBark() {
+        guard
+            let bubble = barkNode,
+            let region = barkRegionScene
+        else { return }
+        let sx = rig.root.xScale == 0 ? 1 : abs(rig.root.xScale)
+        let sy = rig.root.yScale == 0 ? 1 : abs(rig.root.yScale)
+
+        // The frame *as if at home* — clamps are computed against the
+        // home placement, not the current (possibly already-clamped) one.
+        let frame = bubble.calculateAccumulatedFrame()
+        let homeFrame = frame.offsetBy(
+            dx: (barkHome.x - bubble.position.x) * sx,
+            dy: (barkHome.y - bubble.position.y) * sy
+        )
 
         var dx: CGFloat = 0
-        if right > regionMaxX {
-            dx = regionMaxX - right
-        } else if left < regionMinX {
-            dx = regionMinX - left
+        if homeFrame.maxX > region.maxX {
+            dx = region.maxX - homeFrame.maxX
+        } else if homeFrame.minX < region.minX {
+            dx = region.minX - homeFrame.minX
         }
         var dy: CGFloat = 0
-        if top > regionMaxY {
-            dy = regionMaxY - top
+        if homeFrame.maxY > region.maxY {
+            dy = region.maxY - homeFrame.maxY
+        } else if homeFrame.minY < region.minY {
+            dy = region.minY - homeFrame.minY
         }
-        guard dx != 0 || dy != 0 else { return }
-        bubble.position = CGPoint(
-            x: bubble.position.x + dx / rigScaleX,
-            y: bubble.position.y + dy / rigScaleY
+
+        let target = CGPoint(
+            x: barkHome.x + dx / sx,
+            y: barkHome.y + dy / sy
         )
+        if bubble.position != target {
+            bubble.position = target
+        }
     }
 
-    /// One builder for the centered bubble and the shifted rebuild, so
-    /// width, height and tail knobs can never drift apart between the two
-    /// call sites.
-    private func makeBarkNode(text: String, tailOffsetUnits: CGFloat) -> SKNode {
-        BarkBubble.makeNode(
-            text: text,
-            maxWidth: availableBarkWidth(),
-            maxHeight: availableBarkHeight(),
-            tailOffsetUnits: tailOffsetUnits
-        )
-    }
-
-    /// The vertical room the bark bubble can occupy, in rig points: from
-    /// its base just above Bill's hat up to the on-screen top of the
-    /// window. The bubble bitmap plus its `effectivePixelScale`
-    /// multiplier must fit inside this, whatever the text-size setting.
-    private func availableBarkHeight() -> CGFloat {
-        guard
-            let scene = rig.root.scene,
-            let window = scene.view?.window,
-            let visible = (window.screen ?? NSScreen.main)?.visibleFrame
-        else { return 340 }
-        let rigScaleY = abs(rig.root.yScale) != 0 ? abs(rig.root.yScale) : 1
-        let regionMaxY = min(scene.frame.height, visible.maxY - window.frame.minY)
-        let baseSceneY = barkBaseY() * rigScaleY
-        return max(60, (regionMaxY - baseSceneY) / rigScaleY)
-    }
-
-    /// Slides a just-placed bark bubble back into the *window's on-screen
-    /// region* if Bill is standing somewhere that would push it out.
-    ///
-    /// Bill's window is much larger than Bill, and it is deliberately
-    /// allowed to hang off the screen edges (see `BillPanel`) so that he
-    /// himself can reach them — his window's empty margins, not his body,
-    /// are what would otherwise collide with the screen bounds. The bubble
-    /// lives in those margins. This used to clamp the bubble against the
-    /// *screen* frame only, which silently broke at the window's own
-    /// edge: the SKView clips drawing at the window bounds, so a wide
-    /// bubble nudged sideways to dodge a screen edge crossed the window
-    /// edge instead and lost a chunk of its text to an invisible border.
-    /// Clamping in scene space against the window∩screen region — after
-    /// `present` wrapped the bubble to exactly that region's width —
-    /// guarantees every placement is both fully rendered and fully
-    /// visible. The bubble would rather overlap Bill (normal comic
-    /// framing) than end up unreadable.
 
     private func play(_ state: BillState) {
         currentState = state

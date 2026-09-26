@@ -896,10 +896,16 @@ final class RoamingController {
     // MARK: - Panel <-> simulation
 
     /// Bill's feet in screen coordinates, derived from the panel's origin.
+    /// Set by `CharacterWindowController` when a directional bark widens
+    /// the panel LEFT: the origin shifts left by the growth, so the feet
+    /// inset must grow by the same amount or the sim thinks Bill
+    /// teleported. Right growth needs no adjustment (origin is fixed).
+    var feetInsetAdjustment: CGFloat = 0
+
     private func feetPosition(panel: NSPanel) -> CGPoint {
         let s = preferences.characterScale
         return CGPoint(
-            x: panel.frame.minX + Self.centerInsetX * s,
+            x: panel.frame.minX + Self.centerInsetX * s + feetInsetAdjustment,
             y: panel.frame.minY + Self.feetInsetY * s
         )
     }
@@ -915,7 +921,7 @@ final class RoamingController {
     private func writeBack(panel: NSPanel) {
         let s = preferences.characterScale
         let origin = NSPoint(
-            x: sim.feet.x - Self.centerInsetX * s,
+            x: sim.feet.x - Self.centerInsetX * s - feetInsetAdjustment,
             y: sim.feet.y - Self.feetInsetY * s
         )
         // Direct `setFrameOrigin`, deliberately NOT `animator().setFrameOrigin`
