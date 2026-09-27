@@ -199,6 +199,34 @@ final class ReactionRouter {
 
     private var idleStartDate: Date?
 
+    // MARK: - Incognito browsing trigger
+
+    /// Cooldown so switching between normal and private tabs doesn't spam
+    /// the reaction. Generous — the joke lands once per session, not every
+    /// tab switch.
+    private var lastIncognitoTriggerAt: Date?
+    private static let incognitoCooldown: TimeInterval = 10 * 60
+
+    private static let incognitoPatterns = [
+        "incognito", "private browsing", "inprivate",
+        "private window", "private tab", "new private",
+    ]
+
+    private func checkIncognitoBrowsing(title: String, appName: String) -> Bool {
+        guard Date().timeIntervalSince(lastIncognitoTriggerAt ?? .distantPast)
+            > Self.incognitoCooldown
+        else { return false }
+        let lower = title.lowercased()
+        let matched = Self.incognitoPatterns.contains { lower.contains($0) }
+        guard matched else { return false }
+        lastIncognitoTriggerAt = Date()
+        // The ONLY trigger for the red shooting cloud, per the explicit ask —
+        // no random rotation or showcase ever fires it.
+        characterEngine.request(.rampaging, force: true)
+        speak(["incognito.search"], substitutions: ["app": appName], importance: .always)
+        return true
+    }
+
     // MARK: - App activation
 
     private func handleAppActivated(bundleID: String, name: String, category: AppCategory?, pid: pid_t) {
@@ -238,6 +266,13 @@ final class ReactionRouter {
         Task { [weak self] in
             guard let title = await WindowTitleReader.focusedWindowTitle(pid: pid) else { return }
             guard let self else { return }
+
+            // Incognito/private browsing: the one and only trigger for the
+            // red shooting cloud. Detects "Incognito", "Private", etc. in
+            // the focused window title across all major browsers.
+            if self.checkIncognitoBrowsing(title: title, appName: appName) {
+                return
+            }
             var resolved = WindowTitleInsight.insight(appName: appName, title: title)
             // The title got us the section; OCR gets us the numbers — "you
             // have 3 missing" is not something a window title ever says. Only
@@ -331,7 +366,13 @@ final class ReactionRouter {
         let states: [BillState] = count == 1 ? [.watched, .smug, .presenting]
                                  : count == 2 ? [.grumpEyes, .huffy, .annoyed]
                                               : [.dreading, .guilty, .stressed]
-        play(states, keys: keys, substitutions: ["app": name])
+        // Personalized per-app lines also fire on refocus — the user's
+        // "custom quotes don't get triggered that much" report: they were
+        // first-open-only, meaning a returning app (the most common case)
+        // never heard them.
+        play(states,
+             keys: [PersonalizedDialogueStore.shared.appKey(for: bundleID)] + keys,
+             substitutions: ["app": name])
     }
 
     /// Which broad reaction a category gets when no per-app override applies.

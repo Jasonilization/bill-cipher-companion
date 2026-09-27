@@ -42,6 +42,10 @@ final class AnimationCoverage {
         .idle, .walking, .running, .crouching, .launching, .rising, .falling,
         .landingSoft, .landingHard, .ledgeGrabbing, .climbingUp, .climbingDown,
         .hangingIdle, .edgePeek, .sleeping, .charging, .heatingUp,
+        /// Reserved exclusively for the incognito-browsing trigger — the
+        /// "red shooting cloud" should NEVER appear in any random rotation
+        /// or showcase sweep, per the explicit ask.
+        .rampaging,
     ]
 
     /// Everything the daily sweep is responsible for getting on screen.

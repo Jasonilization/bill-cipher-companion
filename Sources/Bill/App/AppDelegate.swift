@@ -76,6 +76,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         settingsWindowController.onOpenQuotesManager = { [weak self] in
             self?.openQuotesManager()
         }
+        settingsWindowController.onTestTrigger = { [weak self] keys, animationKey in
+            guard let self else { return }
+            // Fire the trigger live: request the assigned animation (or
+            // the standard pool for that key) and bark the line.
+            if let assigned = self.preferences.customAnimationMap[animationKey],
+               let state = BillState(rawValue: assigned) {
+                self.characterEngine.request(state, force: true)
+            } else if let pool = Self.testTriggerAnimations[animationKey],
+                      let state = self.characterEngine.coverage.pick(from: pool) {
+                self.characterEngine.request(state, force: true)
+            }
+            if let line = DialogueLibrary.shared.firstLine(keys) {
+                self.characterEngine.bark(line, importance: .always)
+            }
+        }
         characterWindowController.settingsWindowFrameProvider = { [weak self] in
             self?.settingsWindowController?.contentFrame()
         }
@@ -97,6 +112,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             dialogueRefreshLogWindowController: dialogueRefreshLogWindowController
         )
         characterWindowController.show()
+        // The multicolour prism beat as the opening flourish — a brief
+        // welcome light-show that says "I'm here and I'm fabulous"
+        // without the commitment of a full rare event.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3) { [weak self] in
+            self?.characterEngine.request(.prismDance, force: true)
+        }
         characterEngine.start()
 
         preferences.$speakingFrequency
@@ -252,6 +273,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         weatherMonitor.onReport = { [weak self] snapshot, reason in
             self?.reactionRouter.handle(.weatherChanged(snapshot, reason))
         }
+        weatherMonitor.onFetchError = { [weak self] message in
+            guard let self else { return }
+            self.characterEngine.bark(message, importance: .always)
+        }
         weatherMonitor.isEnabledProvider = { [weak self] in
             self?.preferences.isWeatherEnabled ?? true
         }
@@ -291,6 +316,25 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// Opens the quotes manager: every pool, every line, source badges
     /// (authored/generated/personalized), refresh-everything, and the
     /// recent log strip.
+    /// Animation pools for the Settings "Reaction Triggers" test buttons —
+    /// mirrors what the `ReactionRouter` would pick for each trigger.
+    private static let testTriggerAnimations: [String: [BillState]] = [
+        "batteryLow": [.stressed, .dreading, .huffy, .grumpEyes, .watched, .annoyed],
+        "networkLost": [.confused, .glitchForm, .spooked, .dazed, .glitching, .ambushed],
+        "networkRestored": [.celebrating, .happy, .charged, .zipAround, .fractaling],
+        "volume.100": [.dancing, .grooving, .happy, .flinching, .surprised, .caneFlourish],
+        "volume.mute": [.dancing, .grooving, .happy, .flinching, .surprised, .caneFlourish],
+        "poked": [.poked, .surprised, .flinching, .dazed],
+        "chatFailed": [.confused, .spooked, .glitchForm],
+        "stillThinking": [.thinking, .focused],
+        "incognito.search": [.rampaging],
+        "deal.offer": [.caneFlourish, .smug],
+        "cipher.message": [.scanning],
+        "userReturned": [.watched, .smug, .presenting],
+        "clock.morning": [.presenting, .dispatching, .watched, .smug, .zodiacVision],
+        "clock.night": [.presenting, .dispatching, .watched, .smug, .zodiacVision],
+    ]
+
     func openQuotesManager() {
         quotesManagerController?.present()
     }

@@ -382,12 +382,23 @@ final class BillStateMachine {
             return (bubble, home)
         }
 
-        // Preference: the roomier side first, then the other side, then
-        // below, then above.
-        if roomRight >= roomLeft, let placed = sideBubble(right: true) {
+        // Preference: sides (random when both are roomy, away from the
+        // border when near one), then the other side, then below, then
+        // above.
+        let bothSidesRoomy = roomRight >= 160 && roomLeft >= 160
+        let goRight: Bool
+        if bothSidesRoomy {
+            goRight = Bool.random()
+        } else {
+            goRight = roomRight >= roomLeft
+        }
+        if goRight, let placed = sideBubble(right: true) {
             return placed
         }
         if let placed = sideBubble(right: false) {
+            return placed
+        }
+        if !goRight, let placed = sideBubble(right: true) {
             return placed
         }
         if let placed = belowBubble() {
@@ -464,7 +475,17 @@ final class BillStateMachine {
         let roomLeftScreen = billLeft - visible.minX - lead
         guard roomRightScreen > 54 || roomLeftScreen > 54 else { return }
 
-        let rightPreferred = roomRightScreen >= roomLeftScreen
+        // Adaptive: random direction when there's room everywhere; away
+        // from the border when near one. The explicit ask — a coin flip
+        // keeps it lively mid-screen, but near an edge the bubble has to
+        // go the other way or it'd be squeezed to nothing.
+        let comfortableBothSides = roomRightScreen > 200 && roomLeftScreen > 200
+        let rightPreferred: Bool
+        if comfortableBothSides {
+            rightPreferred = Bool.random()
+        } else {
+            rightPreferred = roomRightScreen >= roomLeftScreen
+        }
         let roomScreen = rightPreferred ? roomRightScreen : roomLeftScreen
         // Cap the side bubble to a comfortable max (~300 rig points) and
         // to whatever screen room exists.

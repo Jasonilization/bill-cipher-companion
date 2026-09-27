@@ -18,6 +18,9 @@ struct SettingsView: View {
     var onTestWeather: (() -> Void)?
     /// Set by `AppDelegate` — opens the quotes manager window.
     var onOpenQuotesManager: (() -> Void)?
+    /// Set by `AppDelegate` — fires a reaction trigger live (keys +
+    /// animation) so the user can test each from Settings.
+    var onTestTrigger: ((_ keys: [String], _ animationKey: String) -> Void)?
 
     /// The dialogue keys offered as animation-override triggers — the ones
     /// with real pool content behind them. Deliberately curated: the full
@@ -52,7 +55,7 @@ struct SettingsView: View {
 
     var body: some View {
         Form {
-            Section("Appearance") {
+            Section("Appearance — how Bill looks") {
                 VStack(alignment: .leading, spacing: 4) {
                     HStack {
                         Text("Bill's size")
@@ -111,7 +114,7 @@ struct SettingsView: View {
                 }
             }
 
-            Section("Behaviour") {
+            Section("Behaviour — what Bill does") {
                 Toggle("Bill roams the screen", isOn: $preferences.isRoamingEnabled)
                 Toggle("Minimize-button mischief", isOn: $preferences.isMinimizeMischiefEnabled)
                 Text("Occasionally leaps onto a background window's yellow button and actually minimizes it, then falls. Never touches the window you're working in.")
@@ -150,7 +153,7 @@ struct SettingsView: View {
                 }
             }
 
-            Section("Animation") {
+            Section("Animation — pacing & per-trigger overrides") {
                 VStack(alignment: .leading, spacing: 4) {
                     HStack {
                         Text("How long until the next idle animation")
@@ -174,7 +177,7 @@ struct SettingsView: View {
                 }
             }
 
-            Section("Weather") {
+            Section("Weather — Bill comments on the sky") {
                 Toggle("Bill talks about the weather", isOn: $preferences.isWeatherEnabled)
                 Stepper(
                     preferences.weatherAnnounceMinutes == 0
@@ -189,7 +192,7 @@ struct SettingsView: View {
                 Button("Test weather now") { onTestWeather?() }
             }
 
-            Section("Prompts") {
+            Section("Prompts — what ChatGPT writes for Bill") {
                 Button("Open the Quotes Manager…") { onOpenQuotesManager?() }
                 Text("Every pool, every line, where each came from — authored (A), ChatGPT-generated (G), or personalized to your apps (P) — plus one-click refresh and clear logs.")
                     .font(.caption).foregroundStyle(.secondary)
@@ -212,7 +215,7 @@ struct SettingsView: View {
                 }
             }
 
-            Section("Per-app animations") {
+            Section("Per-app — assign reactions to your apps") {
                 Text("Assign a signature reaction to any app Bill has seen you open. Automatic = his usual pools.")
                     .font(.caption).foregroundStyle(.secondary)
                 let apps = memoryStore.knownApps()
@@ -229,6 +232,36 @@ struct SettingsView: View {
                             }
                         }
                     }
+                }
+            }
+
+            Section("Test Triggers — fire any reaction live") {
+                Text("Press any trigger to see Bill's reaction live, right on the desktop.")
+                    .font(.caption).foregroundStyle(.secondary)
+                HStack {
+                    Button("Low Battery") { onTestTrigger?(["batteryLow"], "batteryLow") }
+                    Button("Wi-Fi Drops") { onTestTrigger?(["networkLost"], "networkLost") }
+                    Button("Wi-Fi Back") { onTestTrigger?(["networkRestored"], "networkRestored") }
+                }
+                HStack {
+                    Button("Volume Up") { onTestTrigger?(["volume.100"], "volume.100") }
+                    Button("Volume Mute") { onTestTrigger?(["volume.mute"], "volume.mute") }
+                    Button("Weather") { onTestWeather?() }
+                }
+                HStack {
+                    Button("Poke") { onTestTrigger?(["poked"], "poked") }
+                    Button("Chat") { onTestTrigger?(["chatFailed"], "chatFailed") }
+                    Button("Still Thinking") { onTestTrigger?(["stillThinking"], "stillThinking") }
+                }
+                HStack {
+                    Button("Incognito") { onTestTrigger?(["incognito.search"], "incognito.search") }
+                    Button("Deal") { onTestTrigger?(["deal.offer"], "deal.offer") }
+                    Button("Cipher") { onTestTrigger?(["cipher.message"], "cipher.message") }
+                }
+                HStack {
+                    Button("User Returns") { onTestTrigger?(["userReturned"], "userReturned") }
+                    Button("Morning") { onTestTrigger?(["clock.morning"], "clock.morning") }
+                    Button("Night") { onTestTrigger?(["clock.night"], "clock.night") }
                 }
             }
 
