@@ -62,9 +62,9 @@ final class PixelMessageBubbleView: NSView {
     /// narrowed panel can never have bubbles wider than itself (the panel
     /// padding + bubble chrome are the 36pt of margin).
     private static let absoluteMaxTextWidth: CGFloat = 520
-    static var maxTextWidth: CGFloat {
-        min(absoluteMaxTextWidth, PixelChatBubble.maxWidth - 36)
-    }
+    /// Fixed at the comfortable ceiling — the panel is fixed-size now, so
+    /// this no longer needs to track a live panel width.
+    static var maxTextWidth: CGFloat { absoluteMaxTextWidth }
     private static let closeButtonSize: CGFloat = 14
     private static let closeGap: CGFloat = 5
     private static let userAccent = NSColor(calibratedRed: 0.36, green: 0.58, blue: 0.86, alpha: 1)

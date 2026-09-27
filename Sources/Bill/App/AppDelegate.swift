@@ -147,7 +147,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         preferences.$chatBubbleMaxWidth
             .removeDuplicates()
             .sink { [weak self] width in
-                PixelChatBubble.maxWidth = CGFloat(width)
+                PixelChatBubble.panelWidth = CGFloat(width)
                 self?.characterWindowController.relayoutChatBubble()
             }
             .store(in: &cancellables)
