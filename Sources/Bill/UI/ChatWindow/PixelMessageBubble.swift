@@ -108,10 +108,7 @@ final class PixelMessageBubbleView: NSView {
         textView.linkTextAttributes = [.foregroundColor: NSColor(calibratedRed: 0.1, green: 0.25, blue: 0.75, alpha: 1), .underlineStyle: NSUnderlineStyle.single.rawValue]
         addSubview(textView)
 
-        if showCloseButton {
-            closeButton.onClick = { [weak self] in self?.onClose?() }
-            addSubview(closeButton)
-        }
+
 
         applyMessage(animatingResize: false)
     }
@@ -167,7 +164,7 @@ final class PixelMessageBubbleView: NSView {
         bodyHeightUnits = (textHeight + Self.paddingY * 2 + Self.borderInsetPoints * 2) / Self.pixelScale
 
         let bodySize = NSSize(width: bodyWidthUnits * Self.pixelScale, height: bodyHeightUnits * Self.pixelScale)
-        let topStrip = showCloseButton ? Self.closeButtonSize + Self.closeGap * 2 : 0
+        let topStrip: CGFloat = 0
         let totalSize = NSSize(width: bodySize.width, height: bodySize.height + topStrip)
 
         frame.size = totalSize
@@ -180,14 +177,7 @@ final class PixelMessageBubbleView: NSView {
             height: textHeight
         )
 
-        if showCloseButton {
-            closeButton.frame = NSRect(
-                x: totalSize.width - Self.closeGap - Self.closeButtonSize,
-                y: totalSize.height - Self.closeGap - Self.closeButtonSize,
-                width: Self.closeButtonSize,
-                height: Self.closeButtonSize
-            )
-        }
+
         needsDisplay = true
     }
 

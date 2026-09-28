@@ -51,14 +51,6 @@ final class BillStateMachine {
     /// Fires when a speech bubble appears/disappears, so the host window can
     /// grow to make room for it and shrink back afterwards.
     var onBarkVisibilityChanged: ((Bool) -> Void)?
-    /// Directional barks: before placing, the state machine picks a side
-    /// (or below) from screen room and calls this so the character window
-    /// can grow that one side — the bubble renders inside the window, so
-    /// a bubble beside Bill physically needs the window widened. The
-    /// controller grows the panel synchronously and adjusts the roaming
-    /// feet inset when growing left.
-    var onBarkCanvasWiden: ((_ side: Bool, _ growthScreenPt: CGFloat) -> Void)?
-
     init(rig: BillRigNode) {
         self.rig = rig
         equipProp(.none)
@@ -164,7 +156,6 @@ final class BillStateMachine {
         // the side from SCREEN room (the window itself is only as wide as
         // Bill, so side room inside the window is zero until it's widened),
         // asks the host to widen the window that one side, then places.
-        preWidenCanvasForSideBark()
         let (bubble, home) = makeDirectionalBark(text: text)
         barkNode = bubble
         barkHome = home
@@ -450,58 +441,6 @@ final class BillStateMachine {
         return (bubble, home)
     }
 
-
-    /// Picks the bark side from SCREEN room and asks the host to widen the
-    /// character window on that one side — the bubble renders inside the
-    /// window, so "directly left/right of Bill" is physically impossible in
-    /// the base window that is exactly as wide as him. Growth is capped to
-    /// the screen space actually available. Below/above barks need no
-    /// widening.
-    private func preWidenCanvasForSideBark() {
-        guard
-            let scene = rig.root.scene,
-            let window = scene.view?.window,
-            let visible = (window.screen ?? NSScreen.main)?.visibleFrame
-        else { return }
-        let s = rig.root.xScale == 0 ? 1 : abs(rig.root.xScale)
-
-        // Bill's screen-space edges (rig extents × scale, window centers him).
-        let center = window.frame.midX
-        let billRight = center + bodyHalfWidth * s
-        let billLeft = center - bodyHalfWidth * s
-        let lead = (Self.barkGap + barkTailLength) * s
-
-        let roomRightScreen = visible.maxX - billRight - lead
-        let roomLeftScreen = billLeft - visible.minX - lead
-        guard roomRightScreen > 54 || roomLeftScreen > 54 else { return }
-
-        // Adaptive: random direction when there's room everywhere; away
-        // from the border when near one. The explicit ask — a coin flip
-        // keeps it lively mid-screen, but near an edge the bubble has to
-        // go the other way or it'd be squeezed to nothing.
-        let comfortableBothSides = roomRightScreen > 200 && roomLeftScreen > 200
-        let rightPreferred: Bool
-        if comfortableBothSides {
-            rightPreferred = Bool.random()
-        } else {
-            rightPreferred = roomRightScreen >= roomLeftScreen
-        }
-        let roomScreen = rightPreferred ? roomRightScreen : roomLeftScreen
-        // Cap the side bubble to a comfortable max (~300 rig points) and
-        // to whatever screen room exists.
-        let bubbleRig = min(300, roomScreen / s)
-        guard bubbleRig >= 108 else { return }
-
-        // How far past the window's edge on the chosen side the bubble
-        // must reach.
-        let windowEdge = rightPreferred ? window.frame.maxX : window.frame.minX
-        let edgeDistance = rightPreferred
-            ? windowEdge - billRight
-            : billLeft - windowEdge
-        let neededScreen = bubbleRig * s + lead - edgeDistance + 8
-        guard neededScreen > 0 else { return }
-        onBarkCanvasWiden?(rightPreferred, neededScreen)
-    }
 
     /// Keeps a *showing* bark inside the region as Bill moves — the cheap
     /// per-move half of placement (no bitmap rebuild). Always recomputed

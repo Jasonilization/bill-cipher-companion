@@ -470,7 +470,6 @@ final class PixelChatBubble: NSObject, NSTextViewDelegate {
                 bubbleView = existing
             } else {
                 bubbleView = PixelMessageBubbleView(message: message)
-                bubbleView.onClose = { [weak self] in self?.removeMessage(id: message.id) }
                 bubbleViewsByID[message.id] = bubbleView
                 stackView.addSubview(bubbleView)
                 Self.popIn(bubbleView)
