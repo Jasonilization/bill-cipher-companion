@@ -170,11 +170,71 @@ enum BarkBubble {
         texture.filteringMode = .nearest
         let sprite = SKSpriteNode(texture: texture)
         sprite.setScale(effectivePixelScale)
-        // Center anchor for every orientation: the placement engine
-        // positions the bitmap center explicitly per edge, so one anchor
-        // rule serves all four.
         sprite.anchorPoint = CGPoint(x: 0.5, y: 0.5)
         return sprite
+    }
+
+    /// Renders the bubble as a plain `NSImage` at its natural bitmap size —
+    /// the panel-based bark path (`BarkPanelController`) uses this instead
+    /// of the SpriteKit node, because a separate NSPanel can host the image
+    /// directly without any scene/coordinate conversion at all. Returns
+    /// the image and its *display* size (bitmap units × effective pixel
+    /// scale), so the caller can size a panel around it.
+    static func makeImage(
+        text: String,
+        maxWidth: CGFloat,
+        maxHeight: CGFloat = .greatestFiniteMagnitude,
+        tailEdge: TailEdge = .above,
+        tailOffsetUnits: CGFloat = 0
+    ) -> (image: NSImage, displaySize: NSSize) {
+        // Duplicate the wrap logic — makeNode's body is too intertwined
+        // with the SpriteKit return to share directly.
+        let chromeUnits = paddingX * 2 + CGFloat(borderThickness + accentThickness) * 2
+        let roomUnits = Int((maxWidth / effectivePixelScale).rounded(.down)) - Int(chromeUnits)
+        let textColumnUnits = min(maxTextWidthUnits, max(minTextWidthUnits, roomUnits))
+        let heightBudgetUnits = (maxHeight / effectivePixelScale).rounded(.down) - tailHeight - paddingY * 2
+        let lineBudget = max(1, Int(heightBudgetUnits / PixelFont.lineHeight))
+        let lines = PixelFont.wrap(
+            normalize(text.uppercased()),
+            maxWidthUnits: textColumnUnits,
+            maxLines: min(maxLines, lineBudget)
+        )
+
+        let textBlockWidth = CGFloat(lines.map(PixelFont.lineWidth).max() ?? 0)
+        let textBlockHeight = CGFloat(lines.count) * PixelFont.lineHeight - PixelFont.lineSpacing
+        let bodyWidth = textBlockWidth + paddingX * 2
+        let bodyHeight = textBlockHeight + paddingY * 2
+        var imageSize = CGSize(width: bodyWidth, height: bodyHeight)
+        var bodyRect: CGRect
+        switch tailEdge {
+        case .above:
+            imageSize.height += tailHeight
+            bodyRect = CGRect(x: 0, y: tailHeight, width: bodyWidth, height: bodyHeight)
+        case .below:
+            imageSize.height += tailHeight
+            bodyRect = CGRect(x: 0, y: 0, width: bodyWidth, height: bodyHeight)
+        case .leftSide:
+            imageSize.width += tailHeight
+            bodyRect = CGRect(x: tailHeight, y: 0, width: bodyWidth, height: bodyHeight)
+        case .rightSide:
+            imageSize.width += tailHeight
+            bodyRect = CGRect(x: 0, y: 0, width: bodyWidth, height: bodyHeight)
+        }
+
+        let image = NSImage(size: imageSize, flipped: false) { _ in
+            guard let ctx = NSGraphicsContext.current?.cgContext else { return false }
+            ctx.setShouldAntialias(false)
+            ctx.setAllowsAntialiasing(false)
+            ctx.interpolationQuality = .none
+            let fillRect = drawLayeredBorder(ctx, bodyRect: bodyRect, cornerRadius: cornerRadius, borderThickness: borderThickness, accentThickness: accentThickness, accentColor: BillPalette.bubbleAccent)
+            drawTail(ctx, bodyRect: bodyRect, edge: tailEdge, offsetUnits: tailOffsetUnits)
+            PixelFont.drawCentered(ctx, lines: lines, in: fillRect, color: BillPalette.black)
+            return true
+        }
+
+        let scale = effectivePixelScale
+        let display = NSSize(width: imageSize.width * scale, height: imageSize.height * scale)
+        return (image, display)
     }
 
     /// Renders the same bubble as an `NSImage` (bitmap units — multiply the

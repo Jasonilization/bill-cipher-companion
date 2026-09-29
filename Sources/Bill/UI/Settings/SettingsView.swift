@@ -301,7 +301,7 @@ struct SettingsView: View {
             }
         }
         .formStyle(.grouped)
-        .frame(width: 480, height: 720)
+        .frame(width: 720, height: 640)
     }
 
     /// `""` (Automatic) when unset, so the picker reads honestly.

@@ -45,7 +45,8 @@ final class SettingsWindowController: NSObject {
             let hosting = NSHostingController(rootView: view)
             let win = NSWindow(contentViewController: hosting)
             win.title = "Bill"
-            win.styleMask = [.titled, .closable]
+            win.styleMask = [.titled, .closable, .resizable, .miniaturizable]
+            win.minSize = NSSize(width: 600, height: 500)
             win.isReleasedWhenClosed = false
             window = win
         }

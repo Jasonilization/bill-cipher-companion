@@ -729,34 +729,3 @@ final class PixelChatBubble: NSObject, NSTextViewDelegate {
         }
     }
 }
-
-/// Draws the chat panel's pixel frame — the layered black/accent/fill
-/// border around the entire chat window, the same recipe every bubble in
-/// the app uses. The frame is drawn once per size change (which is now
-/// "once per open"), not per-message.
-private final class ChatFrameView: NSView {
-    private static let pixelScale: CGFloat = 2
-    private static let borderThickness = 2
-    private static let accentThickness = 1
-
-    override var isFlipped: Bool { false }
-
-    override func draw(_ dirtyRect: NSRect) {
-        guard let ctx = NSGraphicsContext.current?.cgContext else { return }
-        ctx.setShouldAntialias(false)
-        ctx.setAllowsAntialiasing(false)
-        ctx.interpolationQuality = .none
-        ctx.scaleBy(x: Self.pixelScale, y: Self.pixelScale)
-        let bodyRect = CGRect(
-            x: 0, y: 0,
-            width: bounds.width / Self.pixelScale,
-            height: bounds.height / Self.pixelScale
-        )
-        BarkBubble.drawLayeredBorder(
-            ctx, bodyRect: bodyRect,
-            cornerRadius: 8, borderThickness: Self.borderThickness,
-            accentThickness: Self.accentThickness,
-            accentColor: BillPalette.bubbleAccent
-        )
-    }
-}

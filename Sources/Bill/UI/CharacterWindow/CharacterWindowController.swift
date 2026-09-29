@@ -11,6 +11,7 @@ final class CharacterWindowController: NSObject {
     private let chatBridge: ChatBridge
     private let memoryStore: MemoryStore
     private let chatBubble = PixelChatBubble()
+    private let barkPanelController = BarkPanelController()
     private let contextMenu = NSMenu()
     private var wasWanderingBeforeChat = false
     private var isAwaitingChatResponse = false
@@ -160,6 +161,21 @@ final class CharacterWindowController: NSObject {
         characterEngine.stateMachine.onBarkVisibilityChanged = { [weak self] isShowing in
             self?.setPanelExpanded(isShowing)
         }
+        characterEngine.stateMachine.onBarkPanel = { [weak self] text, billFrame in
+            guard let self,
+                  let screen = self.panel.screen ?? NSScreen.main
+            else { return }
+            self.barkPanelController.show(text: text, near: billFrame, on: screen)
+        }
+        characterEngine.stateMachine.onBarkPanelReposition = { [weak self] billFrame in
+            guard let self,
+                  let screen = self.panel.screen ?? NSScreen.main
+            else { return }
+            self.barkPanelController.reposition(near: billFrame, on: screen)
+        }
+        characterEngine.stateMachine.onBarkPanelFadeOut = { [weak self] in
+            self?.barkPanelController.fadeOut()
+        }
 
         // Keep the speech bubble glued to Bill wherever he ends up — roaming,
         // a drag, or a window shoving him all move the panel.
@@ -172,6 +188,9 @@ final class CharacterWindowController: NSObject {
                 // cheap re-clamp that keeps it (and its tail) inside the
                 // on-screen region as Bill moves, without a bitmap rebuild.
                 self?.characterEngine.stateMachine.reclampVisibleBark()
+                // The bark panel (separate NSPanel) also follows Bill.
+                let frame = self?.panel.frame ?? .zero
+                self?.barkPanelController.reposition(near: frame, on: self?.panel.screen ?? NSScreen.main ?? NSScreen())
                 // The Settings drop-by Easter egg: dragged onto the
                 // Settings window, he comments on the control room.
                 self?.checkSettingsDropBy()
