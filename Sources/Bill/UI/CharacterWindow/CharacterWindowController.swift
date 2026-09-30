@@ -161,11 +161,24 @@ final class CharacterWindowController: NSObject {
         characterEngine.stateMachine.onBarkVisibilityChanged = { [weak self] isShowing in
             self?.setPanelExpanded(isShowing)
         }
-        characterEngine.stateMachine.onBarkPanel = { [weak self] text, billFrame in
+        characterEngine.stateMachine.onBarkPanel = { [weak self] text, _ in
             guard let self,
                   let screen = self.panel.screen ?? NSScreen.main
             else { return }
-            self.barkPanelController.show(text: text, near: billFrame, on: screen)
+            // Bill's actual body frame on screen, NOT the character window
+            // frame — the window grows to 700pt for barking, so its top is
+            // ~480pt above his hat. Computing from the known rig geometry:
+            // body half-width ≈ 112pt, hat top ≈ 215pt above the window
+            // bottom (rig at y=110 + half body height 105), feet ≈ 5pt.
+            let scale = self.preferences.characterScale
+            let frame = self.panel.frame
+            let billBody = CGRect(
+                x: frame.midX - 112 * scale,
+                y: frame.minY + 5 * scale,
+                width: 224 * scale,
+                height: 215 * scale
+            )
+            self.barkPanelController.show(text: text, near: billBody, on: screen)
         }
         characterEngine.stateMachine.onBarkPanelReposition = { [weak self] billFrame in
             guard let self,
