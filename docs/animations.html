@@ -4,78 +4,36 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Every Animation — Bill Cipher for macOS</title>
-<meta name="description" content="All 66 hand-drawn pixel-art animation families — 380 sprites — from the Bill Cipher desktop companion, looping live.">
 <link rel="icon" type="image/png" href="assets/bill-hero.png">
-<link rel="stylesheet" href="">
 <style>
-  :root {
-    --yellow: #fac726;
-    --ink: #121217;
-    --ink-2: #1a1a22;
-    --paper: #faf9f5;
-    --muted: #9b9aa5;
-    --line: #2c2c36;
-  }
+  :root { --yellow: #fac726; --ink: #121217; --ink-2: #1a1a22; --paper: #faf9f5; --muted: #9b9aa5; --line: #2c2c36; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    background: var(--ink); color: var(--paper);
-    font: 16px/1.6 -apple-system, "SF Pro Text", "Helvetica Neue", sans-serif;
-    -webkit-font-smoothing: antialiased; overflow-x: hidden;
-  }
+  body { background: var(--ink); color: var(--paper); font: 16px/1.6 -apple-system, sans-serif; overflow-x: hidden; }
   a { color: var(--yellow); text-decoration: none; }
-  a:hover { text-decoration: underline; }
   .stars { position: fixed; inset: 0; z-index: 0; pointer-events: none;
-    background-image:
-      radial-gradient(1px 1px at 20% 30%, #fff8 50%, transparent 50%),
-      radial-gradient(1px 1px at 80% 20%, #fff5 50%, transparent 50%),
-      radial-gradient(1px 1px at 60% 70%, #fff6 50%, transparent 50%),
-      radial-gradient(1px 1px at 45% 12%, #fff3 50%, transparent 50%);
-    animation: twinkle 7s ease-in-out infinite;
-  }
+    background-image: radial-gradient(1px 1px at 20% 30%, #fff8 50%, transparent 50%), radial-gradient(1px 1px at 60% 70%, #fff6 50%, transparent 50%);
+    animation: twinkle 7s ease-in-out infinite; }
   @keyframes twinkle { 0%,100% { opacity: 1; } 50% { opacity: .4; } }
-  .walker {
-    position: fixed; left: 0; bottom: 5vh; z-index: 0; pointer-events: none;
-    height: 84px; image-rendering: pixelated; opacity: .09;
-    animation: walk-across 52s linear infinite;
-  }
-  @keyframes walk-across {
-    0% { transform: translateX(-160px) scaleX(1); }
-    49% { transform: translateX(100vw) scaleX(1); }
-    50% { transform: translateX(100vw) scaleX(-1); }
-    99% { transform: translateX(-160px) scaleX(-1); }
-    100% { transform: translateX(-160px) scaleX(1); }
-  }
+  .walker { position: fixed; left: 0; bottom: 5vh; z-index: 0; pointer-events: none; height: 84px; image-rendering: pixelated; opacity: .09; animation: walk-across 52s linear infinite; }
+  @keyframes walk-across { 0% { transform: translateX(-160px) scaleX(1); } 49% { transform: translateX(100vw) scaleX(1); } 50% { transform: translateX(100vw) scaleX(-1); } 99% { transform: translateX(-160px) scaleX(-1); } 100% { transform: translateX(-160px) scaleX(1); } }
   main { position: relative; z-index: 1; }
   .wrap { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
-
   header.hero { padding: 64px 0 28px; }
-  h1 { font-size: clamp(26px, 4vw, 40px); }
-  h1 .y { color: var(--yellow); }
+  h1 { font-size: clamp(26px, 4vw, 40px); } h1 .y { color: var(--yellow); }
   .tagline { margin-top: 10px; color: #cfcedd; max-width: 40em; }
   .crumb { margin-top: 14px; font-size: 13px; color: var(--muted); }
-
   .group-title { font-size: 19px; margin: 44px 0 4px; }
   .group-blurb { color: var(--muted); font-size: 13px; margin-bottom: 16px; }
-  .clips {
-    display: grid; gap: 16px;
-    grid-template-columns: repeat(4, 1fr);
-  }
-  .clip {
-    background: var(--ink-2); border: 1px solid var(--line);
-    padding: 14px; display: flex; flex-direction: column; gap: 6px;
-    animation: fadeUp .4s ease-out both;
-    transition: transform .18s ease, border-color .18s ease;
-  }
+  .clips { display: grid; gap: 16px; grid-template-columns: repeat(4, 1fr); }
+  .clip { background: var(--ink-2); border: 1px solid var(--line); padding: 14px; display: flex; flex-direction: column; gap: 6px; animation: fadeUp .4s ease-out both; transition: transform .18s ease, border-color .18s ease; }
   .clip:hover { transform: translateY(-3px); border-color: color-mix(in srgb, var(--yellow) 45%, var(--line)); }
   .clip img { image-rendering: pixelated; width: 100%; background: #0d0d12; border: 1px solid var(--line); }
-  .clip h3 { font: 600 13px "SF Mono", ui-monospace, monospace; color: var(--yellow); }
+  .clip h3 { font: 600 13px "SF Mono", monospace; color: var(--yellow); }
   .clip p { font-size: 12px; color: #b9b8c6; flex: 1; }
-  .clip .meta { font: 11px "SF Mono", ui-monospace, monospace; color: var(--muted); opacity: .7; }
+  .clip .meta { font: 11px "SF Mono", monospace; color: var(--muted); opacity: .7; }
   @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; } }
-
   footer { border-top: 1px solid var(--line); margin-top: 56px; padding: 32px 0 56px; color: var(--muted); font-size: 13px; }
   footer .sig { font-family: "SF Mono", monospace; color: var(--yellow); margin-top: 8px; }
-
   @media (max-width: 980px) { .clips { grid-template-columns: repeat(3, 1fr); } }
   @media (max-width: 720px) { .clips { grid-template-columns: repeat(2, 1fr); } }
   @media (max-width: 480px) { .clips { grid-template-columns: 1fr; } }
@@ -84,14 +42,12 @@
 <body>
 <div class="stars"></div>
 <img class="walker" src="assets/bill-walk.gif" alt="" aria-hidden="true">
-<main>
-  <div class="wrap">
-    <header class="hero">
-      <h1>Every <span class="y">animation</span> in the library.</h1>
-      <p class="tagline">All 66 hand-drawn pixel-art families — 380 sprites — from the Bill Cipher desktop companion, looping right here. Nothing on this page is a mockup: every GIF is rendered from the exact sprites the app plays.</p>
-      <p class="crumb"><a href="./">&larr; back to the front page</a> &middot; <a href="https://github.com/Jasonilization/bill-cipher-companion">GitHub</a> &middot; loops are pingpong — forward, then reverse.</p>
-    </header>
-
+<main><div class="wrap">
+  <header class="hero">
+    <h1>Every <span class="y">animation</span> in the library.</h1>
+    <p class="tagline">All 66 hand-drawn pixel-art families — 380 sprites — looping right here. Nothing on this page is a mockup.</p>
+    <p class="crumb"><a href="./">&larr; back to the front page</a> &middot; <a href="https://github.com/Jasonilization/bill-cipher-companion">GitHub</a></p>
+  </header>
       <h2 class="group-title">Core personality</h2>
       <p class="group-blurb">The everyday moods — the states Bill lives in between events.</p>
       <div class="clips">
@@ -223,7 +179,7 @@
         </div>
       </div>
       <h2 class="group-title">Rare events & the true form</h2>
-      <p class="group-blurb">Dramatic one-offs, held deliberately rare so they keep their punch.</p>
+      <p class="group-blurb">Dramatic one-offs, held deliberately rare.</p>
       <div class="clips">
         <div class="clip">
           <img src="assets/anims/powerSurge.gif" alt="A portal of rings widens, the ancient eye-and-bolt &quot;true form&quot; holds (ping-ponged once), then the portal closes back down." loading="lazy">
@@ -287,7 +243,7 @@
         </div>
       </div>
       <h2 class="group-title">One for every app in the dock</h2>
-      <p class="group-blurb">Distinct hand-drawn reactions for the dock's more recognizable citizens.</p>
+      <p class="group-blurb">Distinct hand-drawn reactions for the dock's recognizable citizens.</p>
       <div class="clips">
         <div class="clip">
           <img src="assets/anims/trickster.gif" alt="UNDERTALE — flex, then a chaotic scribble vortex, then a dazed emergence." loading="lazy">
@@ -504,12 +460,10 @@
           <span class="meta">10 frames &middot; pingpong loop</span>
         </div>
       </div>
-
-    <footer>
-      <p>Unofficial, non-commercial fan project. Bill Cipher and Gravity Falls are &copy; Disney; the pixel sprites here are original fan art made for this project.</p>
-      <p class="sig">REALITY IS AN ILLUSION, THE UNIVERSE IS A HOLOGRAM, BUY GOLD, BYE!</p>
-    </footer>
-  </div>
-</main>
+  <footer>
+    <p>Unofficial, non-commercial fan project. Bill Cipher and Gravity Falls are &copy; Disney. Sprites: <a href="https://www.deviantart.com/kiernenking">Kelly Nora</a> / <a href="https://www.deviantart.com/jayhyperstarx/art/Bill-Cipher---Sprite-Sheet-910916786">JayHyperstarX</a>.</p>
+    <p class="sig">REALITY IS AN ILLUSION, THE UNIVERSE IS A HOLOGRAM, BUY GOLD, BYE!</p>
+  </footer>
+</div></main>
 </body>
 </html>

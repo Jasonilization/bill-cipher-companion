@@ -7,323 +7,112 @@
 <meta name="description" content="Bill Cipher lives on your desktop. A native macOS companion that roams your screen, reacts to what you do, watches the weather, and chats through his own pixel speech bubbles.">
 <link rel="icon" type="image/png" href="assets/bill-hero.png">
 <style>
-  :root {
-    --yellow: #fac726;
-    --yellow-dark: #b8850a;
-    --ink: #121217;
-    --ink-2: #1a1a22;
-    --paper: #faf9f5;
-    --user-blue: #5c94dc;
-    --muted: #9b9aa5;
-    --line: #2c2c36;
-  }
+  :root { --yellow: #fac726; --ink: #121217; --ink-2: #1a1a22; --paper: #faf9f5; --user-blue: #5c94dc; --muted: #9b9aa5; --line: #2c2c36; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html { scroll-behavior: smooth; }
-  body {
-    background: var(--ink);
-    color: var(--paper);
-    font: 16px/1.65 -apple-system, "SF Pro Text", "Helvetica Neue", sans-serif;
-    -webkit-font-smoothing: antialiased;
-    overflow-x: hidden;
-  }
+  body { background: var(--ink); color: var(--paper); font: 16px/1.65 -apple-system, "SF Pro Text", sans-serif; -webkit-font-smoothing: antialiased; overflow-x: hidden; }
   .mono, code { font-family: "SF Mono", ui-monospace, Menlo, monospace; }
-  a { color: var(--yellow); text-decoration: none; }
-  a:hover { text-decoration: underline; }
-
+  a { color: var(--yellow); text-decoration: none; } a:hover { text-decoration: underline; }
   .stars { position: fixed; inset: 0; z-index: 0; pointer-events: none;
-    background-image:
-      radial-gradient(1px 1px at 20% 30%, #fff8 50%, transparent 50%),
-      radial-gradient(1px 1px at 80% 20%, #fff5 50%, transparent 50%),
-      radial-gradient(1px 1px at 60% 70%, #fff6 50%, transparent 50%),
-      radial-gradient(1px 1px at 35% 85%, #fff4 50%, transparent 50%),
-      radial-gradient(1px 1px at 90% 55%, #fff7 50%, transparent 50%),
-      radial-gradient(1px 1px at 10% 75%, #fff5 50%, transparent 50%),
-      radial-gradient(1px 1px at 45% 12%, #fff3 50%, transparent 50%);
-    animation: twinkle 7s ease-in-out infinite;
-  }
-  .stars.two { animation-delay: -3.5s; transform: scale(1.06) rotate(2deg); opacity: .7; }
-  @keyframes twinkle { 0%, 100% { opacity: 1; } 50% { opacity: .45; } }
-
-  /* One slow meteor every ~9s — pure decoration. */
-  .meteor {
-    position: fixed; z-index: 0; pointer-events: none;
-    width: 2px; height: 2px; border-radius: 50%;
-    background: #fff; box-shadow: 0 0 6px 2px #fff6;
-    top: 8%; left: -4%;
-    animation: shoot 9s linear infinite; opacity: 0;
-  }
-  .meteor.b { top: 22%; animation-delay: 5.5s; transform: scaleX(-1); }
-  @keyframes shoot {
-    0% { transform: translate(0, 0); opacity: 0; }
-    3% { opacity: .9; }
-    14% { transform: translate(45vw, 34vh); opacity: 0; }
-    100% { transform: translate(45vw, 34vh); opacity: 0; }
-  }
-
-  /* Faded Bill, walking around back there. Three depths, all behind the
-     content and all well below reading contrast — ambience, not noise.
-     The walk gif pingpongs, and the CSS flips him at each screen edge so
-     the return trip reads as walking back, not moonwalking. */
-  .walker {
-    position: fixed; left: 0; z-index: 0; pointer-events: none;
-    height: 96px; image-rendering: pixelated;
-    opacity: 0.13; filter: blur(0.4px);
-    animation: walk-across 44s linear infinite;
-    will-change: transform;
-  }
-  .walker.mid   { bottom: 4vh; height: 78px; opacity: 0.10; animation-duration: 58s; animation-delay: -26s; }
-  .walker.far   { bottom: 16vh; height: 58px; opacity: 0.06; animation-duration: 74s; animation-delay: -51s; filter: blur(0.8px); }
-  @keyframes walk-across {
-    0%   { transform: translateX(-160px) scaleX(1); }
-    49%  { transform: translateX(100vw) scaleX(1); }
-    50%  { transform: translateX(100vw) scaleX(-1); }
-    99%  { transform: translateX(-160px) scaleX(-1); }
-    100% { transform: translateX(-160px) scaleX(1); }
-  }
-
+    background-image: radial-gradient(1px 1px at 20% 30%, #fff8 50%, transparent 50%), radial-gradient(1px 1px at 80% 20%, #fff5 50%, transparent 50%), radial-gradient(1px 1px at 60% 70%, #fff6 50%, transparent 50%), radial-gradient(1px 1px at 35% 85%, #fff4 50%, transparent 50%), radial-gradient(1px 1px at 90% 55%, #fff7 50%, transparent 50%), radial-gradient(1px 1px at 10% 75%, #fff5 50%, transparent 50%);
+    animation: twinkle 7s ease-in-out infinite; }
+  @keyframes twinkle { 0%,100% { opacity: 1; } 50% { opacity: .4; } }
+  .walker { position: fixed; left: 0; bottom: 5vh; z-index: 0; pointer-events: none; height: 84px; image-rendering: pixelated; opacity: .09; animation: walk-across 52s linear infinite; }
+  @keyframes walk-across { 0% { transform: translateX(-160px) scaleX(1); } 49% { transform: translateX(100vw) scaleX(1); } 50% { transform: translateX(100vw) scaleX(-1); } 99% { transform: translateX(-160px) scaleX(-1); } 100% { transform: translateX(-160px) scaleX(1); } }
   main { position: relative; z-index: 1; }
   .wrap { max-width: 1000px; margin: 0 auto; padding: 0 24px; }
-
-  /* Slow rotating summoning circle behind the hero art. */
-  .ritual {
-    position: absolute; inset: -70px; margin: auto;
-    width: 340px; height: 340px; border-radius: 50%;
-    border: 2px dashed var(--yellow-dark);
-    opacity: .5; pointer-events: none;
-    animation: spin 36s linear infinite;
-  }
-  .ritual::before {
-    content: ""; position: absolute; inset: 26px; border-radius: 50%;
-    border: 1px solid var(--yellow-dark);
-    animation: spin 24s linear infinite reverse;
-  }
-  .ritual::after {
-    content: ""; position: absolute; inset: -12px; border-radius: 50%;
-    border: 1px dotted color-mix(in srgb, var(--yellow) 30%, transparent);
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
-
-  .pixel-frame {
-    border: 2px solid var(--ink);
-    outline: 2px solid var(--yellow);
-    background: var(--paper);
-    color: var(--ink);
-  }
-
   .hero { padding: 96px 0 72px; display: grid; grid-template-columns: 1.25fr 1fr; gap: 48px; align-items: center; }
-  h1 { font-size: clamp(30px, 4.5vw, 46px); line-height: 1.15; letter-spacing: -0.5px; }
-  h1 .y { color: var(--yellow); }
+  h1 { font-size: clamp(30px, 4.5vw, 46px); line-height: 1.15; } h1 .y { color: var(--yellow); }
   .tagline { margin-top: 14px; font-size: 18px; color: #cfcedd; max-width: 34em; }
   .ctas { margin-top: 28px; display: flex; gap: 12px; flex-wrap: wrap; }
   .btn { display: inline-block; padding: 12px 20px; font-weight: 700; font-size: 15px; }
-  .btn-y { background: var(--yellow); color: var(--ink); border: 2px solid var(--ink); outline: 2px solid var(--yellow);
-    animation: pulse 3.2s ease-in-out infinite; }
-  .btn-y:hover { background: #ffd84a; text-decoration: none; }
-  @keyframes pulse { 0%,100% { box-shadow: 0 0 0 0 #fac72655; } 50% { box-shadow: 0 0 18px 4px #fac72633; } }
+  .btn-y { background: var(--yellow); color: var(--ink); border: 2px solid var(--ink); outline: 2px solid var(--yellow); }
   .btn-ghost { border: 2px solid var(--line); color: var(--paper); }
   .btn-ghost:hover { border-color: var(--yellow); text-decoration: none; }
   .badges { margin-top: 22px; display: flex; gap: 8px; flex-wrap: wrap; }
   .badge { font-size: 12px; padding: 4px 10px; border: 1px solid var(--line); color: var(--muted); }
   .hero-art { text-align: center; }
   .hero-art img { image-rendering: pixelated; }
-  .hero-art .gif { width: 236px; }
-  .hero-art .hero { width: 300px; margin-top: -18px; }
-  .float { animation: bob 2.1s ease-in-out infinite; }
-  @keyframes bob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
-
   section { padding: 64px 0; border-top: 1px solid var(--line); }
-  h2 { font-size: 24px; margin-bottom: 28px; }
-  h2 .y { color: var(--yellow); }
+  h2 { font-size: 24px; margin-bottom: 28px; } h2 .y { color: var(--yellow); }
   .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
-  .card { background: var(--ink-2); border: 1px solid var(--line); padding: 22px;
-    animation: fadeUp .5s ease-out both; transition: transform .18s ease, border-color .18s ease; }
+  .card { background: var(--ink-2); border: 1px solid var(--line); padding: 22px; animation: fadeUp .5s ease-out both; transition: transform .18s ease, border-color .18s ease; }
   .card:hover { transform: translateY(-3px); border-color: color-mix(in srgb, var(--yellow) 45%, var(--line)); }
-  .card:nth-child(2) { animation-delay: .06s; } .card:nth-child(3) { animation-delay: .12s; }
-  .card:nth-child(4) { animation-delay: .18s; } .card:nth-child(5) { animation-delay: .24s; }
-  .card:nth-child(6) { animation-delay: .3s; }
-  @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; } }
   .card img { image-rendering: pixelated; float: right; margin: -4px -6px 6px 10px; }
   .card h3 { font-size: 15px; color: var(--yellow); margin-bottom: 8px; }
   .card p { font-size: 14px; color: #b9b8c6; }
-
-  .chat-demo { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: center; }
-  .bubbles { display: flex; flex-direction: column; gap: 14px; max-width: 420px; }
-  .bubble { padding: 12px 16px; font-size: 14px; line-height: 1.5; position: relative; max-width: 85%; }
-  .bubble .who { font-size: 10px; letter-spacing: 1px; text-transform: uppercase; opacity: .6; display: block; margin-bottom: 4px; }
-  .from-bill { align-self: flex-start; }
-  .from-user { align-self: flex-end; outline-color: var(--user-blue); }
-  .bubble::after { content:""; position: absolute; bottom: -8px; width: 12px; height: 8px; background: inherit; }
-  .from-bill::after { left: 18px; background: var(--paper); border-right: 2px solid var(--ink); }
-  .from-user::after { right: 18px; background: var(--paper); border-left: 2px solid var(--ink); }
-  .caret::after { content: "▌"; color: var(--ink); animation: blink 1s steps(1) infinite; }
-  @keyframes blink { 50% { opacity: 0; } }
-  .chat-copy p { color: #b9b8c6; margin-bottom: 12px; }
-  .chat-copy .mono { color: var(--yellow); font-size: 13px; }
-
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; } }
   .steps { counter-reset: step; display: grid; gap: 14px; max-width: 640px; }
   .step { display: flex; gap: 14px; align-items: baseline; color: #cfcedd; }
-  .step::before { counter-increment: step; content: counter(step); font-family: "SF Mono", monospace; color: var(--ink); background: var(--yellow); border: 2px solid var(--ink); min-width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; flex-shrink: 0; }
-  .step b { color: var(--paper); }
-  code { background: var(--ink-2); border: 1px solid var(--line); padding: 2px 7px; font-size: 13px; color: var(--yellow); }
-
-  .codeblock { position: relative; max-width: 640px; }
-  pre { background: var(--ink-2); border: 1px solid var(--line); padding: 16px 18px; overflow-x: auto; margin: 0; }
+  .step::before { counter-increment: step; content: counter(step); font: 700 13px "SF Mono", monospace; color: var(--ink); background: var(--yellow); border: 2px solid var(--ink); min-width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center; }
+  pre { background: var(--ink-2); border: 1px solid var(--line); padding: 16px 18px; overflow-x: auto; max-width: 640px; }
   pre code { background: none; border: none; padding: 0; color: #d6d5e0; }
-  .copy-btn {
-    position: absolute; top: 10px; right: 10px;
-    background: var(--ink); color: var(--muted);
-    border: 1px solid var(--line); padding: 4px 10px;
-    font: 11px "SF Mono", ui-monospace, monospace; cursor: pointer;
-  }
-  .copy-btn:hover { color: var(--yellow); border-color: var(--yellow); }
-  .copy-btn.done { color: #7bd88f; border-color: #7bd88f; }
-
   .plat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
-  .plat { border: 1px solid var(--line); padding: 20px; background: var(--ink-2); position: relative; overflow: hidden; }
-  .plat .os { font-family: "SF Mono", monospace; font-weight: 700; font-size: 15px; display: flex; align-items: center; gap: 8px; }
+  .plat { border: 1px solid var(--line); padding: 20px; background: var(--ink-2); }
+  .plat .os { font: 700 15px "SF Mono", monospace; }
   .plat p { font-size: 13px; color: var(--muted); margin-top: 6px; }
   .ok { color: #7bd88f; } .soon { color: var(--yellow); }
-  .ribbon { position: absolute; top: 12px; right: -34px; transform: rotate(38deg); background: var(--yellow); color: var(--ink); font: 700 10px "SF Mono", monospace; letter-spacing: 1px; padding: 3px 36px; border: 1px solid var(--ink); }
-
   footer { border-top: 1px solid var(--line); padding: 40px 0 64px; color: var(--muted); font-size: 13px; }
   footer .sig { font-family: "SF Mono", monospace; color: var(--yellow); margin-top: 10px; }
-
-  @media (max-width: 800px) {
-    .hero { grid-template-columns: 1fr; padding-top: 64px; }
-    .hero-art { order: -1; }
-    .grid, .plat-grid { grid-template-columns: 1fr; }
-    .chat-demo { grid-template-columns: 1fr; }
-  }
+  @media (max-width: 800px) { .hero { grid-template-columns: 1fr; padding-top: 64px; } .hero-art { order: -1; } .grid, .plat-grid { grid-template-columns: 1fr; } }
 </style>
 </head>
 <body>
 <div class="stars"></div>
-<div class="stars two"></div>
-<div class="meteor"></div>
-<div class="meteor b"></div>
 <img class="walker" src="assets/bill-walk.gif" alt="" aria-hidden="true">
-<img class="walker mid" src="assets/bill-walk.gif" alt="" aria-hidden="true">
-<img class="walker far" src="assets/bill-walk.gif" alt="" aria-hidden="true">
-<main>
-  <div class="wrap">
-
-    <div class="hero">
-      <div>
-        <h1>Bill Cipher lives <span class="y">on your desktop.</span></h1>
-        <p class="tagline">A hand-drawn 380-sprite pixel-art companion — native Swift, AppKit + SpriteKit — who roams your screen, studies your apps, watches the weather, nags your habits, and chats back through his own speech bubbles.</p>
-        <div class="ctas">
-          <a class="btn btn-y" href="https://github.com/Jasonilization/bill-cipher-companion/releases/latest">Download the DMG</a>
-          <a class="btn btn-ghost" href="animations.html">Every Animation</a>
-          <a class="btn btn-ghost" href="https://github.com/Jasonilization/bill-cipher-companion">View on GitHub</a>
-        </div>
-        <div class="badges">
-          <span class="badge">macOS 14+</span>
-          <span class="badge">MIT</span>
-        </div>
+<main><div class="wrap">
+  <div class="hero">
+    <div>
+      <h1>Bill Cipher lives <span class="y">on your desktop.</span></h1>
+      <p class="tagline">A hand-drawn 380-sprite pixel-art companion — native Swift, AppKit + SpriteKit — who roams your screen, studies your apps, watches the sky, nags your habits, and chats back through his own speech bubbles.</p>
+      <div class="ctas">
+        <a class="btn btn-y" href="https://github.com/Jasonilization/bill-cipher-companion/releases/latest">Download the DMG</a>
+        <a class="btn btn-ghost" href="animations.html">Every Animation</a>
+        <a class="btn btn-ghost" href="https://github.com/Jasonilization/bill-cipher-companion">View on GitHub</a>
       </div>
-      <div class="hero-art">
-        <div class="ritual" aria-hidden="true"></div>
-        <img class="float hero" src="assets/bill-hero.png" alt="Pixel-art Bill Cipher" width="300">
-        <img class="gif" src="assets/bill-demo.gif" alt="Bill summoning the Zodiac wheel" width="236">
-      </div>
+      <div class="badges"><span class="badge">macOS 14+</span><span class="badge">MIT</span></div>
     </div>
-
-    <section id="features">
-      <h2>What he <span class="y">does</span></h2>
-      <div class="grid">
-        <div class="card"><h3>Studies your apps</h3><p>On first launch, Bill offers to use his ChatGPT connection to write himself a morning, midday, afternoon and night line for every app on your Mac — plus switcheroo quips for your most-used pairs. Generated on your machine, in his voice, the moment you're ready.</p></div>
-        <div class="card"><img src="assets/bill-conjure.gif" width="72" alt="Bill conjuring"><h3>Reads the sky</h3><p>A keyless Open-Meteo nowcast, refreshed every five minutes off live radar. When it starts raining exactly outside, he tells you while it's still raining — and today's weather rides into his chat context.</p></div>
-        <div class="card"><h3>Roams everything</h3><p>Walks the floor, climbs your windows, perches on them, falls with gravity — and gets shoved aside when you move windows under him. His blast animations keep him anchored where he stands.</p></div>
-        <div class="card"><h3>Presses buttons</h3><p>Very occasionally he leaps onto a background window's yellow minimize light, plays a satisfied finger-snap, and actually minimizes it — then falls through where its top edge used to be. Never the window you're in; toggleable.</p></div>
-        <div class="card"><img src="assets/bill-celebrate.gif" width="66" alt="Bill celebrating"><h3>Talks back</h3><p>Right-click → Talk, a global hotkey, or the menu bar. Conversations scroll — never clip — land pinned to the newest message, take Shift+Return for paragraphs, and always close with Esc.</p></div>
-        <div class="card"><h3>Has moods</h3><p>Idle bobbing, thinking, talking, celebrating, meltdowns, shadow hands. That's six of <a href="animations.html">66 hand-drawn animation families</a> — poke him too much and find out which one you get. 30fps when active, a calm 12fps when ambient.</p></div>
-      </div>
-    </section>
-
-    <section id="chat">
-      <div class="chat-demo">
-        <div>
-          <h2>Talk to <span class="y">Bill</span></h2>
-          <div class="chat-copy">
-            <p>Conversations stack as individually-dismissable speech bubbles that grow upward beside Bill — his on the left in yellow, yours on the right in blue. Turn your volume up and he'll bring up the party at the Shack; ask him anything and the reply comes from a real ChatGPT session with your recent activity and today's weather quietly folded in.</p>
-            <p>Since v1.0.0 the chat window scrolls once it outgrows the screen instead of clipping, can never be placed partially off-screen, accepts <span class="mono">Shift+Return</span> for multi-line messages, focuses on click, and closes with <span class="mono">Esc</span>.</p>
-          </div>
-        </div>
-        <div class="bubbles" aria-hidden="true">
-          <div class="bubble pixel-frame from-bill"><span class="who">Bill</span>WELL, WELL. THREE HOURS IN XCODE AND YOUR BUILD STILL FAILS. THE AUTHOR KEPT THREE JOURNALS AND STILL SHIPPED.</div>
-          <div class="bubble pixel-frame from-user"><span class="who">You</span>help me fix it? deal?</div>
-          <div class="bubble pixel-frame from-bill"><span class="who">Bill</span>A DEAL! NOW YOU'RE SPEAKING MY LANGUAGE. SHAKE MY HAND — AND TYPE <b>Shift+Return</b> IF YOUR PLEA NEEDS PARAGRAPHS<span class="caret"></span></div>
-        </div>
-      </div>
-    </section>
-
-    <section id="install">
-      <h2>Summon <span class="y">him</span></h2>
-      <div class="steps">
-        <div class="step"><span>Download <a href="https://github.com/Jasonilization/bill-cipher-companion/releases/latest"><b>Bill-macOS.dmg</b></a> from the latest release.</span></div>
-        <div class="step"><span>Open the DMG. Drag <b>Bill</b> onto the <b>Applications</b> shortcut right beside him. (A plain <code>.zip</code> is on the release page too, if you prefer.)</span></div>
-        <div class="step"><span>First launch: <b>right-click → Open</b> — he's ad-hoc signed, not notarized. Trust no one except this triangle.</span></div>
-        <div class="step"><span>Check the menu bar. He's already watching your desktop — and shortly he'll offer to write himself lines for your apps.</span></div>
-      </div>
-      <h2 style="margin-top:56px">Or build from <span class="y">source</span></h2>
-      <div class="codeblock">
-        <button class="copy-btn" data-copy="src1" type="button">copy</button>
-        <pre id="src1"><code>git clone https://github.com/Jasonilization/bill-cipher-companion.git
-cd bill-cipher-companion
-swift build                  # debug
-./Scripts/bundle.sh release  # -> Bill.app, ad-hoc signed</code></pre>
-      </div>
-    </section>
-
-    <section id="platforms">
-      <h2>Platform<span class="y">s</span></h2>
-      <div class="plat-grid">
-        <div class="plat">
-          <div class="os"><span class="ok">&#10003;</span> macOS 14+</div>
-          <p>Native and first-class. On the newest systems he gets Liquid Glass and the modern WebKit engine; on older Sonoma+ Macs he falls back to classic WebKit and material chrome — same Bill, same tricks, no feature left behind. Download it right now.</p>
-        </div>
-        <div class="plat">
-          <span class="ribbon">SOON</span>
-          <div class="os"><span class="soon">◐</span> Windows</div>
-          <p>Coming soon. The portal is being built — summoning circles for other dimensions take a little time to draw correctly.</p>
-        </div>
-        <div class="plat">
-          <span class="ribbon">SOON</span>
-          <div class="os"><span class="soon">◐</span> Linux</div>
-          <p>Coming soon. Even the bunker under the Shack took Ford a while — good things emerge from below eventually.</p>
-        </div>
-      </div>
-    </section>
-
-    <footer>
-      <p>Unofficial, non-commercial fan project. Bill Cipher and Gravity Falls are &copy; Disney — not affiliated with or endorsed by them. Code is <a href="https://github.com/Jasonilization/bill-cipher-companion/blob/main/LICENSE">MIT</a>; the pixel sprites are original fan art made for this project.</p>
-      <p class="sig">REALITY IS AN ILLUSION, THE UNIVERSE IS A HOLOGRAM, BUY GOLD, BYE!</p>
-    </footer>
-
+    <div class="hero-art">
+      <img src="assets/bill-hero.png" alt="Pixel-art Bill Cipher" width="300">
+      <img src="assets/bill-demo.gif" alt="Bill summoning the Zodiac wheel" width="236">
+    </div>
   </div>
-</main>
-<script>
-  // Copy buttons for the code blocks — no dependencies, one tiny handler.
-  document.querySelectorAll(".copy-btn").forEach(function (btn) {
-    btn.addEventListener("click", function () {
-      var pre = document.getElementById(btn.dataset.copy);
-      if (!pre) return;
-      var text = pre.innerText;
-      var done = function () {
-        btn.textContent = "copied!";
-        btn.classList.add("done");
-        setTimeout(function () { btn.textContent = "copy"; btn.classList.remove("done"); }, 1600);
-      };
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(text).then(done);
-      } else {
-        var ta = document.createElement("textarea");
-        ta.value = text; document.body.appendChild(ta); ta.select();
-        try { document.execCommand("copy"); done(); } catch (e) {}
-        document.body.removeChild(ta);
-      }
-    });
-  });
-</script>
+  <section id="features">
+    <h2>What he <span class="y">does</span></h2>
+    <div class="grid">
+      <div class="card"><h3>Studies your apps</h3><p>On first launch, Bill offers to use his ChatGPT connection to write himself a morning, midday, afternoon and night line for every app on your Mac — plus switcheroo quips for your most-used pairs. Generated on your machine, in his voice, the moment you're ready.</p></div>
+      <div class="card"><img src="assets/bill-conjure.gif" width="72" alt="Bill conjuring"><h3>Reads the sky</h3><p>A keyless Open-Meteo nowcast, refreshed every five minutes off live radar. When it starts raining exactly outside, he tells you while it's still raining.</p></div>
+      <div class="card"><h3>Roams everything</h3><p>Walks the floor, climbs your windows, perches on them, falls with gravity — and gets shoved aside when you move windows under him.</p></div>
+      <div class="card"><h3>Presses buttons</h3><p>Very occasionally he leaps onto a background window's yellow minimize light and actually minimizes it — then falls through where its top edge used to be.</p></div>
+      <div class="card"><img src="assets/bill-celebrate.gif" width="66" alt="Bill celebrating"><h3>Talks back</h3><p>Right-click → Talk. Fixed-size pixel chat window, scrollable messages, dot-matrix header — nothing ever gets clipped.</p></div>
+      <div class="card"><h3>Has moods</h3><p>Idle bobbing, thinking, talking, celebrating, meltdowns, shadow hands — all <a href="animations.html">66+ animation families</a> from idle, tiered by rarity. Poke him too much and find out.</p></div>
+    </div>
+  </section>
+  <section id="install"><h2>Summon <span class="y">him</span></h2>
+    <div class="steps">
+      <div class="step"><span>Download <a href="https://github.com/Jasonilization/bill-cipher-companion/releases/latest"><b>Bill-macOS.dmg</b></a> from the latest release.</span></div>
+      <div class="step"><span>Open the DMG. Drag <b>Bill</b> onto the <b>Applications</b> shortcut right beside him.</span></div>
+      <div class="step"><span>First launch: <b>right-click → Open</b> — he's ad-hoc signed, not notarized. Trust no one except this triangle.</span></div>
+      <div class="step"><span>Check the menu bar. He's already watching your desktop — and shortly he'll offer to write himself lines for your apps.</span></div>
+    </div>
+    <h2 style="margin-top:56px">Build from <span class="y">source</span></h2>
+    <pre><code>git clone https://github.com/Jasonilization/bill-cipher-companion.git
+cd bill-cipher-companion
+swift build
+./Scripts/bundle.sh release</code></pre>
+  </section>
+  <section id="platforms"><h2>Platform<span class="y">s</span></h2>
+    <div class="plat-grid">
+      <div class="plat"><div class="os"><span class="ok">&#10003;</span> macOS 14+</div><p>Native and first-class. Download it right now.</p></div>
+      <div class="plat"><div class="os"><span class="soon">◐</span> Windows</div><p>Coming soon. The portal is being built.</p></div>
+      <div class="plat"><div class="os"><span class="soon">◐</span> Linux</div><p>Coming soon. Even the bunker took Ford a while.</p></div>
+    </div>
+  </section>
+  <footer>
+    <p>Unofficial, non-commercial fan project. Bill Cipher and Gravity Falls are &copy; Disney — not affiliated with or endorsed by them. Code is <a href="https://github.com/Jasonilization/bill-cipher-companion/blob/main/LICENSE">MIT</a>.</p>
+    <p>Sprites: original artwork by <a href="https://www.deviantart.com/kiernenking">Kelly Nora (@kiernenking)</a>; sprite sheet by <a href="https://www.deviantart.com/jayhyperstarx/art/Bill-Cipher---Sprite-Sheet-910916786">JayHyperstarX</a> (DeviantArt).</p>
+    <p class="sig">REALITY IS AN ILLUSION, THE UNIVERSE IS A HOLOGRAM, BUY GOLD, BYE!</p>
+  </footer>
+</div></main>
 </body>
 </html>
