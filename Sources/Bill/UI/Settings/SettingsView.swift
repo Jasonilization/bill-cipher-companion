@@ -18,6 +18,9 @@ struct SettingsView: View {
     var onTestWeather: (() -> Void)?
     /// Set by `AppDelegate` — opens the quotes manager window.
     var onOpenQuotesManager: (() -> Void)?
+    /// Set by `AppDelegate` — fires a reaction trigger live (keys +
+    /// animation) so the user can test each from Settings.
+    var onTestTrigger: ((_ keys: [String], _ animationKey: String) -> Void)?
 
     /// The dialogue keys offered as animation-override triggers — the ones
     /// with real pool content behind them. Deliberately curated: the full
@@ -52,7 +55,7 @@ struct SettingsView: View {
 
     var body: some View {
         Form {
-            Section("Appearance") {
+            Section("Appearance — how Bill looks") {
                 VStack(alignment: .leading, spacing: 4) {
                     HStack {
                         Text("Bill's size")
@@ -62,6 +65,15 @@ struct SettingsView: View {
                             .monospacedDigit()
                             .frame(width: 46, alignment: .trailing)
                     }
+                }
+                // Live preview: the real bark-bubble renderer drawing with the
+                // current accent, text scale, rounded corners and outlined
+                // tail — exactly what will pop over Bill's head.
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Bubble preview")
+                        .font(.system(size: 12, weight: .semibold))
+                    bubblePreview
+                        .frame(maxWidth: .infinity)
                 }
                 HStack {
                     Text("Bubble colour")
@@ -102,7 +114,7 @@ struct SettingsView: View {
                 }
             }
 
-            Section("Behaviour") {
+            Section("Behaviour — what Bill does") {
                 Toggle("Bill roams the screen", isOn: $preferences.isRoamingEnabled)
                 Toggle("Minimize-button mischief", isOn: $preferences.isMinimizeMischiefEnabled)
                 Text("Occasionally leaps onto a background window's yellow button and actually minimizes it, then falls. Never touches the window you're working in.")
@@ -141,7 +153,7 @@ struct SettingsView: View {
                 }
             }
 
-            Section("Animation") {
+            Section("Animation — pacing & per-trigger overrides") {
                 VStack(alignment: .leading, spacing: 4) {
                     HStack {
                         Text("How long until the next idle animation")
@@ -165,7 +177,7 @@ struct SettingsView: View {
                 }
             }
 
-            Section("Weather") {
+            Section("Weather — Bill comments on the sky") {
                 Toggle("Bill talks about the weather", isOn: $preferences.isWeatherEnabled)
                 Stepper(
                     preferences.weatherAnnounceMinutes == 0
@@ -180,7 +192,7 @@ struct SettingsView: View {
                 Button("Test weather now") { onTestWeather?() }
             }
 
-            Section("Prompts") {
+            Section("Prompts — what ChatGPT writes for Bill") {
                 Button("Open the Quotes Manager…") { onOpenQuotesManager?() }
                 Text("Every pool, every line, where each came from — authored (A), ChatGPT-generated (G), or personalized to your apps (P) — plus one-click refresh and clear logs.")
                     .font(.caption).foregroundStyle(.secondary)
@@ -203,6 +215,56 @@ struct SettingsView: View {
                 }
             }
 
+            Section("Per-app — assign reactions to your apps") {
+                Text("Assign a signature reaction to any app Bill has seen you open. Automatic = his usual pools.")
+                    .font(.caption).foregroundStyle(.secondary)
+                let apps = memoryStore.knownApps()
+                if apps.isEmpty {
+                    Text("Open a few apps and Bill will list them here.")
+                        .font(.system(size: 12))
+                        .foregroundStyle(.secondary)
+                } else {
+                    ForEach(apps.prefix(24), id: \.bundleID) { app in
+                        Picker("\(app.name) (\(app.opens)×)", selection: perAppBinding(for: app.bundleID)) {
+                            Text("Automatic").tag("")
+                            ForEach(BillState.allCases, id: \.self) { state in
+                                Text(state.rawValue).tag(state.rawValue)
+                            }
+                        }
+                    }
+                }
+            }
+
+            Section("Test Triggers — fire any reaction live") {
+                Text("Press any trigger to see Bill's reaction live, right on the desktop.")
+                    .font(.caption).foregroundStyle(.secondary)
+                HStack {
+                    Button("Low Battery") { onTestTrigger?(["batteryLow"], "batteryLow") }
+                    Button("Wi-Fi Drops") { onTestTrigger?(["networkLost"], "networkLost") }
+                    Button("Wi-Fi Back") { onTestTrigger?(["networkRestored"], "networkRestored") }
+                }
+                HStack {
+                    Button("Volume Up") { onTestTrigger?(["volume.100"], "volume.100") }
+                    Button("Volume Mute") { onTestTrigger?(["volume.mute"], "volume.mute") }
+                    Button("Weather") { onTestWeather?() }
+                }
+                HStack {
+                    Button("Poke") { onTestTrigger?(["poked"], "poked") }
+                    Button("Chat") { onTestTrigger?(["chatFailed"], "chatFailed") }
+                    Button("Still Thinking") { onTestTrigger?(["stillThinking"], "stillThinking") }
+                }
+                HStack {
+                    Button("Incognito") { onTestTrigger?(["incognito.search"], "incognito.search") }
+                    Button("Deal") { onTestTrigger?(["deal.offer"], "deal.offer") }
+                    Button("Cipher") { onTestTrigger?(["cipher.message"], "cipher.message") }
+                }
+                HStack {
+                    Button("User Returns") { onTestTrigger?(["userReturned"], "userReturned") }
+                    Button("Morning") { onTestTrigger?(["clock.morning"], "clock.morning") }
+                    Button("Night") { onTestTrigger?(["clock.night"], "clock.night") }
+                }
+            }
+
             Section("Reactions") {
                 ForEach(AppCategory.allCases, id: \.self) { category in
                     Toggle(category.displayName, isOn: preferences.binding(for: category))
@@ -218,12 +280,48 @@ struct SettingsView: View {
                     .foregroundStyle(.secondary)
                 Button("Reset memory", action: onResetMemory)
             }
+
+            Section("Credits") {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Bill Cipher sprite artwork")
+                        .font(.system(size: 12, weight: .semibold))
+                    Text("Original artwork: Kelly Nora (@kiernenking)")
+                    Text("Sprite sheet: JayHyperstarX — “Bill Cipher – Sprite Sheet” (DeviantArt)")
+                    if let url = URL(string: "https://www.deviantart.com/jayhyperstarx/art/Bill-Cipher---Sprite-Sheet-910916786") {
+                        Link("deviantart.com/jayhyperstarx/art/Bill-Cipher---Sprite-Sheet-910916786", destination: url)
+                            .font(.system(size: 11))
+                    }
+                    Text("Unofficial, non-commercial fan project. Bill Cipher and Gravity Falls are © Disney. Not affiliated with or endorsed by Disney. Code is MIT.")
+                        .font(.system(size: 11))
+                        .foregroundStyle(.secondary)
+                        .padding(.top, 2)
+                }
+                .font(.system(size: 11))
+                .textSelection(.enabled)
+            }
         }
         .formStyle(.grouped)
-        .frame(width: 480, height: 720)
+        .frame(width: 720, height: 640)
     }
 
     /// `""` (Automatic) when unset, so the picker reads honestly.
+    /// The live bark-bubble preview: the real renderer, the real accent,
+    /// the real text-size knob — regenerated on every Settings change
+    /// because the whole view re-renders with `preferences`.
+    private var bubblePreview: some View {
+        let image = BarkBubble.makePreviewImage(text: "HELLO, PINE TREE.")
+        let scale = BarkBubble.effectivePixelScale
+        return Image(nsImage: image)
+            .interpolation(.none)
+            .resizable()
+            .frame(
+                width: image.size.width * scale,
+                height: image.size.height * scale
+            )
+            .frame(maxWidth: .infinity)
+            .alignmentGuide(.leading) { d in d[.leading] }
+    }
+
     private func animationBinding(for key: String) -> Binding<String> {
         Binding(
             get: { preferences.customAnimationMap[key] ?? "" },
@@ -235,6 +333,23 @@ struct SettingsView: View {
                     map[key] = rawValue
                 }
                 preferences.customAnimationMap = map
+            }
+        )
+    }
+
+    /// Same shape as `animationBinding`, keyed by bundle ID for the
+    /// per-app section.
+    private func perAppBinding(for bundleID: String) -> Binding<String> {
+        Binding(
+            get: { preferences.perAppAnimations[bundleID] ?? "" },
+            set: { rawValue in
+                var map = preferences.perAppAnimations
+                if rawValue.isEmpty {
+                    map.removeValue(forKey: bundleID)
+                } else {
+                    map[bundleID] = rawValue
+                }
+                preferences.perAppAnimations = map
             }
         )
     }

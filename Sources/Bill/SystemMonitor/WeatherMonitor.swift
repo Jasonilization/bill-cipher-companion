@@ -138,6 +138,11 @@ final class WeatherMonitor {
     /// Settings/menu "Test weather now": force a pull and announce the
     /// result loudly whatever it says, bypassing the enable gate the way
     /// an explicit user action should.
+    /// Fires when a fetch *fails* — the test button surfaces this
+    /// instead of silence, so "not really working" becomes a diagnosable
+    /// message on screen.
+    var onFetchError: ((String) -> Void)?
+
     func testNow() {
         isTestForced = true
         fetch()
@@ -148,7 +153,16 @@ final class WeatherMonitor {
         let enabled = isEnabledProvider?() ?? true
         guard forced || enabled else { return }
         Task { [weak self] in
-            guard let snapshot = await Self.pull() else { return }
+            guard let snapshot = await Self.pull() else {
+                // The test path tells the user what went wrong — silence
+                // was the "weather not really working with test button"
+                // report.
+                guard let self else { return }
+                self.isTestForced = false
+                let message = "THE WEATHER PULL FAILED. THE SKY ISN'T RESPONDING. CHECK YOUR CONNECTION — OR YOUR REALITY."
+                self.onFetchError?(message)
+                return
+            }
             guard let self else { return }
             self.latest = snapshot
             self.onSnapshot?(snapshot)

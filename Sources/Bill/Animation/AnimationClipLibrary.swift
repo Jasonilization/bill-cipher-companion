@@ -97,6 +97,9 @@ enum AnimationClipLibrary {
         case .powerSurge: return powerSurge
         case .zodiacVision: return zodiacVision
         case .summonRitual: return summonRitual
+        case .zodiacRage: return zodiacRage
+        case .prismDance: return prismDance
+        case .zodiacCrimson: return zodiacCrimson
         case .ghostPale: return ghostPale
         case .glitchForm: return glitchForm
         case .shadowHands: return shadowHands
@@ -361,6 +364,33 @@ enum AnimationClipLibrary {
     static let summonRitual = AnimationClip(
         textures: Array(repeating: BillSpriteCatalog.summonRitual[0], count: 6) + Array(BillSpriteCatalog.summonRitual.dropFirst()),
         frameDuration: 0.25,
+        loop: .once
+    )
+
+    // MARK: - Second-pass sheet finds (the red-zodiac complex and friends)
+
+    /// The red-zodiac complex directly below the normal zodiac row — a
+    /// ten-frame escalation from a sparse ring-form to the full red
+    /// geometry. Deliberately dramatic and rare.
+    static let zodiacRage = AnimationClip(
+        textures: holdLast(BillSpriteCatalog.zodiacRage, extra: 4),
+        frameDuration: 0.18,
+        loop: .once
+    )
+
+    /// The small multicolour prism/shimmer beat from the sheet's
+    /// bottom-right — a compact little light show between bigger moods.
+    static let prismDance = AnimationClip(
+        textures: holdLast(BillSpriteCatalog.prismDance, extra: 3),
+        frameDuration: 0.16,
+        loop: .once
+    )
+
+    /// The separate red zodiac from the sheet's bottom-right corner —
+    /// six frames of the crimson ring, the Rift made geometry.
+    static let zodiacCrimson = AnimationClip(
+        textures: holdLast(BillSpriteCatalog.zodiacCrimson, extra: 4),
+        frameDuration: 0.2,
         loop: .once
     )
 

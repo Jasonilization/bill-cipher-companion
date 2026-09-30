@@ -78,6 +78,9 @@ enum DialogueKey: String, CaseIterable, Codable, Sendable {
     case summoning
     case tinkering
     case transferring
+    case zodiacRage
+    case prismDance
+    case zodiacCrimson
     case trickster
     case tumbling
     case userReturned

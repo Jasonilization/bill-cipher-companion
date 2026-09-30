@@ -714,6 +714,15 @@ final class RoamingController {
     private func driveStep() {
         switch step {
         case .approach(let x, let running):
+            // The stationary rule: a reaction clip that fires mid-beat must
+            // pause the walk — Bill only moves while the walk (or a roam
+            // motion) is actually playing. The sim freezes in place for as
+            // long as the animation holds, then the planner resumes.
+            let current = characterEngine.stateMachine.currentState
+            guard current == .idle || current.isRoamingMotion else {
+                sim.stop()
+                return
+            }
             let delta = x - sim.feet.x
             if abs(delta) <= Self.arrivalTolerance || !sim.isGrounded {
                 if sim.isGrounded {

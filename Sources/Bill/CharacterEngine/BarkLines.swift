@@ -671,6 +671,24 @@ enum BarkLines {
         "Every good ritual opens with a dramatic pause. For ambiance. Mostly menace.",
     ]
 
+    static let zodiacRage = [
+        "THE ZODIAC HAS A TEMPER. FEW HUMANS EVER SEE IT. FEWER SURVIVE SEEING IT.",
+        "THE WHEEL TURNS RED WHEN I'M IN CHARGE OF IT. FORD HATED THIS VERSION.",
+        "ELEVEN FRAMES OF PURE FORBIDDEN GEOMETRY. THE AUTHOR CALLED IT 'THE ANGRY PAGE'.",
+    ]
+
+    static let prismDance = [
+        "A SMALL LIGHT SHOW. I DO PARTIES. ASK THE PIGS.",
+        "EVERY COLOR AT ONCE, BRIEFLY. LIKE MY MOOD, BUT SPARKLIER.",
+        "MABEL WOULD LOVE THIS ONE. I'M LEGALLY NOT ALLOWED TO SAY WHY.",
+    ]
+
+    static let zodiacCrimson = [
+        "THE RIFT, RENDERED AS A RING. WEIRDMAGEDDON STARTED EXACTLY LIKE THIS.",
+        "A CRIMSON ZODIAC. THE ONE THE JOURNAL'S MISSING PAGE WARNED ABOUT.",
+        "SIX SIDES OF TROUBLE AND EVERY ONE OF THEM IS MY FAVORITE COLOR.",
+    ]
+
     static func specialApp(for state: BillState) -> [String] {
         switch state {
         case .trickster: return trickster
@@ -722,6 +740,9 @@ enum BarkLines {
         case .zipAround: return zipAround
         case .rampaging: return rampaging
         case .ritualBuildup: return ritualBuildup
+        case .zodiacRage: return zodiacRage
+        case .prismDance: return prismDance
+        case .zodiacCrimson: return zodiacCrimson
         default: return ["..."]
         }
     }

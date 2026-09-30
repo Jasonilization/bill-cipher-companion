@@ -76,6 +76,24 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         settingsWindowController.onOpenQuotesManager = { [weak self] in
             self?.openQuotesManager()
         }
+        settingsWindowController.onTestTrigger = { [weak self] keys, animationKey in
+            guard let self else { return }
+            // Fire the trigger live: request the assigned animation (or
+            // the standard pool for that key) and bark the line.
+            if let assigned = self.preferences.customAnimationMap[animationKey],
+               let state = BillState(rawValue: assigned) {
+                self.characterEngine.request(state, force: true)
+            } else if let pool = Self.testTriggerAnimations[animationKey],
+                      let state = self.characterEngine.coverage.pick(from: pool) {
+                self.characterEngine.request(state, force: true)
+            }
+            if let line = DialogueLibrary.shared.firstLine(keys) {
+                self.characterEngine.bark(line, importance: .always)
+            }
+        }
+        characterWindowController.settingsWindowFrameProvider = { [weak self] in
+            self?.settingsWindowController?.contentFrame()
+        }
         quotesManagerController = QuotesManagerController()
         quotesManagerController.refreshStore = characterWindowController.dialogueRefreshStore
         quotesManagerController.onRefreshAll = { [weak self] in
@@ -94,6 +112,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             dialogueRefreshLogWindowController: dialogueRefreshLogWindowController
         )
         characterWindowController.show()
+        // The multicolour prism beat as the opening flourish — a brief
+        // welcome light-show that says "I'm here and I'm fabulous"
+        // without the commitment of a full rare event.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3) { [weak self] in
+            self?.characterEngine.request(.prismDance, force: true)
+        }
         characterEngine.start()
 
         preferences.$speakingFrequency
@@ -123,7 +147,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         preferences.$chatBubbleMaxWidth
             .removeDuplicates()
             .sink { [weak self] width in
-                PixelChatBubble.maxWidth = CGFloat(width)
+                PixelChatBubble.panelWidth = CGFloat(width)
                 self?.characterWindowController.relayoutChatBubble()
             }
             .store(in: &cancellables)
@@ -191,6 +215,29 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 self?.chatPanelController.keepMounted = false
             }
         }
+        // `BILL_BARK_DIAGNOSTIC=1` showcases the bark bubble end-to-end from
+        // a terminal: a long multi-line centered bark first (wrapping,
+        // rounded corners, outlined tail, near-hat gap), then Bill is
+        // parked at the screen's right edge and barks again — the bubble
+        // shifts left to stay on screen with the tail tracking him, which
+        // is the directional-placement behavior in one screenshot.
+        if ProcessInfo.processInfo.environment["BILL_BARK_DIAGNOSTIC"] == "1" {
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                try? await Task.sleep(nanoseconds: 6_000_000_000)
+                self.characterWindowController.characterEngine.bark(
+                    "AH, A TEST SUBJECT. WATCH CLOSELY: THIS BUBBLE SITS RIGHT ABOVE MY HAT, WRAPS ITS TEXT PROPERLY, AND ITS TAIL IS PART OF THE BORDER.",
+                    importance: .always
+                )
+                try? await Task.sleep(nanoseconds: 7_000_000_000)
+                self.characterWindowController.debugParkNearScreenEdge()
+                try? await Task.sleep(nanoseconds: 1_000_000_000)
+                self.characterWindowController.characterEngine.bark(
+                    "NOW I'M AT THE SCREEN'S EDGE. NOTICE: THE BUBBLE SHIFTED LEFT, AND MY TAIL FOLLOWED ME. DIRECTIONAL. GEOMETRY IS A LIFESTYLE.",
+                    importance: .always
+                )
+            }
+        }
         if ProcessInfo.processInfo.environment["BILL_AWARENESS_DIAGNOSTIC"] == "1" {
             Task { @MainActor [weak self] in
                 try? await Task.sleep(nanoseconds: 6_000_000_000)
@@ -225,6 +272,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // for steady-weather days. The Test button forces a loud report.
         weatherMonitor.onReport = { [weak self] snapshot, reason in
             self?.reactionRouter.handle(.weatherChanged(snapshot, reason))
+        }
+        weatherMonitor.onFetchError = { [weak self] message in
+            guard let self else { return }
+            self.characterEngine.bark(message, importance: .always)
         }
         weatherMonitor.isEnabledProvider = { [weak self] in
             self?.preferences.isWeatherEnabled ?? true
@@ -265,6 +316,25 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// Opens the quotes manager: every pool, every line, source badges
     /// (authored/generated/personalized), refresh-everything, and the
     /// recent log strip.
+    /// Animation pools for the Settings "Reaction Triggers" test buttons —
+    /// mirrors what the `ReactionRouter` would pick for each trigger.
+    private static let testTriggerAnimations: [String: [BillState]] = [
+        "batteryLow": [.stressed, .dreading, .huffy, .grumpEyes, .watched, .annoyed],
+        "networkLost": [.confused, .glitchForm, .spooked, .dazed, .glitching, .ambushed],
+        "networkRestored": [.celebrating, .happy, .charged, .zipAround, .fractaling],
+        "volume.100": [.dancing, .grooving, .happy, .flinching, .surprised, .caneFlourish],
+        "volume.mute": [.dancing, .grooving, .happy, .flinching, .surprised, .caneFlourish],
+        "poked": [.poked, .surprised, .flinching, .dazed],
+        "chatFailed": [.confused, .spooked, .glitchForm],
+        "stillThinking": [.thinking, .focused],
+        "incognito.search": [.rampaging],
+        "deal.offer": [.caneFlourish, .smug],
+        "cipher.message": [.scanning],
+        "userReturned": [.watched, .smug, .presenting],
+        "clock.morning": [.presenting, .dispatching, .watched, .smug, .zodiacVision],
+        "clock.night": [.presenting, .dispatching, .watched, .smug, .zodiacVision],
+    ]
+
     func openQuotesManager() {
         quotesManagerController?.present()
     }

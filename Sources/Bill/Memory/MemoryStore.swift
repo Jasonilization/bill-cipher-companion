@@ -176,6 +176,19 @@ final class MemoryStore: ObservableObject {
             }
     }
 
+    /// All apps this Mac has opened in front of Bill, most-used first —
+    /// the Settings "per-app animations" list, so the user can give their
+    /// real apps signature reactions.
+    func knownApps() -> [(bundleID: String, name: String, opens: Int)] {
+        data.appOpenCounts
+            .compactMap { bundleID, opens in
+                data.appDisplayNames[bundleID].map { (bundleID: bundleID, name: $0, opens: opens) }
+            }
+            .sorted { lhs, rhs in
+                lhs.opens != rhs.opens ? lhs.opens > rhs.opens : lhs.name < rhs.name
+            }
+    }
+
     /// How many times this app was opened within the last `interval`
     /// seconds — the basis for "you really like this one, don't you?"
     /// without needing an explicit session-tracking system.
