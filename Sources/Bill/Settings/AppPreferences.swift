@@ -142,6 +142,10 @@ final class AppPreferences: ObservableObject {
         didSet { UserDefaults.standard.set(promptExtraInstructions, forKey: Keys.promptExtraInstructions) }
     }
 
+    /// Which Settings section is selected — tracked in the model since
+    /// `@State` is unavailable in this toolchain.
+    @Published var selectedSettingsSection: String = "Appearance"
+
     // MARK: - Weather
 
     /// Master switch for all weather commentary. Off means the monitor
