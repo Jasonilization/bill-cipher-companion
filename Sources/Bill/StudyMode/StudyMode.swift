@@ -141,7 +141,7 @@ final class StudyMode {
 
         let states: [BillState] = offence == 1 ? [.watched, .grumpEyes, .huffy]
                                : offence == 2 ? [.annoyed, .dreading, .stressed]
-                                              : [.rampaging, .meltdown, .cultLeader, .shadowHands]
+                                              : [.meltdown, .shadowHands, .cultLeader, .tumbling]
         announce?(DialogueKey.studyBlocked(offence: offence), states, ["app": name])
 
         // First offence is a warning only.

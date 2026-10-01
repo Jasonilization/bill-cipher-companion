@@ -190,24 +190,23 @@ final class BarkPanelController: NSObject {
         }
     }
 
-    /// Re-clamps the showing bark into the visible frame when Bill moves.
+    /// Re-positions the showing bark panel when Bill moves — tracks the
+    /// delta (how far Bill moved since the bark was placed) and applies
+    /// the same shift to the panel, then clamps into the visible frame.
+    /// This is what makes the bark *follow* him smoothly.
     func reposition(near billFrame: NSRect, on screen: NSScreen) {
-        guard let panel, panel.isVisible else { return }
+        guard let panel, panel.isVisible, let lastBill = lastBillFrame else { return }
         let visible = screen.visibleFrame
+        let dx = billFrame.midX - lastBill.midX
+        let dy = billFrame.midY - lastBill.midY
+        guard dx != 0 || dy != 0 else { return }
         var frame = panel.frame
-        // Keep the same relative position — just clamp into the screen.
-        if frame.maxX > visible.maxX {
-            frame.origin.x = visible.maxX - frame.width
-        }
-        if frame.minX < visible.minX {
-            frame.origin.x = visible.minX
-        }
-        if frame.maxY > visible.maxY {
-            frame.origin.y = visible.maxY - frame.height
-        }
-        if frame.minY < visible.minY {
-            frame.origin.y = visible.minY
-        }
+        frame.origin.x += dx
+        frame.origin.y += dy
+        if frame.maxX > visible.maxX { frame.origin.x = visible.maxX - frame.width }
+        if frame.minX < visible.minX { frame.origin.x = visible.minX }
+        if frame.maxY > visible.maxY { frame.origin.y = visible.maxY - frame.height }
+        if frame.minY < visible.minY { frame.origin.y = visible.minY }
         if frame != panel.frame {
             panel.setFrameOrigin(frame.origin)
         }

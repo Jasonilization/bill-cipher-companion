@@ -1002,7 +1002,7 @@ final class CharacterWindowController: NSObject {
         pokeCount += 1
         if Date().timeIntervalSince(lastPokeAt) > 25 { pokeCount = 1 }
         lastPokeAt = Date()
-        let states: [BillState] = pokeCount >= 5 ? [.rampaging, .meltdown, .grumpEyes, .shadowHands]
+        let states: [BillState] = pokeCount >= 5 ? [.meltdown, .shadowHands, .grumpEyes, .tumbling]
                                 : pokeCount >= 3 ? [.annoyed, .huffy, .grumpEyes]
                                                  : [.poked, .surprised, .flinching, .dazed]
         if let state = characterEngine.coverage.pick(from: states) {
