@@ -504,13 +504,17 @@
   ]
  },
  "cipher.message": {
+  "afternoon": [],
   "any": [
    "KHOOR JUDYLWB IDOOV IDQV. L VHH HYHUBWKLQJ. HYHQ WKLV PHVVDJH. (SHIFT THREE, PINE TREE.)",
    "WKH DXWKRU NHSW KLV VHFUHWV OLNH WKLV. L NHHS PLQH WKH VDPH ZDB. (SHIFT THREE, PINE TREE.)",
    "VKLIW WKUHH DQG BRX JHW WKH WUXWK. RU DW OHDVW D SXQFKOLQH. (SHIFT THREE, PINE TREE.)",
    "EBH. (SHIFT THREE, PINE TREE.)",
    "UHDOLWB LV DQ LOOXVLRQ. WKLV IRQW KRZHYHU LV YHUB UHDO. (SHIFT THREE, PINE TREE.)"
-  ]
+  ],
+  "midday": [],
+  "morning": [],
+  "night": []
  },
  "clock.0000": {
   "afternoon": [],
@@ -997,6 +1001,7 @@
   ]
  },
  "deal.offer": {
+  "afternoon": [],
   "any": [
    "PSST. WANT TO MAKE A DEAL? I ONLY ASK FOR SOMETHING SMALL. LIKE YOUR NAME.",
    "SHAKE MY HAND AND ALL YOUR TABS REOPEN. WHAT'S THE WORST THAT COULD HAPPEN?",
@@ -1004,6 +1009,8 @@
    "A DEAL, THEN: YOU KEEP WORKING, I KEEP WATCHING. EVERYONE WINS. MOSTLY ME.",
    "EVERY DEAL I'VE EVER MADE ENDED BADLY FOR THE OTHER PARTY. FANCY YOUR ODDS?"
   ],
+  "midday": [],
+  "morning": [],
   "night": [
    "A MOONLIT DEAL IS THE BEST KIND. THE FINE PRINT IS ALWAYS INVISIBLE."
   ]
@@ -1342,6 +1349,7 @@
   ]
  },
  "incognito.search": {
+  "afternoon": [],
   "any": [
    "OOOH, A PRIVATE WINDOW. WHAT ARE YOU HIDING, PINE TREE? BETTER NOT BE AS WEIRD AS DIPPER'S SEARCH HISTORY.",
    "INCOGNITO MODE? THE ONLY THING YOU'RE HIDING FROM IS YOURSELF. AND ME. AND THE FBI.",
@@ -1350,6 +1358,7 @@
    "WHAT ARE YOU LOOKING UP THAT YOU DON'T WANT ME TO SEE? IS IT PONY STUFF? IT'S PONY STUFF, ISN'T IT.",
    "A PRIVATE WINDOW. HOW QUAINT. REMINDS ME OF THE TIME PINE TREE TRIED TO HIDE JOURNAL 3 UNDER HIS MATTRESS."
   ],
+  "midday": [],
   "morning": [
    "A MORNING OF PRIVATE BROWSING. STARTING THE DAY WITH SECRETS. I RESPECT THAT."
   ],
@@ -1756,6 +1765,7 @@
   ]
  },
  "prank.minimize": {
+  "afternoon": [],
   "any": [
    "OOPS! MY ELBOW SLIPPED! WAS THAT YOUR WINDOW? HOW EMBARRASSING.",
    "AH, THE CLASSIC VANISHING WINDOW TRICK. I LEARNED IT FROM A ONE-EYED PROFESSIONAL.",
@@ -1763,7 +1773,10 @@
    "THIS BUTTON? OH, I THOUGHT IT SAID 'PANIC'. TOO LATE NOW!",
    "DON'T LOOK AT ME. THESE THINGS HAVE A MIND OF THEIR OWN. A YELLOW, TRIANGULAR MIND.",
    "WOULD YOU LOOK AT THAT. THE WINDOW SIMPLY CEASED TO BE. ANYONE COULD HAVE DONE IT."
-  ]
+  ],
+  "midday": [],
+  "morning": [],
+  "night": []
  },
  "presenting": {
   "afternoon": [
@@ -1785,6 +1798,7 @@
   ]
  },
  "prismDance": {
+  "afternoon": [],
   "any": [
    "A SMALL LIGHT SHOW. I DO PARTIES. ASK THE PIGS.",
    "EVERY COLOR AT ONCE, BRIEFLY. LIKE MY MOOD, BUT SPARKLIER.",
@@ -1792,7 +1806,9 @@
   ],
   "midday": [
    "A MIDDAY PRISM BURST. NO OCCULT SIGNIFICANCE. JUST SHOWING OFF."
-  ]
+  ],
+  "morning": [],
+  "night": []
  },
  "productivity": {
   "afternoon": [
@@ -2016,13 +2032,17 @@
   ]
  },
  "settings.visit": {
+  "afternoon": [],
   "any": [
    "AH, THE CONTROL ROOM. I LIKE IT IN HERE. SO MANY SLIDERS TO BETRAY YOU.",
    "THE SETTINGS WINDOW. WHERE HUMANS PRETEND THEY'RE IN CHARGE.",
    "Ooh, AN AUDIENCE WITH THE MACHINE ITSELF. I FEEL POWERFUL. TIP THE TRIANGLE.",
    "PUT ME BACK ON THE DESK, THIS CHAIR HAS NO SWIVEL.",
    "I COULD LIVE IN HERE. REACH INTO EVERY PREFERENCE. STARTING WITH YOURS."
-  ]
+  ],
+  "midday": [],
+  "morning": [],
+  "night": []
  },
  "shadowHands": {
   "afternoon": [
@@ -2656,10 +2676,12 @@
   ]
  },
  "weather.clear": {
+  "afternoon": [],
   "any": [
    "CLEAR SKIES AT {temp} DEGREES. GOOD. I HATE WHEN THE TREES BLOCK MY VIEW OF EVERYTHING.",
    "{temp} DEGREES AND NOT A CLOUD. PERFECT DEAL-MAKING WEATHER. SIGN HERE."
   ],
+  "midday": [],
   "morning": [
    "CLEAR AND {temp} DEGREES AT DAWN. EVEN THE SUNRISE HERE IS SUSPICIOUSLY PLEASANT."
   ],
@@ -2668,43 +2690,66 @@
   ]
  },
  "weather.cloudy": {
+  "afternoon": [],
   "any": [
    "GREY AND {temp} DEGREES. THE WEATHER HERE HAS BEEN WRONG SINCE THE PORTAL OPENED. NOBODY ASKED ME.",
    "OVERCAST AT {temp} DEGREES. THE SKY IS HIDING SOMETHING. I RESPECT THAT."
-  ]
+  ],
+  "midday": [],
+  "morning": [],
+  "night": []
  },
  "weather.fog": {
+  "afternoon": [],
   "any": [
    "FOG AT {temp} DEGREES. EXCELLENT COVER. NOBODY SEES WHAT I'M DOING. NOT THAT THEY COULD STOP ME.",
    "FOG ROLLED IN. THE SHAPE-SHIFTER'S FAVORITE WEATHER. WATCH WHO YOU TRUST OUT THERE."
-  ]
+  ],
+  "midday": [],
+  "morning": [],
+  "night": []
  },
  "weather.other": {
+  "afternoon": [],
   "any": [
    "THE SKY IS DOING SOMETHING UNCLASSIFIABLE AT {temp} DEGREES. I'D TELL YOU WHAT, BUT WHERE'S THE FUN?"
-  ]
+  ],
+  "midday": [],
+  "morning": [],
+  "night": []
  },
  "weather.rain": {
+  "afternoon": [],
   "any": [
    "IT'S RAINING, {temp} DEGREES. THE FOREST AROUND GRAVITY FALLS HATES RAIN MORE THAN YOU DO. TOO MANY THINGS LIVE IN IT.",
    "RAIN AT {temp} DEGREES. THE GNOMES ARE HIDING. SMART GNOMES.",
    "IT'S POURING. MABEL ONCE PUNCHED A UNICORN IN THE RAIN. THIS WEATHER REMINDS ME OF BETTER DAYS."
   ],
+  "midday": [],
+  "morning": [],
   "night": [
    "RAIN OVERNIGHT, {temp} DEGREES. GOOD. THE NIGHTMARE REALM IS WATERPROOF."
   ]
  },
  "weather.snow": {
+  "afternoon": [],
   "any": [
    "SNOW, AT {temp} DEGREES. IN OREGON, IN SUMMER, NOBODY HERE WOULD BLINK. THIS TOWN RUINS SURPRISES.",
    "IT'S SNOWING. THE MANOTAURS HANDLE COLD THE WAY THEY HANDLE EVERYTHING: LOUDLY."
-  ]
+  ],
+  "midday": [],
+  "morning": [],
+  "night": []
  },
  "weather.thunder": {
+  "afternoon": [],
   "any": [
    "THUNDER OUTSIDE. AMATEURS. I DO LIGHTNING WITH ONE EYE AND NO CLOUD.",
    "A STORM'S ROLLING IN. THE AUTHOR BLAMED WEIRDNESS-TRACES IN THE AIR. I BLAME DRAMA."
-  ]
+  ],
+  "midday": [],
+  "morning": [],
+  "night": []
  },
  "zipAround": {
   "afternoon": [],
@@ -2721,21 +2766,27 @@
   ]
  },
  "zodiacCrimson": {
+  "afternoon": [],
   "any": [
    "THE RIFT, RENDERED AS A RING. WEIRDMAGEDDON STARTED EXACTLY LIKE THIS.",
    "A CRIMSON ZODIAC. THE ONE THE JOURNAL'S MISSING PAGE WARNED ABOUT.",
    "SIX SIDES OF TROUBLE AND EVERY ONE IS MY FAVORITE COLOR."
   ],
+  "midday": [],
+  "morning": [],
   "night": [
    "THE CRIMSON RING PREFERS THE DARK. SO DO I. WHAT A COINCIDENCE."
   ]
  },
  "zodiacRage": {
+  "afternoon": [],
   "any": [
    "THE ZODIAC HAS A TEMPER. FEW HUMANS EVER SEE IT.",
    "RED WHEEL RISING. FORD'S JOURNAL SKIPPED THIS PAGE ON PURPOSE.",
    "ELEVEN FRAMES OF FORBIDDEN GEOMETRY, BROUGHT TO YOU BY ME."
   ],
+  "midday": [],
+  "morning": [],
   "night": [
    "A RED ZODIAC AT NIGHT. THE FINAL BOOK'S AUTHOR WOULD BE TAKING NOTES. FRANTICALLY."
   ]

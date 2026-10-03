@@ -124,6 +124,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             .sink { [weak self] frequency in self?.characterEngine.speakingFrequencyMultiplier = frequency }
             .store(in: &cancellables)
 
+        // Sync the dark mode preference to the shared static for views
+        // that can't reach the preferences instance.
+        AppPreferences.isDarkModeChromeShared = preferences.isDarkModeChrome
+
         // Live "proper app to edit more things" wiring: each Settings
         // control below writes straight into the running app.
         preferences.$ambientAnimationSpacing
@@ -236,6 +240,40 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     "NOW I'M AT THE SCREEN'S EDGE. NOTICE: THE BUBBLE SHIFTED LEFT, AND MY TAIL FOLLOWED ME. DIRECTIONAL. GEOMETRY IS A LIFESTYLE.",
                     importance: .always
                 )
+            }
+        }
+        // `BILL_WEATHER_DIAGNOSTIC=1` fires a forced weather pull at launch
+        // and barks whatever the API actually returns — proving the whole
+        // pipeline end-to-end: geo → Open-Meteo → condition → dialogue
+        // → bark panel on screen.
+        if ProcessInfo.processInfo.environment["BILL_WEATHER_DIAGNOSTIC"] == "1" {
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                try? await Task.sleep(nanoseconds: 4_000_000_000)
+                print("=== WEATHER DIAGNOSTIC: pulling ===")
+                let snapshot = await WeatherMonitor.pull()
+                guard let snapshot else {
+                    print("=== WEATHER DIAGNOSTIC: PULL FAILED ===")
+                    self.characterWindowController.characterEngine.bark(
+                        "THE WEATHER PULL FAILED. CHECK YOUR CONNECTION.",
+                        importance: .always
+                    )
+                    return
+                }
+                let temp = String(format: "%.0f", snapshot.temperatureC.rounded())
+                print("=== WEATHER DIAGNOSTIC: \(snapshot.condition) \(temp)°C in \(snapshot.city ?? "?") ===")
+                let conditionKey = "weather.\(snapshot.condition.rawValue)"
+                print("=== WEATHER DIAGNOSTIC: looking up dialogue pool '\(conditionKey)' ===")
+                if let line = DialogueLibrary.shared.firstLine([conditionKey]) {
+                    print("=== WEATHER DIAGNOSTIC: barking '\(line)' ===")
+                    self.characterWindowController.characterEngine.bark(line, importance: .always)
+                } else {
+                    print("=== WEATHER DIAGNOSTIC: no line for '\(conditionKey)' ===")
+                    self.characterWindowController.characterEngine.bark(
+                        "IT'S \(temp) DEGREES AND \(snapshot.condition.rawValue.uppercased()) OUT THERE. I'D SAY SOMETHING WITTY BUT MY SCRIPT WRITER IS ASLEEP.",
+                        importance: .always
+                    )
+                }
             }
         }
         if ProcessInfo.processInfo.environment["BILL_AWARENESS_DIAGNOSTIC"] == "1" {

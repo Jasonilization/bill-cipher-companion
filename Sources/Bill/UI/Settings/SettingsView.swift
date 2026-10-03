@@ -113,6 +113,10 @@ struct SettingsView: View {
                         .foregroundStyle(.secondary)
                         .frame(width: 50)
                 }
+                Toggle("Dark mode chrome", isOn: $preferences.isDarkModeChrome)
+                Text("Uses a darker fill inside the pixel borders for the chat window and bark panels — better for dark desktops.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
 
             card("Speech Bubbles") {
@@ -178,17 +182,45 @@ struct SettingsView: View {
 
             card("Awareness") {
                 Toggle("Read window titles", isOn: $preferences.isWindowAwarenessEnabled)
-                if preferences.isWindowAwarenessEnabled, !WindowTitleReader.isTrusted {
-                    Button("Grant Accessibility Permission…") { WindowTitleReader.requestTrust() }
+
+                // Permission status — the #1 reason "nothing works": ad-hoc
+                // signing invalidates Accessibility on every rebuild, and
+                // the user has no way to tell without this indicator.
+                if preferences.isWindowAwarenessEnabled {
+                    if WindowTitleReader.isTrusted {
+                        Label("Accessibility granted", systemImage: "checkmark.circle.fill")
+                            .foregroundStyle(.green)
+                            .font(.caption)
+                    } else {
+                        Label("Accessibility NOT granted — Bill can't see window titles", systemImage: "exclamationmark.triangle.fill")
+                            .foregroundStyle(.red)
+                            .font(.caption)
+                        Button("Grant Accessibility Permission…") { WindowTitleReader.requestTrust() }
+                            .buttonStyle(.borderedProminent)
+                    }
                 }
+
                 Toggle("Read window contents (OCR)", isOn: $preferences.isScreenOCREnabled)
                     .disabled(!preferences.isWindowAwarenessEnabled)
-                if preferences.isScreenOCREnabled, !ScreenTextReader.hasPermission {
-                    Button("Grant Screen Recording…") { ScreenTextReader.requestPermission() }
+
+                if preferences.isScreenOCREnabled {
+                    if ScreenTextReader.hasPermission {
+                        Label("Screen Recording granted", systemImage: "checkmark.circle.fill")
+                            .foregroundStyle(.green)
+                            .font(.caption)
+                    } else {
+                        Label("Screen Recording NOT granted — OCR can't capture", systemImage: "exclamationmark.triangle.fill")
+                            .foregroundStyle(.red)
+                            .font(.caption)
+                        Button("Grant Screen Recording…") { ScreenTextReader.requestPermission() }
+                            .buttonStyle(.borderedProminent)
+                    }
                 }
-                Text("Bill reads the title of the window you're focused on, and optionally its contents. Requires Accessibility and Screen Recording permissions (must be re-granted after each rebuild).")
+
+                Text("⚠ Because this app is ad-hoc signed (not notarized), macOS invalidates these permissions on every rebuild. You must re-grant them after each build. This is the #1 reason reactions stop working.")
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(.orange)
+                    .padding(.top, 4)
             }
             Spacer()
         }

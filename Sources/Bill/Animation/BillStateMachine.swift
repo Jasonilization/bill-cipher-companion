@@ -157,7 +157,9 @@ final class BillStateMachine {
         // Get Bill's on-screen frame from the rig's window.
         guard let scene = rig.root.scene,
               let window = scene.view?.window
-        else { return }
+        else {
+            return
+        }
 
         let billFrame = window.frame
         onBarkPanel?(text, billFrame)

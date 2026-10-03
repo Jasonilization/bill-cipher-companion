@@ -39,7 +39,10 @@ enum WindowTopology {
 
     /// Windows smaller than this are tooltips, badges, popovers and shadow
     /// helpers — landing on them looks broken and they vanish constantly.
-    private static let minPlatformSize = CGSize(width: 140, height: 90)
+    /// Minimum size for a window to be "furniture" — raised from 140×90
+    /// because Bill was jumping onto small utility panels and ghost
+    /// windows that are technically layer 0 but effectively invisible.
+    private static let minPlatformSize = CGSize(width: 180, height: 100)
     /// A window taller/wider than the whole screen is almost always a
     /// full-screen backdrop or a wallpaper-ish helper; its top edge is the
     /// screen edge, which the screen bounds already provide.
@@ -99,8 +102,17 @@ enum WindowTopology {
             else { continue }
             guard cgRect.width >= minPlatformSize.width, cgRect.height >= minPlatformSize.height else { continue }
             // Fully transparent windows are still "on screen" and would give
-            // Bill invisible floors to stand on.
-            if let alpha = info[kCGWindowAlpha as String] as? Double, alpha < 0.35 { continue }
+            // Bill invisible floors to stand on. Threshold raised from 0.35
+            // to 0.5: windows at 0.4 alpha are effectively invisible but
+            // were passing the old check.
+            if let alpha = info[kCGWindowAlpha as String] as? Double, alpha < 0.5 { continue }
+            // Skip windows with no title AND no owning app name — these are
+            // almost always system ghosts (Window Server internal windows,
+            // UWP placeholders, accessibility overlays) that have layer 0
+            // but aren't real furniture.
+            let ownerName = info[kCGWindowOwnerName as String] as? String ?? ""
+            let windowTitle = info[kCGWindowName as String] as? String ?? ""
+            if ownerName.isEmpty && windowTitle.isEmpty { continue }
 
             let rect = cocoaRect(from: cgRect)
 

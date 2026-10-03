@@ -25,6 +25,15 @@ final class ChatFrameView: NSView {
         // and often has its own background, but the border area around
         // it should be Bill's palette.
         BarkBubble.fillPixelRoundedRect(ctx, rect: bodyRect, radius: 8, color: BillPalette.black)
+        // Dark chrome: either forced by the Settings preference, or
+        // auto-detected from the system appearance.
+        let systemDark = NSAppearance.currentDrawing().bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+        if AppPreferences.isDarkModeChromeShared || systemDark {
+            let inner = bodyRect.insetBy(dx: CGFloat(Self.borderThickness + Self.accentThickness),
+                                         dy: CGFloat(Self.borderThickness + Self.accentThickness))
+            BarkBubble.fillPixelRoundedRect(ctx, rect: inner, radius: 6,
+                                             color: NSColor(calibratedWhite: 0.08, alpha: 1))
+        }
         BarkBubble.drawLayeredBorder(
             ctx, bodyRect: bodyRect,
             cornerRadius: 8, borderThickness: Self.borderThickness,
