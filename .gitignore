@@ -1,5 +1,0 @@
-.build/
-.swiftpm/
-*.xcuserstate
-.DS_Store
-Bill.app/

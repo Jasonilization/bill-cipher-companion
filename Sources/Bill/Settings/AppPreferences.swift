@@ -26,6 +26,7 @@ final class AppPreferences: ObservableObject {
         static let weatherEnabled = "billWeatherEnabled"
         static let weatherAnnounceMinutes = "billWeatherAnnounceMinutes"
         static let perAppAnimations = "billPerAppAnimations"
+        static let darkModeChrome = "billDarkModeChrome"
     }
 
     @Published var isRoamingEnabled: Bool {
@@ -142,9 +143,26 @@ final class AppPreferences: ObservableObject {
         didSet { UserDefaults.standard.set(promptExtraInstructions, forKey: Keys.promptExtraInstructions) }
     }
 
-    /// Which Settings section is selected — tracked in the model since
+    /// The selected Settings section — tracked in the model since
     /// `@State` is unavailable in this toolchain.
     @Published var selectedSettingsSection: String = "Appearance"
+
+    /// Shared static for views that can't access the preferences instance
+    /// (like `ChatFrameView.draw`). Set by `AppDelegate` at launch and
+    /// whenever the preference changes.
+    static var isDarkModeChromeShared: Bool = false
+
+    /// Dark mode for the pixel chrome (chat frame, bark panel borders) —
+    /// when on, the pixel borders use a darker ink fill so Bill's
+    /// chat window doesn't look like a bright rectangle floating in a
+    /// dark environment. When off (default), the classic light
+    /// paper-white fill is used.
+    @Published var isDarkModeChrome: Bool {
+        didSet {
+            UserDefaults.standard.set(isDarkModeChrome, forKey: Keys.darkModeChrome)
+            Self.isDarkModeChromeShared = isDarkModeChrome
+        }
+    }
 
     // MARK: - Weather
 
@@ -194,6 +212,7 @@ final class AppPreferences: ObservableObject {
             Self.weatherAnnounceRange.upperBound
         )
         perAppAnimations = defaults.dictionary(forKey: Keys.perAppAnimations) as? [String: String] ?? [:]
+        isDarkModeChrome = (defaults.object(forKey: Keys.darkModeChrome) as? Bool) ?? false
         let disabledRaw = defaults.stringArray(forKey: Keys.disabledCategories) ?? []
         disabledCategories = Set(disabledRaw.compactMap(AppCategory.init(rawValue:)))
         let storedScale = (defaults.object(forKey: Keys.characterScale) as? Double) ?? 1.0

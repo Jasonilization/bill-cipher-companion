@@ -151,18 +151,11 @@ final class BarkPanelController: NSObject {
         }
 
         panel?.setFrame(frame, display: true)
-        // The image's bitmap is at pixelScale density (e.g., 80×40 bitmap
-        // units at 3x = 240×120 display points). Setting the NSImage's
-        // point size to the display size makes it render at the right
-        // physical size with crisp pixels on retina — without this the
-        // image renders at its raw bitmap size (tiny, the "very small"
-        // bug).
         image.size = size
         imageView?.image = image
         lastBillFrame = billFrame
 
-        // Fade in.
-        panel?.alphaValue = 0
+                panel?.alphaValue = 0
         panel?.orderFrontRegardless()
         NSAnimationContext.runAnimationGroup { ctx in
             ctx.duration = Self.fadeDuration

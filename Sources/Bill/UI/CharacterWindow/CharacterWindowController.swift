@@ -357,6 +357,15 @@ final class CharacterWindowController: NSObject {
         }
         Task { @MainActor [weak self] in
             guard let self else { return }
+            // Warm up the WebView FIRST — checkSignedIn() creates the page
+            // model object, but a WebPage doesn't actually load or execute
+            // anything until a real WebView renders it. Without this,
+            // checkSignedIn() always failed because the page was never
+            // visible to WebKit (the "setup doesn't even work" report).
+            self.warmUpChatEngine?()
+            self.setChatEngineMounted?(true)
+            // Give the page a moment to start loading before checking.
+            try? await Task.sleep(nanoseconds: 2_000_000_000)
             guard await self.chatBridge.checkSignedIn() else {
                 self.personalizationEngine.requireLogin()
                 return
