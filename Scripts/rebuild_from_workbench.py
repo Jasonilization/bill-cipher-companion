@@ -264,8 +264,74 @@ def rebuild_workbench_character(char, labels, sheets_cache):
     }
 
 
+def rebuild_knight_verbatim():
+    """The Knight, VERBATIM from the user's zip — the authoritative audit.
+
+    The zip (~/Downloads/sprite sheets/PC _ Computer - Hollow Knight -
+    Playable Characters - The Knight (Ghost).zip) ships 71 named animation
+    folders of individual pre-aligned PNGs on a uniform 349x186 canvas:
+    feet bottom-anchored, content centered by the author. Processing them
+    means: family = folder name VERBATIM, frames in natural filename order,
+    pixels UNTOUCHED (no crop, no re-canvas, no background removal — they
+    are already transparent). Any "improvement" here destroys the
+    author's frame alignment (the historical walk/slash misalignment bug).
+
+    `_ effects` and `_ unnamed` are non-character content — skipped.
+    displayScale stays 1.0: the art is authored at native desktop
+    resolution (body ~128px tall ≈ the UT cast at their 4.0 cap).
+    """
+    import zipfile
+    zip_path = SHEETS / (
+        "PC _ Computer - Hollow Knight - Playable Characters - The Knight (Ghost).zip"
+    )
+    if not zip_path.exists():
+        sys.exit(f"FATAL: knight zip missing at {zip_path}")
+    out_dir = PACKS / "hollowknight" / "Sprites"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    for old in out_dir.glob("knight_*.png"):
+        old.unlink()
+
+    import tempfile
+    with tempfile.TemporaryDirectory() as tmp:
+        with zipfile.ZipFile(zip_path) as zf:
+            zf.extractall(tmp)
+        root = pathlib.Path(tmp)
+        # The zip nests everything under one folder (the_knight/).
+        char_dirs = [d for d in root.iterdir() if d.is_dir()]
+        base = char_dirs[0] if len(char_dirs) == 1 else root
+        folders = sorted(
+            d for d in base.iterdir()
+            if d.is_dir() and not d.name.startswith("_")
+        )
+        fam_counts = {}
+        canvas = None
+        for folder in folders:
+            def natkey(p):
+                return [int(t) if t.isdigit() else t
+                        for t in re.split(r"(\d+)", p.name)]
+            frames = sorted(folder.glob("*.png"), key=natkey)
+            if not frames:
+                continue
+            first = np.asarray(Image.open(str(frames[0])).convert("RGBA"))
+            if canvas is None:
+                canvas = (first.shape[1], first.shape[0])
+            elif (first.shape[1], first.shape[0]) != canvas:
+                print(f"  knight/{folder.name}: NON-UNIFORM canvas "
+                      f"{first.shape[1]}x{first.shape[0]} vs {canvas} — kept as-is")
+            for i, f in enumerate(frames, 1):
+                shutil.copy(str(f), out_dir / f"knight_{folder.name}_{i:02d}.png")
+            fam_counts[folder.name] = len(frames)
+        if canvas is None:
+            sys.exit("FATAL: knight zip contained no animation folders")
+    return {
+        "canvas": [int(canvas[0]), int(canvas[1])],
+        "idle_h": int(canvas[1]),  # uniform canvas: scale = 185/186 ≈ 1.0
+        "families": {k: int(v) for k, v in sorted(fam_counts.items())},
+    }
+
+
 def recanvas_existing(char, pack):
-    """Re-fit an already-processed character (sansdt, knight, hornet)."""
+    """Re-fit an already-processed character (sansdt, hornet)."""
     out_dir = PACKS / pack / "Sprites"
     files = sorted(out_dir.glob(f"{char}_*.png"))
     if not files:
@@ -381,10 +447,13 @@ def main():
                 print(f"  {cid} [{pack}]: {len(info['families'])} families, "
                       f"{total} frames, canvas {info['canvas']}")
 
-    # 2. already-processed characters not in the workbench (sansdt)
+    # 2. The Knight VERBATIM from the zip; sansdt/hornet re-fit.
     print("== recanvas existing ==")
-    for cid, pack in [("sansdt", "undertale"), ("knight", "hollowknight"),
-                      ("hornet", "hollowknight")]:
+    knight_info = rebuild_knight_verbatim()
+    manifest["knight"] = knight_info
+    print(f"  knight [hollowkit] VERBATIM: {len(knight_info['families'])} families, "
+          f"{sum(knight_info['families'].values())} frames, canvas {knight_info['canvas']}")
+    for cid, pack in [("sansdt", "undertale"), ("hornet", "hollowknight")]:
         info = recanvas_existing(cid, pack)
         if info:
             manifest[cid] = info
@@ -404,13 +473,16 @@ def main():
     tmp.replace(MANIFEST_PATH)
     print(f"manifest written: {len(manifest)} characters")
 
-    # 5. update roster geometry for existing hand-written definitions
+    # 5. update roster geometry for existing hand-written definitions.
+    #    Scale: target ~185pt visible height, CAPPED at 4.0 — beyond that
+    #    small-pixel art (kris/sans/niko, 20-40px sheets) renders as huge
+    #    mushy blocks ("too pixelated low res"). Crisp beats big.
     def_source = ROOT / "Sources/Bill/Packs/CharacterDefinition.swift"
     text = def_source.read_text()
     n_updated = 0
     for cid, info in manifest.items():
         cw, chh = info["canvas"]
-        scale = round(185.0 / info["idle_h"], 2)
+        scale = round(min(185.0 / info["idle_h"], 4.0), 2)
         pattern = (rf'(spritePrefix: "{cid}", canvasSize: '
                    rf'CGSize\(width: )\d+(, height: )\d+(\), displayScale: )[0-9.]+')
         new_text, n = re.subn(

@@ -261,6 +261,19 @@ struct SettingsView: View {
         return hasDark && hasLight
     }
 
+    /// The character whose sheet the animation browser is showing —
+    /// independent of who is on screen (defaults to the active one).
+    private var browsedCharacterBinding: Binding<String> {
+        Binding(
+            get: {
+                preferences.previewCharacterID.isEmpty
+                    ? preferences.activeCharacterID
+                    : preferences.previewCharacterID
+            },
+            set: { preferences.previewCharacterID = $0 }
+        )
+    }
+
     /// World-mode picker binding — persists and triggers the crossfade.
     private var worldModeBinding: Binding<String> {
         Binding(
@@ -281,13 +294,25 @@ struct SettingsView: View {
             sectionHeader("Animations", subtitle: "Every animation on the sheet — preview it, assign it to any trigger")
 
             card("Animation browser") {
-                AnimationBrowserView(
-                    characterID: preferences.activeCharacterID,
-                    customFamilyMap: $preferences.customFamilyMap,
-                    familyFacingMap: $preferences.familyFacingMap,
-                    familyWorldMap: $preferences.familyWorldMap
-                )
-                .frame(height: 360)
+                VStack(alignment: .leading, spacing: 8) {
+                    // Browse ANY character's sheet — not just whoever is on
+                    // screen. The pickers (Facing / World / Assign to…)
+                    // write per-family labels that apply wherever that
+                    // family plays.
+                    Picker("Character", selection: browsedCharacterBinding) {
+                        ForEach(CharacterRoster.all) { character in
+                            Text(character.displayName).tag(character.id)
+                        }
+                    }
+                    .frame(maxWidth: 360)
+                    AnimationBrowserView(
+                        characterID: browsedCharacterBinding.wrappedValue,
+                        customFamilyMap: $preferences.customFamilyMap,
+                        familyFacingMap: $preferences.familyFacingMap,
+                        familyWorldMap: $preferences.familyWorldMap
+                    )
+                    .frame(height: 360)
+                }
             }
 
             // Deltarune (and any character carrying both forms' rows):

@@ -200,9 +200,11 @@ do {
         check(entry.canvas == [w, h],
               "\(id): roster canvas \(w)x\(h) ≠ manifest \(entry.canvas)")
         if let idleH = entry.idle_h {
-            let expected = (185.0 / Double(idleH) * 100).rounded() / 100
+            // Target ~185pt visible height, capped at 4.0 so small-pixel
+            // art stays crisp instead of rendering as mushy blocks.
+            let expected = (min(185.0 / Double(idleH), 4.0) * 100).rounded() / 100
             check(abs(scale - expected) < 0.03,
-                  "\(id): displayScale \(scale) ≠ 185/\(idleH) = \(expected)")
+                  "\(id): displayScale \(scale) ≠ min(185/\(idleH), 4.0) = \(expected)")
         }
     }
     check(found >= workbenchCharacters.count,
@@ -272,8 +274,12 @@ for (character, pack) in anchorCheckList {
         fail("\(character)/\(family): idle PNG unreadable at \(url.path)")
         continue
     }
-    check(analysis.bottomPadding == 0,
-          "\(character)/\(family): content floats \(analysis.bottomPadding)px above the canvas bottom")
+    // Workbench characters are bottom-anchored by OUR pipeline (must be 0);
+    // the HK zip's frames are aligned BY THE AUTHOR with small intentional
+    // gaps (2-12px) — anything larger means a misaligned rebuild.
+    let maxGap: Int = pack == "hollowknight" ? 12 : 0
+    check(analysis.bottomPadding <= maxGap,
+          "\(character)/\(family): content floats \(analysis.bottomPadding)px above the canvas bottom (allowed ≤ \(maxGap))")
     check(analysis.cornersTransparent,
           "\(character)/\(family): canvas corners opaque — background not removed")
 }

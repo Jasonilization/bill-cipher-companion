@@ -74,7 +74,10 @@ final class CharacterAnimationLibrary {
     /// to actual movement).
     var showcaseCandidates: [String] {
         allFamilies.filter { fam in
-            !(["idle", "idle_still", "down", "left", "right", "up"].contains(fam))
+            guard !["idle", "idle_still", "down", "left", "right", "up"].contains(fam) else { return false }
+            // Death/impairment poses are never idle theatre — the Knight
+            // keeling over dead at random reads as a crash, not a show.
+            return !fam.contains("death") && fam != "stun" && fam != "spike"
         }
     }
 
@@ -252,11 +255,24 @@ final class CharacterAnimationLibrary {
     /// generic ladder so e.g. the Knight's attack actually plays its
     /// seventeen-frame nail arc.
     private static let specialsByCharacter: [String: [BillState: String]] = [
+        // The Knight's families are the VERBATIM zip folder names — the
+        // mapping below is the only place they're interpreted. Physics
+        // states point at their true folders: fall, land, hard_land,
+        // wall_slide (falling used to render the WALK family — the
+        // "falling very slowly looks wrong" report).
         "knight": [
-            .powerSurge: "attack", .zodiacVision: "attack", .summonRitual: "attack",
-            .rampaging: "attack", .zipAround: "attack", .conjuring: "attack",
-            .sleeping: "sit", .charging: "sit", .heatingUp: "attack", .dazed: "dazed",
-            .thinking: "focus", .caneFlourish: "focus", .focused: "focus",
+            .powerSurge: "nail_slash", .zodiacVision: "nail_slash", .summonRitual: "nail_slash",
+            .rampaging: "nail_slash", .zipAround: "dash_v2", .conjuring: "cast",
+            .heatingUp: "quake", .sleeping: "sit", .charging: "focus_v2",
+            .dazed: "stun", .thinking: "focus_v2", .caneFlourish: "focus_v2",
+            .focused: "focus_v2", .dashTarget: "shadow_dash",
+            // Roaming physics → true folders.
+            .falling: "fall", .landingSoft: "land", .landingHard: "hard_land",
+            .launching: "jump", .rising: "jump", .edgePeek: "look_down",
+            .ledgeGrabbing: "wall_slide", .hangingIdle: "wall_slide",
+            .climbingUp: "wall_slide", .climbingDown: "wall_slide",
+            .gaming: "sit_map_write", .coding: "sit_map_look",
+            .channeling: "cast", .happy: "look_up",
         ],
         "hornet": [
             .powerSurge: "throw", .zipAround: "jump", .rampaging: "throw",

@@ -775,7 +775,7 @@ final class RoamingController {
         guard let screen = screenForBill() else { endBeat(); return }
         let visible = screen.visibleFrame
         let s = preferences.characterScale
-        let speed: CGFloat = 60 * preferences.characterScale
+        let speed: CGFloat = 75 * preferences.characterScale
 
         guard var target = walk2DTarget else {
             // Arrived (or first tick): either chain another leg or settle.
@@ -1059,6 +1059,11 @@ final class RoamingController {
     /// rig was built with, or the horizontal axis diverges from vertical.
     private func updateFacing(_ dx: CGFloat) {
         let want: CGFloat = dx > 0 ? -1 : 1
+        // walkDirection must sync on EVERY call, not just on facing changes:
+        // vertical legs overwrite it, and the guard below would otherwise
+        // leave a stale up/down assignment on the next same-direction
+        // horizontal leg (walking right playing the LEFT rows).
+        characterEngine.animationLibrary?.walkDirection = dx > 0 ? 1 : -1
         guard want != facing else { return }
         facing = want
         // The sheet's left/right rows are genuine art, not mirrors — the
@@ -1066,7 +1071,6 @@ final class RoamingController {
         // authored left-facing single-sided) flips via xScale; pack
         // characters NEVER auto-mirror. If a pack family needs flipping,
         // the user labels it "Faces right (mirror)" in Settings.
-        characterEngine.animationLibrary?.walkDirection = dx > 0 ? 1 : -1
         if characterEngine.character.isBill {
             characterEngine.rig.bodyNode.xScale = want * characterEngine.character.displayScale
         } else {
