@@ -92,6 +92,24 @@ Sources/Bill/
 
 A Windows port is in progress (WPF, milestones W1–W3). Preview available in `windows/` — see [the port plan](https://github.com/Jasonilization/bill-cipher-companion/blob/main/docs/notes/WindowsPortPlan.md).
 
+## Windows and Linux (Electron)
+
+`desktop/` is a port of the Mac app to Electron that runs on Windows and Linux (X11). It reuses the sprites and dialogue in `Sources/Bill/Resources` and keeps the Mac behaviour: roaming and window physics, barks, the ChatGPT chat window, weather, study mode, personalization and the settings panels.
+
+```sh
+cd desktop
+npm install
+npm start
+```
+
+It also adds a few things the Mac app does not have:
+
+- **Troll and Helpful modes** — right-click Bill → Mode. Troll mode lets him snatch the cursor and shake windows (each can be switched off, and "Undo Bill's Mischief" puts things back); Helpful mode offers help when a window looks like trouble.
+- **Solve something on screen** — `Ctrl+Alt+S`, then drag a box around a sum or an equation. Arithmetic, percentages, linear and quadratic equations and linear systems are solved on the machine; anything else goes to the chat.
+- **Brawl** — `Ctrl+Alt+F` spawns extra Bills that fight until one is left.
+
+`npm test` runs the logic checks and `npm run selftest` runs the app's own self-test. `npm run dist:win` and `npm run dist:linux` build installers with electron-builder; these have not been run yet.
+
 ## License
 
 Code is released under the [MIT License](LICENSE). The character Bill Cipher and all Gravity Falls references belong to Disney. The pixel sprites are used for this non-commercial fan project with credit to their creators:

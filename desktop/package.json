@@ -1,0 +1,85 @@
+{
+  "name": "bill-cipher-companion",
+  "productName": "Bill",
+  "version": "1.0.0",
+  "description": "Bill Cipher — Desktop Companion for Windows and Linux",
+  "license": "MIT",
+  "author": "Bill Cipher Companion contributors",
+  "homepage": "https://github.com/Jasonilization/bill-cipher-companion",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "convert": "node scripts/convert-swift-data.js",
+    "icon": "electron scripts/make-icon.js",
+    "selftest": "node scripts/selftest.js",
+    "test": "node scripts/logic-tests.js",
+    "dist:win": "electron-builder --win",
+    "dist:linux": "electron-builder --linux"
+  },
+  "dependencies": {
+    "@tesseract.js-data/eng": "^1.0.0",
+    "koffi": "^2.11.0",
+    "tesseract.js": "^7.0.0"
+  },
+  "devDependencies": {
+    "electron": "^38.0.0",
+    "electron-builder": "^26.0.0"
+  },
+  "build": {
+    "appId": "com.billcipher.companion",
+    "productName": "Bill",
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "main.js",
+      "src/**/*",
+      "renderer/**/*",
+      "build/icon.png",
+      "package.json"
+    ],
+    "asarUnpack": [
+      "node_modules/**",
+      "src/platform/helpers/**"
+    ],
+    "extraResources": [
+      {
+        "from": "../Sources/Bill/Resources/Sprites",
+        "to": "assets/Sprites"
+      },
+      {
+        "from": "../Sources/Bill/Resources/Dialogue",
+        "to": "assets/Dialogue"
+      }
+    ],
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ],
+      "icon": "build/icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true
+    },
+    "portable": {
+      "artifactName": "Bill-${version}-portable.exe"
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb",
+        "tar.gz"
+      ],
+      "icon": "build/icon.png",
+      "category": "Utility",
+      "executableArgs": [
+        "--ozone-platform=x11"
+      ],
+      "synopsis": "Bill Cipher desktop companion"
+    }
+  }
+}

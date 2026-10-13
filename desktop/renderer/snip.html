@@ -1,0 +1,21 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'unsafe-inline'">
+<title>Show Bill the problem</title>
+<style>
+  html, body { margin: 0; height: 100%; overflow: hidden; background: transparent; cursor: crosshair; user-select: none; -webkit-user-select: none; }
+  #shade { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.28); }
+  #box { position: fixed; display: none; border: 2px solid #fac726; background: rgba(250, 199, 38, 0.10); box-shadow: 0 0 0 1px #000; }
+  #hint { position: fixed; top: 28px; left: 50%; transform: translateX(-50%); padding: 8px 14px; background: #000; color: #fac726;
+    border: 2px solid #fac726; font: 700 13px/1.3 ui-monospace, Consolas, "DejaVu Sans Mono", monospace; letter-spacing: 0.5px; white-space: nowrap; }
+</style>
+</head>
+<body>
+<div id="shade"></div>
+<div id="box"></div>
+<div id="hint">DRAG A BOX AROUND THE PROBLEM &nbsp;·&nbsp; ENTER = WHOLE SCREEN &nbsp;·&nbsp; ESC = CANCEL</div>
+<script src="snip.js"></script>
+</body>
+</html>

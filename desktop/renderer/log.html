@@ -1,0 +1,32 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'">
+<title>Bill — Dialogue Refresh Log</title>
+<link rel="stylesheet" href="panels.css">
+<style>
+  body { display: flex; flex-direction: column; }
+  #toolbar { flex: none; display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-bottom: 1px solid var(--line); }
+  #toolbar .spacer { flex: 1; }
+  #entries { flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+  .entry summary { cursor: pointer; display: flex; gap: 10px; align-items: baseline; }
+  .entry summary .when { font-variant-numeric: tabular-nums; color: var(--muted); }
+  .entry .state { font-weight: 650; }
+  .entry .state.ok { color: var(--ok); } .entry .state.failed { color: var(--danger); } .entry .state.running { color: var(--warn); }
+  .entry h3 { font-size: 11.5px; margin: 10px 0 4px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+  pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font: 11.5px/1.45 ui-monospace, Consolas, monospace; background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 8px; max-height: 240px; overflow-y: auto; user-select: text; cursor: text; }
+  .empty { margin: auto; color: var(--muted); text-align: center; max-width: 420px; }
+</style>
+</head>
+<body>
+<div id="toolbar">
+  <strong>Dialogue refresh log</strong>
+  <span class="spacer"></span>
+  <button class="btn primary" id="refresh">Refresh Now</button>
+  <button class="btn" id="clear">Clear Log</button>
+</div>
+<div id="entries"></div>
+<script src="log.js"></script>
+</body>
+</html>

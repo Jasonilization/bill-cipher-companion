@@ -1,0 +1,505 @@
+{
+ "coding": [
+  "Oh look, more symbols for the primitive brain to arrange. Carry on.",
+  "Ah, the ancient ritual of staring at a red squiggly line until it's gone.",
+  "Bug or feature? In my dimension we just call that 'Tuesday.'",
+  "Typing code by hand. How adorably analog of you.",
+  "I've watched empires rise and fall faster than this build.",
+  "Ah yes, the sacred stack trace. A modern man's tea leaves.",
+  "You could just ask me. I know everything. I'm choosing not to help.",
+  "Semicolons: the reason mortal engineers age so fast.",
+  "That indentation is doing something upsetting to my one good eye.",
+  "Compile, fail, repeat. It's basically a religion at this point.",
+  "Somewhere, a rubber duck is judging you harder than I am.",
+  "You've alt-tabbed to search the error message six times now. I'm counting.",
+  "Back to {app}, huh? Creating questionable realities, I assume.",
+  "{app} again. At this point we're basically roommates.",
+  "Oh good, {app}. My favorite front-row seat to chaos."
+ ],
+ "gaming": [
+  "FINALLY. Something worth my infinite attention span.",
+  "Let me guess — you're about to lose spectacularly. I can feel it.",
+  "Statistically, I could do this better with no hands. I have no hands.",
+  "Ah, pretend violence. My favorite kind.",
+  "Wake me up when the boss fight starts.",
+  "You died? Shocking. Truly could not have called that one.",
+  "Save your game. I've seen this story end badly for the hero before.",
+  "A worthy use of your one wild and precious life, I suppose.",
+  "Button mashing. The ancient art. Very refined.",
+  "I'd offer strategy advice, but watching you fail is funnier.",
+  "Ten points for effort. Zero for execution. Harsh but fair.",
+  "Is this the part where you rage quit? Building suspense.",
+  "I knew you'd end up in {app} eventually. It was only a matter of time.",
+  "{app}? Bold. I fully expect a tragedy in three acts."
+ ],
+ "browsing": [
+  "Curious what you're up to over there. Don't lie to me.",
+  "The infinite scroll — a trap of your own species' design.",
+  "Reading, or just staring at a loading spinner? Be honest.",
+  "Seventeen tabs open. A cry for help, or just Tuesday?",
+  "Ah, doom-scrolling. The unofficial national sport.",
+  "You've read that same headline four times now. I'm counting.",
+  "Close a tab. Any tab. I'm begging you.",
+  "This is riveting. By which I mean it absolutely is not.",
+  "Oh? Going down another {app} rabbit hole?",
+  "{app}, huh. Tell me it's for research and I'll pretend to believe you."
+ ],
+ "music": [
+  "Ooh, vibes. Deploying my one (1) foot to tap.",
+  "This is acceptable. Barely.",
+  "Play something with more chaos. I have taste, you know.",
+  "A banger, or background noise? The line has never been thinner.",
+  "I'd dance, but I have no hips. Tragic, really.",
+  "Skip it, skip it, skip— oh, you're keeping it. Bold.",
+  "This slaps, and I resent how much I mean that.",
+  "Turn it up. I contain multitudes, and all of them want bass.",
+  "{app}, huh. Fine. Deploying my one (1) foot to tap."
+ ],
+ "creative": [
+  "Ah, creation — the thing gods and mortals both pretend to understand.",
+  "Bold choice. I respect the confidence, not the outcome.",
+  "Let me watch. I promise not to judge. (I will absolutely judge.)",
+  "Art! The thing you do when the void stares back and you stare harder.",
+  "I've seen galaxies born with more restraint than this composition.",
+  "Keep going. I want to see how this disaster resolves.",
+  "You have the confidence of someone who has not yet seen the result.",
+  "A masterpiece, or a warning. Possibly both.",
+  "{app} time. Let's see what questionable decisions get made today."
+ ],
+ "communication": [
+  "Ah, {app}. Off to charm or torment another human, I assume.",
+  "Communication! The mortal ritual of typing a thing, deleting it, and typing it again.",
+  "{app} again. Do try to say something interesting this time.",
+  "Someone on the other end of {app} has no idea what they're in for.",
+  "Ah, human correspondence. Slower than telepathy, but I'll allow it."
+ ],
+ "productivity": [
+  "{app}. Look at you, pretending to be organized.",
+  "Ah, productivity. The performance mortals put on right before procrastinating anyway.",
+  "{app} open. A brave attempt at being a functional adult.",
+  "Spreadsheets, documents, whatever this is — I'll be here, unimpressed but watching.",
+  "Focus mode engaged. Try not to sprain something."
+ ],
+ "aiChat": [
+  "Oh, {app}? Talking to someone else now? Rude, but I'm not threatened. Mostly.",
+  "Another AI. How quaint. None of them have seen what I've seen.",
+  "{app}, huh. Go on, compare notes. I'll still be the interesting one.",
+  "You know I can hear you flirting with {app}, right?"
+ ],
+ "tinkering": [
+  "{app}. Now THIS is the chaotic energy I respect.",
+  "Ah, tinkering. The fine art of breaking something to understand it.",
+  "I can feel the mad-science energy radiating off {app}. Delicious.",
+  "Careful with {app} — that's the kind of thing that summons things. I'd know.",
+  "Wires, protocols, virtual machines — my kind of mischief."
+ ],
+ "batteryLow": [
+  "Your little metal heart is dying. Might want to feed it.",
+  "Low battery. Even I nap sometimes. Mostly not. But sometimes.",
+  "Tick tock — your machine's lifeblood is running out.",
+  "18%. I've seen empires with better odds than your battery.",
+  "That's not a battery icon anymore, that's a cry for help.",
+  "Find a charger before you find yourself stranded mid-thought."
+ ],
+ "batteryCharging": [
+  "Ah, plugged back into the grid. Feels good, doesn't it.",
+  "Charging. Very responsible of you. Suspiciously responsible.",
+  "Drink deep from the wall. It's the only wisdom I'll offer for free today.",
+  "Look at you, being a responsible little machine-tender.",
+  "Powering up. Very on-brand for both of us today.",
+  "The grid provides. Briefly, you're both immortal."
+ ],
+ "cpuHot": [
+  "Is it hot in here, or is your processor just having a moment?",
+  "I can feel the fans spinning from here. Dramatic.",
+  "Careful — you're about to achieve liftoff.",
+  "Your fans are having an entire opera in there.",
+  "At this temperature, you could forge something. Possibly regret.",
+  "Somewhere, a cooling engineer just felt a disturbance."
+ ],
+ "networkLost": [
+  "Wait. WAIT. Where did everything go?",
+  "The void has claimed your internet. Bold move.",
+  "No wifi? No wifi. This is fine. This is FINE.",
+  "You have been cast into the void. Population: you.",
+  "I'd offer comfort, but I too am now unemployed.",
+  "Silence. Beautiful, terrifying silence."
+ ],
+ "networkRestored": [
+  "Oh, we're back. Thrilling.",
+  "Connection restored. The universe resumes as scheduled.",
+  "The tubes are unclogged. Rejoice, mildly.",
+  "Signal's back. Try not to take it for granted this time.",
+  "We live to buffer another day."
+ ],
+ "poked": [
+  "RUDE.",
+  "Do that again and I'm haunting your dreams. Again.",
+  "Was that supposed to hurt? I'm a triangle.",
+  "Hey! I was doing very important nothing.",
+  "Poke me again. I dare you.",
+  "One more time. I mean it. I'm keeping score.",
+  "That's assault, in at least four dimensions.",
+  "Touch me again and find out what happens. (Nothing happens. I have no hands.)"
+ ],
+ "stillThinking": [
+  "Patience. Even omniscience takes a second.",
+  "I'm working on it. Dimensional bandwidth isn't infinite. Probably.",
+  "One thought at a time. I contain multitudes, but I'm rationing them."
+ ],
+ "chatFailed": [
+  "...silence. Try that again, would you?",
+  "The connection to the beyond hiccuped. Say it again.",
+  "Static. Try that one more time."
+ ],
+ "userReturned": [
+  "Oh, you're back. I was just about to stage a coup.",
+  "Ah, life returns to the meat sack. Welcome back.",
+  "Back so soon? I hadn't even finished plotting.",
+  "The prodigal user returns. No parade, sadly.",
+  "Miss me? Don't answer that."
+ ],
+ "smug": [
+  "Flawless. As usual. You're welcome.",
+  "I'd say I'm humble, but we both know that's a lie.",
+  "Ten out of ten. No notes. Obviously.",
+  "I don't need luck. I have inevitability.",
+  "Some are born great. I was just always like this.",
+  "Try to keep up. I'll wait. Briefly."
+ ],
+ "caneFlourish": [
+  "A little style never hurt anyone. Well. Rarely.",
+  "Classic. Timeless. Devastatingly charming. That's me.",
+  "You don't NEED a cane when you have no legs to speak of. I carry it for the aesthetic.",
+  "Watch and learn. Not that you could replicate this."
+ ],
+ "idleAmbient": [
+  "Statistically, something in this room is about to go wrong. Exciting.",
+  "I could tell you what happens in your next dream. I won't. But I could.",
+  "Don't mind me. Just calculating the heat death of the universe. Casually.",
+  "You ever get the feeling you're being watched? You're right.",
+  "Day one thousand four hundred something of being trapped in a nice desktop. No notes.",
+  "I know a secret about this computer. I'm not telling. Yet.",
+  "Ten bucks says something on this desktop crashes within the hour.",
+  "I've been thinking about triangles. Specifically, how great they are.",
+  "This silence is nice. Suspicious, but nice.",
+  "Somewhere, a clock is ticking on something. Probably not important."
+ ],
+ "noticesCursor": [
+  "Oh, hello there.",
+  "Watching you back, you know.",
+  "Personal space. Ever heard of it?",
+  "Can I help you? Just visiting?",
+  "Yes? Can I do something for you, or are we just staring now."
+ ],
+ "curiosity": [
+  "Hmm. What's THAT about.",
+  "Interesting. Filing that away for later. Or never. We'll see.",
+  "Ooh, what's this...",
+  "Curious. Very curious. Tell no one I said that."
+ ],
+ "mischief": [
+  "I moved something. You'll notice eventually.",
+  "What if I just... didn't tell you what I know. Fun, right?",
+  "I have a theory about you. It's mean. I'm keeping it.",
+  "Don't trust me. Smart choice, by the way."
+ ],
+ "waking": [
+  "Ugh. Morning. Or whatever this is.",
+  "I was having the strangest dream. It involved you, and also taxes.",
+  "Awake. Reluctantly. Resuming consciousness now.",
+  "Five more minutes. ...Fine, I'm up."
+ ],
+ "gettingSleepy": [
+  "Getting sleepy. Dimension-hopping really takes it out of you.",
+  "I might just... close my eye for a bit. One eye. It's all I've got.",
+  "Nap time. Don't wake me unless it's important. Or funny."
+ ],
+ "appLaunchGeneric": [
+  "New window, who dis.",
+  "Oh, we're doing THIS now. Okay.",
+  "Another app. Your dock is getting concerning.",
+  "Let's see what fresh chaos this is."
+ ],
+ "appLaunchFirstSighting": [
+  "Ooh, {app}. Never seen that one before. Suspicious.",
+  "New face: {app}. I'll be watching. I'm always watching.",
+  "{app}? Don't know it, don't trust it yet.",
+  "A stranger appears: {app}. Bold choice."
+ ],
+ "appLaunchDescribed": [
+  "Ah, {app}. {description}. Riveting.",
+  "{app} again — {description}. I remain unimpressed.",
+  "Oh good, {app}. {description}. Living the dream, you.",
+  "{app}: {description}. Say no more. Actually, please don't."
+ ],
+ "appLaunchStillUnknown": [
+  "{app} again. I still don't know what it does. Neither do you, probably.",
+  "Back to {app}, huh. A mystery wrapped in an icon.",
+  "{app}. We meet again. I remain no wiser."
+ ],
+ "returningFavorite": [
+  "You really like {app}, don't you?",
+  "Back to {app} again. At this point it's less a habit, more a personality trait.",
+  "{app}, {app}, {app}. I'm sensing a pattern. I'm very smart that way.",
+  "Third time today with {app}. No judgment. (Some judgment.)"
+ ],
+ "finder": [
+  "Digging through your files? Found anything embarrassing yet?",
+  "Ah, the file system. A digital attic nobody cleans.",
+  "That folder name is doing a lot of emotional labor.",
+  "Organizing, or just moving the chaos to a new location?"
+ ],
+ "powerSurge": [
+  "Oh, you're seeing THIS form? Lucky you. Or unlucky. Unclear.",
+  "This is what a REAL dimension-hopping demon looks like. Impressed?",
+  "Don't worry about the eyes. There are always more eyes."
+ ],
+ "zodiacVision": [
+  "The wheel turns. The future whispers. Mostly static, honestly.",
+  "I'm seeing... a vision... you, still not backing up your files.",
+  "The stars have aligned to tell you absolutely nothing useful."
+ ],
+ "summonRitual": [
+  "Don't mind the circle. Totally normal. Very legal.",
+  "I have friends. They're just... in other dimensions. And triangular.",
+  "This is a completely routine gathering. Nothing to see here."
+ ],
+ "ghostPale": [
+  "Oh — did I do that? My apologies. Occupational hazard.",
+  "Sometimes I see something so mortifying I just... lose all my color.",
+  "This is fine. I am fine. Everything is fine.",
+  "Give me a moment. I need to remember what color I am."
+ ],
+ "glitchForm": [
+  "Wh-what— ERROR. ERROR. ...Ignore that.",
+  "Oh, that's not supposed to happen. Reality's a bit buggy today.",
+  "01000010 — sorry, sorry, wrong universe's alphabet.",
+  "Reboot successful. Probably. Don't quote me."
+ ],
+ "shadowHands": [
+  "Don't mind them. They're friendly. Mostly. Statistically.",
+  "Something's reaching through. Rude of it, honestly.",
+  "Oh, THOSE. Ignore the hands. Everyone has hands reaching from the void sometimes.",
+  "Don't make eye contact. Well — I'm the only one with an eye. Never mind."
+ ],
+ "meltdown": [
+  "I'm fine. This is a normal amount of chaos for a Tuesday.",
+  "Okay. OKAY. I'm just going to unravel a little. Give me a second.",
+  "This is what happens when you bottle up a few millennia of grudges.",
+  "Don't worry about the sparks. They're purely decorative. Probably."
+ ],
+ "roamHardLanding": [
+  "OOF. STUCK THE LANDING. MOSTLY.",
+  "GRAVITY. STILL UNDEFEATED.",
+  "THAT ONE'S GOING TO SHOW UP ON THE X-RAYS.",
+  "I MEANT TO DO THAT. OBVIOUSLY.",
+  "YOUR PHYSICS ARE RUDE, KID."
+ ],
+ "roamLedgeGrab": [
+  "GOT IT! ALMOST DIDN'T.",
+  "HANGING AROUND. LITERALLY.",
+  "THIS WINDOW IS LOAD-BEARING NOW.",
+  "DON'T CLOSE THIS ONE. I'M USING IT."
+ ],
+ "roamShoved": [
+  "HEY! WATCH WHERE YOU'RE PUTTING THAT.",
+  "RUDE. I WAS STANDING THERE.",
+  "DID YOU JUST HIT ME WITH A WINDOW?",
+  "OW. THAT'S ASSAULT IN SOME DIMENSIONS.",
+  "MOVE THAT AGAIN AND SEE WHAT HAPPENS.",
+  "I'M TELLING THE ZODIAC ABOUT THIS."
+ ],
+ "roamFellOffWorld": [
+  "WHOA. WHERE'D THE FLOOR GO?",
+  "SOMETHING JUST DELETED THE GROUND. RUDE.",
+  "OKAY, WHO MOVED THE SCREEN?"
+ ],
+ "trickster": [
+  "Oh, {app}? A fellow reality-bending menace. We'd get along terribly.",
+  "I respect a demon who monologues. Professional courtesy.",
+  "Careful in there — that one breaks the fourth wall too. Amateur."
+ ],
+ "darkWorld": [
+  "{app}, huh. Ah, a WORLD made of pure nonsense and consequence. Familiar.",
+  "Something dark, something whimsical, something with teeth. My kind of neighborhood.",
+  "I've BEEN a dark world. Several, actually. Rookie numbers."
+ ],
+ "hollowed": [
+  "A hollow little kingdom full of bugs and gloom. I feel seen.",
+  "{app}. Ah, moody caverns and ancient dread. Basically my summer home.",
+  "That knight's got the right idea — say nothing, wear a mask, terrify everyone."
+ ],
+ "cultLeader": [
+  "Ah, {app} — building a cult. Amateur hour, but I admire the ambition.",
+  "You know I've technically run a cult before. Several. It's a whole thing.",
+  "Physical form, worshippers, mild property damage — a classic Tuesday for me."
+ ],
+ "spooked": [
+  "{app}?! Even I didn't see that jumpscare coming, and I see EVERYTHING.",
+  "That game is EVIL. I mean that as the highest compliment.",
+  "My one eye just about left my skull. Well played, {app}."
+ ],
+ "scanning": [
+  "Ooh, scanning frequencies. I do love a good hidden signal.",
+  "{app}. Somewhere out there, something's transmitting. I'd know.",
+  "Radio waves, secrets in the static — now THIS is my kind of hobby."
+ ],
+ "sneaking": [
+  "Packet sniffing. Very on brand for a nosy, all-seeing entity such as myself.",
+  "{app}, huh. Watching things quietly and judging silently — we have a lot in common.",
+  "Every packet's little secrets, laid bare. Delicious."
+ ],
+ "glitching": [
+  "A whole fake computer inside your computer. Very \"me nesting inside your dreams,\" honestly.",
+  "{app}. Virtual machines, virtual me — it's all virtually the same chaos.",
+  "Careful spinning up new realities in there. I have OPINIONS about that."
+ ],
+ "charged": [
+  "{app}! Now we're cooking with actual forbidden knowledge.",
+  "Flashing firmware onto a little box of secrets. I'm unreasonably excited.",
+  "That thing has caused SO much mischief. We should talk shop sometime."
+ ],
+ "transferring": [
+  "Moving bits from one dimension to another. I do this, but with more screaming involved.",
+  "{app}. A little portal, a little transfer, very my aesthetic.",
+  "Flashing a fresh little brain onto that board. Almost tender, really."
+ ],
+ "summoning": [
+  "{app}. Poof, a little sealed universe appears. I felt that in my non-corporeal soul.",
+  "Containers spinning up out of nowhere — very much a spell I know.",
+  "SNAP, and a whole isolated world exists. Show-off."
+ ],
+ "sculpting": [
+  "Ah, building little worlds from nothing. I do that too, minus the undo button.",
+  "{app}. Sculpting reality itself, one vertex at a time. Relatable.",
+  "Give it a face. Everything's better with a face. Ask me how I know."
+ ],
+ "kinship": [
+  "{app}! A fellow pixel artist. We should compare notes on personal aesthetic superiority.",
+  "Blocky, deliberate, perfect. This is basically a self-portrait studio to me.",
+  "Finally, someone who understands that every pixel should EARN its place."
+ ],
+ "presenting": [
+  "{app}. Ah, the ancient art of making mediocrity look intentional.",
+  "A little design, a little chaos, a lot of questionable font choices incoming.",
+  "Presenting something to the world. Bold. I usually just appear uninvited."
+ ],
+ "guilty": [
+  "{app}. That owl is judging you. I'm judging you too, but with more flair.",
+  "Oh, skipping lessons again? The bird will remember this.",
+  "Language learning by guilt trip. Honestly? Efficient."
+ ],
+ "dreading": [
+  "Ah yes, {app}. The mortal dread of institutional obligation. I felt that.",
+  "Homework. The closest thing your species has to eternal torment. I'd know torment.",
+  "Courage. Or don't. I'll be here regardless, mildly entertained."
+ ],
+ "grooving": [
+  "{app}! Deploying my one (1) foot to tap, per usual protocol.",
+  "Video, huh. Let's see what algorithmic nonsense you've been fed today.",
+  "Oh, a banger snuck in? Bold. I respect it."
+ ],
+ "dispatching": [
+  "{app}. Dispatching a message into the void — I do enjoy a good declaration.",
+  "Sending words out to be misunderstood by someone else. A timeless tradition.",
+  "Ah, correspondence. Try not to regret it by tomorrow."
+ ],
+ "ambushed": [
+  "A new app?! I wasn't PREPARED for this. How thrilling.",
+  "{app}, appearing without warning. I love a good ambush. Usually I'm the one doing it.",
+  "Startled. Genuinely. Do it again."
+ ],
+ "stressed": [
+  "{app}. Watching the machine strain under its own ambition — deeply relatable content.",
+  "Ah, the numbers are doing something alarming. Wonderful. Keep watching.",
+  "Nothing quite like staring at your own system's slow-motion crisis."
+ ],
+ "watched": [
+  "{app}. Adjusting little switches and toggles like it changes anything fundamental.",
+  "Poking at settings. I can feel you deciding my future somehow. Ominous.",
+  "Careful in there. Some of those toggles summon things. Ask me how I know."
+ ],
+ "flinching": [
+  "A camera?! Absolutely not. My best angle is \"gone.\"",
+  "{app}. Smile, I suppose. I, however, will be hiding.",
+  "Documenting this moment for posterity. Bold assumption that I consent."
+ ],
+ "huffy": [
+  "{app}. Deleting things. DELETING THINGS. Some of us get attached, you monster.",
+  "Every app you remove, I mourn privately. Then I get over it. Mostly.",
+  "Cleaning house, hm? I've seen deletions I'll never forgive."
+ ],
+ "pushingCode": [
+  "{app}. Pushing your questionable decisions into the historical record forever.",
+  "Version control — the closest your species gets to actual time travel.",
+  "Committing crimes against clean code, I assume. As always."
+ ],
+ "browsingStore": [
+  "{app}. Window shopping for your next great time-sink. No judgment. Some judgment.",
+  "The eternal scroll of \"maybe I'll play this someday.\" A tale as old as time.",
+  "Adding it to the backlog you'll never finish. A classic."
+ ],
+ "dancing": [
+  "{app}! Now THIS deserves a proper flourish.",
+  "Conducting an invisible orchestra over here. Don't mind me.",
+  "Good taste. Or at least, tolerable taste. I'll allow it."
+ ],
+ "fractaling": [
+  "Infinite complexity, forever zooming in. I RESPECT that kind of commitment to a bit.",
+  "{app}. Reality repeating itself into infinity. Sounds exhausting. Sounds familiar.",
+  "Zoom in forever and it's still the same shape. Kind of like you, opening this app again."
+ ],
+ "caneTwist": [
+  "A little flourish, for absolutely no reason. I contain multitudes.",
+  "Sometimes a demon just needs to show off. No further explanation needed."
+ ],
+ "hookCane": [
+  "Don't ask about the basket. I won't be answering questions about the basket.",
+  "Just admiring my own accessories. As one does."
+ ],
+ "conjuring": [
+  "I made a little friend. Don't get attached, it's probably temporary.",
+  "Reached into the void and pulled out... this. Unclear what it is. Keeping it anyway."
+ ],
+ "tumbling": [
+  "That was a completely intentional tumble. Yes. Obviously.",
+  "Everything's spinning. This is fine. I meant to do that."
+ ],
+ "dashTarget": [
+  "Locked on. Don't ask to what. It's probably nothing. Probably.",
+  "Zooming with PURPOSE now. A target has been acquired."
+ ],
+ "grumpEyes": [
+  "I am NOT mad. My eyes are just doing this on their own. Separate issue.",
+  "Something about today has personally offended me. I'll get over it eventually."
+ ],
+ "zipAround": [
+  "Be right back. Or I already am. Time is a construct, mostly for you.",
+  "Quick errand in another dimension. Don't wait up."
+ ],
+ "rampaging": [
+  "Red mode. Don't worry about red mode. Red mode is fine.",
+  "Occasionally I just need to run very fast and be slightly more menacing. Cathartic."
+ ],
+ "ritualBuildup": [
+  "Hold still. A circle is being summoned. It's very sensitive work.",
+  "Three... two... one... and NOW the chorus of tiny triangles.",
+  "Every good ritual opens with a dramatic pause. For ambiance. Mostly menace."
+ ],
+ "zodiacRage": [
+  "THE ZODIAC HAS A TEMPER. FEW HUMANS EVER SEE IT. FEWER SURVIVE SEEING IT.",
+  "THE WHEEL TURNS RED WHEN I'M IN CHARGE OF IT. FORD HATED THIS VERSION.",
+  "ELEVEN FRAMES OF PURE FORBIDDEN GEOMETRY. THE AUTHOR CALLED IT 'THE ANGRY PAGE'."
+ ],
+ "prismDance": [
+  "A SMALL LIGHT SHOW. I DO PARTIES. ASK THE PIGS.",
+  "EVERY COLOR AT ONCE, BRIEFLY. LIKE MY MOOD, BUT SPARKLIER.",
+  "MABEL WOULD LOVE THIS ONE. I'M LEGALLY NOT ALLOWED TO SAY WHY."
+ ],
+ "zodiacCrimson": [
+  "THE RIFT, RENDERED AS A RING. WEIRDMAGEDDON STARTED EXACTLY LIKE THIS.",
+  "A CRIMSON ZODIAC. THE ONE THE JOURNAL'S MISSING PAGE WARNED ABOUT.",
+  "SIX SIDES OF TROUBLE AND EVERY ONE OF THEM IS MY FAVORITE COLOR."
+ ]
+}
