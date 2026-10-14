@@ -1,121 +1,124 @@
-# Bill Cipher — Desktop Companion for macOS
+# Bill Cipher & Friends — Desktop Companion
 
 <p align="center">
   <img src="docs/assets/bill-demo.gif" width="236" alt="Bill summoning the Zodiac wheel">
+  <img src="docs/gifs/sans.gif" width="120" alt="Sans walking">
+  <img src="docs/gifs/knight.gif" width="220" alt="The Knight walking">
+  <img src="docs/gifs/niko.gif" width="110" alt="Niko walking">
 </p>
 
-<h3 align="center">Bill Cipher lives on your desktop.</h3>
+<h3 align="center">Bill Cipher lives on your desktop — and he brought friends.</h3>
 
-<p align="center">He studies your apps, watches the sky, presses buttons he shouldn't, and chats back through his own pixel speech bubbles.</p>
+<p align="center">Sixteen companions across five games. They study your apps, watch the sky, press buttons they shouldn't, roam the screen, and chat back through their own pixel speech bubbles.</p>
 
 <p align="center">
   <a href="https://github.com/Jasonilization/bill-cipher-companion/releases/latest"><b>Download the DMG</b></a> · <a href="https://jasonilization.github.io/bill-cipher-companion/">Homepage</a> · <a href="https://jasonilization.github.io/bill-cipher-companion/animations.html">Every animation, looping</a></p>
 
 <p align="center">
   <a href="https://github.com/Jasonilization/bill-cipher-companion/releases/latest"><img src="https://img.shields.io/github/v/release/Jasonilization/bill-cipher-companion?style=flat-square" alt="Release"></a>
-  <a href="https://github.com/Jasonilization/bill-cipher-companion/releases"><img src="https://img.shields.io/badge/platform-macOS%2014%2B-333333?style=flat-square&logo=apple&logoColor=white" alt="macOS 14+"></a>
+  <a href="https://github.com/Jasonilization/bill-cipher-companion/releases"><img src="https://img.shields.io/badge/platform-macOS%2014%2B%20%7C%20Windows%20%7C%20Linux-333333?style=flat-square&logo=apple&logoColor=white" alt="macOS 14+ / Windows / Linux"></a>
   <a href="https://github.com/Jasonilization/bill-cipher-companion/actions"><img src="https://img.shields.io/github/actions/workflow/status/Jasonilization/bill-cipher-companion/ci.yml?branch=main&style=flat-square&label=CI" alt="CI"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-000000?style=flat-square" alt="MIT"></a>
 </p>
 
 ---
 
-A hand-drawn **380-sprite pixel-art rig** of Gravity Falls' dream demon, native Swift end to end (AppKit + SpriteKit + WebKit), with desktop physics, app awareness, weather, and a real ChatGPT session behind the chat.
+Native Swift end to end (AppKit + SpriteKit + WebKit): a hand-drawn **380-sprite Bill rig** plus a data-driven **pack system** that turns hand-labeled sprite sheets into fully animated characters — each with its own dialogue voice, ChatGPT persona, roaming style, and speech-bubble theme.
 
-> *Unofficial, non-commercial fan project. Bill Cipher and Gravity Falls are © Disney. Not affiliated with or endorsed by Disney.*
+> *Unofficial, non-commercial fan project. Bill Cipher and Gravity Falls are © Disney. Undertale © Toby Fox, Deltarune © Toby Fox, OneShot © Eliza Velasquez & Nightcat Studios, Hollow Knight © Team Cherry. Not affiliated with or endorsed by any of them.*
 
-## What he does
+## The roster
 
-- **Studies your apps (first-run personalization)** — Bill offers to use his own ChatGPT connection to write himself commentary for the apps actually installed on your Mac: a morning line, a midday line, an afternoon line and a night line for each app, plus transition quips for switching between your most-used pairs. All in his voice, all referencing Gravity Falls lore, all generated on your machine — and merged into his live dialogue immediately, batch by batch.
-- **Reads the sky** — pulls local weather (Open-Meteo, keyless) every five minutes using the radar-based nowcast, so he announces rain *while it's actually starting to rain*, and folds today's conditions into his chat context.
-- **Roams the whole screen** — walks the floor, climbs windows, perches on them, falls with gravity, and gets shoved aside when you move windows under him. Shooting animations keep him anchored where he was standing.
-- **Presses the minimize button** — very occasionally, Bill leaps onto a background window's yellow traffic light, plays a satisfied finger-snap, and *actually minimizes the window* — then falls through where its top edge used to be. Never the window you're working in; toggleable in Settings.
-- **Incognito browsing reaction** — open a private/incognito window in any browser and Bill triggers the red shooting cloud with custom dialogue ("*what you searching up online this late? better not be as weird as Dipper's search history!*"). This is the ONLY trigger for that animation.
-- **Knows what you're up to** — reads your focused window's title (via Accessibility) and, if you opt in, can read the window contents on-device (Vision OCR) to tell whether your assignments are actually done.
-- **Talks to you** — right-click Bill → **Talk** (or the global hotkey, or the menu bar). Fixed-size pixel-styled chat window with scrollable messages, dot-matrix header, and a pixel border. Conversations scroll, the composer wraps, nothing ever gets clipped.
-- **Directional speech bubbles** — bark bubbles float beside, above, or below Bill in their own panel: random direction when there's room, away from the border when near one.
-- **Actually chats** — replies come from a real ChatGPT session in an embedded WebKit view, with a summary of your recent Mac activity *and* the current weather folded into the first message of each conversation.
-- **Never runs out of things to say** — a background prompt asks ChatGPT for fresh, activity-relevant quips **spread across the day** (1–6× per day, your call) and merges them into the local dialogue pools.
-- **Has moods** — poke him too much and watch. All 66+ animation families play from idle, tiered by rarity. Pin any reaction to a favourite animation in Settings, or assign animations per-app.
-- **Menu bar citizen** — a proper `LSUIElement` accessory app: no Dock icon, no focus stealing, lives quietly in the menu bar. Trust no one; trust the eye.
+| Gravity Falls | Undertale | Deltarune | OneShot | Hollow Knight |
+|---|---|---|---|---|
+| Bill Cipher | Sans, Sans (Battle), Papyrus, Toriel, Frisk, Flowey (stays planted), Temmie, Monster Kid, Annoying Dog | Kris, Ralsei, Susie — with light/dark world modes and a crossfade between them | Niko | The Knight, Hornet |
 
-## Make him yours
+Switchable live from the menu bar or Settings. Companions ride along in the same window, wander on their own, banter, and bump.
 
-Settings is a proper control surface: recolour his speech bubbles, scale the bark text, resize the chat window, dial the idle-animation pacing, pin individual reactions to specific animations, assign animations to specific apps, set how many times a day his prompts refresh, and write extra persona instructions that ride along with every prompt (chat, refreshes, personalization). Test triggers let you fire any reaction live. Everything applies immediately.
+<p>
+<img src="docs/gifs/bill.gif" width="100">&nbsp;
+<img src="docs/gifs/sans.gif" width="95">&nbsp;
+<img src="docs/gifs/sansdt.gif" width="95">&nbsp;
+<img src="docs/gifs/papyrus.gif" width="70">&nbsp;
+<img src="docs/gifs/toriel.gif" width="65">&nbsp;
+<img src="docs/gifs/frisk.gif" width="80">&nbsp;
+<img src="docs/gifs/flowey.gif" width="100">&nbsp;
+<img src="docs/gifs/temmie.gif" width="95">&nbsp;
+<img src="docs/gifs/monsterkid.gif" width="80">&nbsp;
+<img src="docs/gifs/annoyingdog.gif" width="105">
+<br>
+<img src="docs/gifs/niko.gif" width="90">&nbsp;
+<img src="docs/gifs/kris.gif" width="65">&nbsp;
+<img src="docs/gifs/ralsei.gif" width="160">&nbsp;
+<img src="docs/gifs/susie.gif" width="125">&nbsp;
+<img src="docs/gifs/knight.gif" width="200">&nbsp;
+<img src="docs/gifs/hornet.gif" width="140">
+</p>
+
+> ⚠️ **The sprite packs are a work in progress.** They're hand-labeled and actively being refined — backgrounds, scales, walk directions, more characters. Expect changes.
+
+## What they do
+
+- **Roam the desktop.** Four-direction characters (Frisk, Sans, Toriel, Kris, Ralsei, Susie, Niko) stroll the whole screen top-down — up is up, down is down. The Knight and Hornet keep full platformer physics: jumping between windows, wall slides, climbing. Flowey stays planted, because flower.
+- **React to what you do.** App launches, incognito windows, trash, clipboard, screenshots, the weather, the time of day — each has in-character reactions per character.
+- **Push windows aside.** (Opt-in, Behaviour settings.) Walking across an app window nudges it a few points over — never the app you're actively using, and it stops the instant you drag it yourself.
+- **Talk back.** Right-click → Talk opens a pixel speech bubble wired to a real ChatGPT session — no API key. Every character has its own persona (sans types lowercase, Papyrus is VERY LOUD, the Knight speaks in lore tablets).
+- **Keep you company.** Idle beats, showcase performances of the whole sprite sheet, banter between companions, per-character dialogue pools for time of day and context.
+
+## Make them yours
+
+Settings covers character selection and companions, per-trigger animation assignment, per-family Facing (left / right-mirror) and World (light/dark) labels, live animated previews of every sheet, idle pacing, speech frequency, roaming and mischief toggles, bubble themes, and more.
 
 ## Requirements
 
-| | |
-|---|---|
-| **OS** | macOS 14 (Sonoma) or newer. On the newest systems Bill gets Liquid Glass and the modern WebKit `WebPage` engine; on older Macs he automatically falls back to a classic `WKWebView` bridge and material chrome — same behavior, same tricks, no setup |
-| **Chat** | a logged-in [chatgpt.com](https://chatgpt.com) account (Bill opens his own browser window for the one-time sign-in) |
-| **Perms** | Accessibility (window titles), optional Screen & Audio capture (OCR) — asked for on first use |
+- **macOS 14+** for the native app (the primary experience)
+- **Windows 10/11 or Linux (X11)** via the Electron port in [`desktop/`](desktop/) — see below
+- Permissions are all optional and each powers a specific feature: Accessibility (window awareness, mischief, pushing), Screen Recording (reading window titles), Location (weather)
 
-## Install
+## Install (Mac)
 
-1. Download **`Bill-macOS.dmg`** from the [latest release](https://github.com/Jasonilization/bill-cipher-companion/releases/latest).
-2. Open the DMG and drag **Bill** onto the **Applications** shortcut beside him.
-3. First launch: **right-click → Open** (the app is ad-hoc signed, not notarized).
-4. Look at your menu bar. He's already watching your desktop — and shortly he'll offer to study your apps.
+Grab the **DMG** from the [latest release](https://github.com/Jasonilization/bill-cipher-companion/releases/latest), drag Bill to Applications, launch, and grant whatever permissions you want.
 
-## Build from source
+> Ad-hoc signing caveat: macOS drops Accessibility/Screen Recording permissions on every new build — re-grant after updating.
 
-```bash
+## Windows and Linux
+
+Two ports ship in this repo:
+
+- **Electron port** ([`desktop/`](desktop/)) — runs on Windows 10/11 and Linux (X11), reusing the same sprites and dialogue. Keeps the roaming physics, barks, ChatGPT chat (cookie-based, no API key), weather, study mode, personalization and settings. Adds Troll/Helpful modes, solve-on-screen (`Ctrl+Alt+S`, on-machine math solver) and Brawl (`Ctrl+Alt+F`).
+  - **Status:** 53/53 logic checks pass; the app self-test passes on Windows 11. The Linux run, brawl, and packaged installers have not been tested yet — build with `npm run dist:win` / `dist:linux`.
+  - Run from source: `cd desktop && npm install && npm start`
+- **WPF Windows preview** ([`windows/`](windows/)) — the earlier C# port; builds with `dotnet publish`.
+
+## Build from source (Mac)
+
+```sh
 git clone https://github.com/Jasonilization/bill-cipher-companion.git
 cd bill-cipher-companion
-swift build                # debug
-./Scripts/bundle.sh release  # → Bill.app, ad-hoc signed
+swift build                              # zero errors expected
+swift Scripts/validate_sprite_assets.swift   # 4,000+ sprite-data checks, must exit 0
 ```
 
-No Xcode project — a pure SwiftPM package (`swift-tools-version: 6.2`, deployment target `.macOS(.v14)`).
+Bundle assembly is manual (see `.opencode/skills/swift-appkit-spritekit/SKILL.md`): copy `.build/debug/Bill`, `Resources/Info.plist`, `Resources/AppIcon.icns` and every `.build/debug/*.bundle` into `Bill.app/Contents/…`, then `codesign --force --sign -`.
 
 ## How it's put together
 
-```
-Sources/Bill/
-├── Animation/        SpriteKit rig, state machine, 380-sprite catalog, FX library
-├── App/              NSApplication bootstrap, menu-bar + monitor wiring
-├── Awareness/        Focused-window titles + on-device OCR (Vision)
-├── CharacterEngine/  Bark lines, reactions, habit nagging
-├── Chat/             WebKit/ChatGPT bridge, injected JS, message relay
-├── Debug/            Dialogue refresh log window
-├── Dialogue/         Local dialogue pools, time-of-day lines
-├── Memory/           Recent-activity summaries (context for chat)
-├── Personalization/ First-run ChatGPT setup: per-app, per-time, transition lines
-├── Roaming/          Desktop physics: ledges, gravity, window-climbing
-├── StudyMode/        Focus enforcement
-├── SystemMonitor/    Battery / network / CPU / idle / volume / weather
-└── UI/               Character window, pixel chat, bark panels, settings, hotkey
-```
+- **`Sources/Bill/Animation`** — the state space, clip system, state machine, Bill's 68-family clip table
+- **`Sources/Bill/Packs`** — the character system: roster, lazy sprite catalogs, the state→family resolver (workbench-label aware), companions, dialogue voices
+- **`Sources/Bill/CharacterEngine`** — ambient beats, rare events, the reaction router, per-character dialogue
+- **`Sources/Bill/Roaming`** — the physics sim, the roaming controller (platformer + top-down modes), window topology, the window pusher
+- **`Sources/Bill/UI`** — the borderless SpriteKit window, chat, Settings
+- **`Scripts/rebuild_from_workbench.py`** — the sprite pipeline: builds everything from the hand-labeled `build-assets/workbench_export.json`; the manifest and roster geometry are derived, never hand-edited
 
-## Windows
+## More indie games to come
 
-A Windows port is in progress (WPF, milestones W1–W3). Preview available in `windows/` — see [the port plan](https://github.com/Jasonilization/bill-cipher-companion/blob/main/docs/notes/WindowsPortPlan.md).
-
-## Windows and Linux (Electron)
-
-`desktop/` is a port of the Mac app to Electron that runs on Windows and Linux (X11). It reuses the sprites and dialogue in `Sources/Bill/Resources` and keeps the Mac behaviour: roaming and window physics, barks, the ChatGPT chat window, weather, study mode, personalization and the settings panels.
-
-```sh
-cd desktop
-npm install
-npm start
-```
-
-It also adds a few things the Mac app does not have:
-
-- **Troll and Helpful modes** — right-click Bill → Mode. Troll mode lets him snatch the cursor and shake windows (each can be switched off, and "Undo Bill's Mischief" puts things back); Helpful mode offers help when a window looks like trouble.
-- **Solve something on screen** — `Ctrl+Alt+S`, then drag a box around a sum or an equation. Arithmetic, percentages, linear and quadratic equations and linear systems are solved on the machine; anything else goes to the chat.
-- **Brawl** — `Ctrl+Alt+F` spawns extra Bills that fight until one is left.
-
-`npm test` runs the logic checks and `npm run selftest` runs the app's own self-test. `npm run dist:win` and `npm run dist:linux` build installers with electron-builder; these have not been run yet.
+The pack system is built for it: any hand-labeled sprite sheet becomes a playable pack with its own animations, dialogue voice, and bubble theme. More indie favorites are on the way — this roster is just the beginning.
 
 ## License
 
-Code is released under the [MIT License](LICENSE). The character Bill Cipher and all Gravity Falls references belong to Disney. The pixel sprites are used for this non-commercial fan project with credit to their creators:
+Code is released under the [MIT License](LICENSE). Bill Cipher and all Gravity Falls references belong to Disney. The pixel sprites are used for this non-commercial fan project with credit to their creators:
 
-**Bill Cipher sprite artwork** — original artwork by **Kelly Nora** ([@kiernenking](https://www.deviantart.com/kiernenking)); sprite sheet by **JayHyperStarX**, from ["Bill Cipher – Sprite Sheet" on DeviantArt](https://www.deviantart.com/jayhyperstarx/art/Bill-Cipher---Sprite-Sheet-910916786).
-
----
-
-*Reality is an illusion, the universe is a hologram, buy gold, bye!*
+- Bill Cipher — artwork by [Kelly Nora](https://kiernenking.newgrounds.com/) (@kiernenking); sheet by JayHyperStarX
+- Undertale / Deltarune — ripped by asym & collaborators, The Spriters Resource
+- OneShot — ripped by accuratejaney, The Spriters Resource
+- Hollow Knight — community rips, The Spriters Resource
