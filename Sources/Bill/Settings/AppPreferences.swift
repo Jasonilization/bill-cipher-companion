@@ -30,12 +30,12 @@ final class AppPreferences: ObservableObject {
         static let alwaysOnTop = "billAlwaysOnTop"
         static let customFamilyMap = "billCustomFamilyMap"
         static let familyFacingMap = "billFamilyFacingMap"
+        static let windowPushing = "billWindowPushing"
         static let worldModeMap = "billWorldModeMap"
         static let familyWorldMap = "billFamilyWorldMap"
         static let mutedCompanions = "billMutedCompanions"
         static let disabledStates = "billDisabledStates"
         static let enemySpawning = "billEnemySpawning"
-        static let windowPushing = "billWindowPushing"
         static let activeCharacter = "billActiveCharacterID"
         static let activeCompanions = "billActiveCompanionIDs"
     }
@@ -123,6 +123,14 @@ final class AppPreferences: ObservableObject {
 
     @Published var isRoamingEnabled: Bool {
         didSet { UserDefaults.standard.set(isRoamingEnabled, forKey: Keys.roaming) }
+    }
+
+    /// Window pushing: walking across an app window nudges it aside via
+    /// the Accessibility API. Off by default — it moves real windows;
+    /// never the frontmost app's, and inert without the Accessibility
+    /// permission.
+    @Published var isWindowPushingEnabled: Bool {
+        didSet { UserDefaults.standard.set(isWindowPushingEnabled, forKey: Keys.windowPushing) }
     }
 
     /// Bill's occasional prank: leap up and press a window's minimize
@@ -259,6 +267,7 @@ final class AppPreferences: ObservableObject {
     static var familyFacingMapShared: [String: String] = [:]
     static var worldModeMapShared: [String: String] = [:]
     static var familyWorldMapShared: [String: String] = [:]
+    static var isWindowPushingEnabledShared = false
 
     /// Muted companions, mirrored for the companion controllers.
     static var mutedCompanionsShared: Set<String> = []
@@ -316,6 +325,7 @@ final class AppPreferences: ObservableObject {
         let defaults = UserDefaults.standard
         isRoamingEnabled = (defaults.object(forKey: Keys.roaming) as? Bool) ?? true
         isMinimizeMischiefEnabled = (defaults.object(forKey: Keys.minimizeMischief) as? Bool) ?? true
+        isWindowPushingEnabled = (defaults.object(forKey: Keys.windowPushing) as? Bool) ?? false
         isWindowAwarenessEnabled = (defaults.object(forKey: Keys.windowAwareness) as? Bool) ?? false
         isScreenOCREnabled = (defaults.object(forKey: Keys.screenOCR) as? Bool) ?? false
         bubbleAccentColorHex = defaults.string(forKey: Keys.bubbleAccentColor) ?? "fac726"

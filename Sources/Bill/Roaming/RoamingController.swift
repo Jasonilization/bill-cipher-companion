@@ -873,6 +873,15 @@ final class RoamingController {
         applyMotionState()
         writeBack(panel: panel)
 
+        // Window pushing (Settings-gated, Accessibility-gated): a
+        // character walking across a real app window's face nudges it
+        // aside — Bill's physics walkers and the floor-pacers. Top-down
+        // characters are excluded: they stroll the whole screen and
+        // would shove everything they pass over.
+        if !isTopDown {
+            WindowPusher.maybePush(panel: panel, at: sim.feet)
+        }
+
         for event in events {
             log("event \(event) at (\(Int(sim.feet.x)),\(Int(sim.feet.y)))")
             handle(event)

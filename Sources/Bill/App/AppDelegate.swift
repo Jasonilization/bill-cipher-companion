@@ -74,6 +74,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             .removeDuplicates()
             .sink { AppPreferences.familyWorldMapShared = $0 }
             .store(in: &cancellables)
+        AppPreferences.isWindowPushingEnabledShared = preferences.isWindowPushingEnabled
+        preferences.$isWindowPushingEnabled
+            .removeDuplicates()
+            .sink { AppPreferences.isWindowPushingEnabledShared = $0 }
+            .store(in: &cancellables)
 
         // Decode the dialogue library before anything can ask it for a line.
         // A few milliseconds for ~750 short strings, and every bark path

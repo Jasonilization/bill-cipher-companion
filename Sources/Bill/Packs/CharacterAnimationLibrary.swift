@@ -569,6 +569,15 @@ final class CharacterAnimationLibrary {
                         PoseKeyframe(duration: 1.6, offset: .zero),
                     ]],
                     loop: .loop)
+            case .falling, .rising, .launching:
+                // Physics-driven states: the CLIP must keep pace with the
+                // simulation. A 6-frame fall at the default slow pingpong
+                // took 2.6s per cycle while the real fall lasts ~0.4s —
+                // the animation visibly trailed the character ("falling
+                // is laggy"). Forward loop, fast frames.
+                return AnimationClip(textures: frames, frameDuration: 0.09, loop: .loop)
+            case .climbingUp, .climbingDown:
+                return AnimationClip(textures: frames, frameDuration: 0.14, loop: .loop)
             default:
                 let textures = frames.count > 1 ? Self.pingpongLoop(frames) : frames
                 return AnimationClip(textures: textures, frameDuration: slow, loop: .loop)

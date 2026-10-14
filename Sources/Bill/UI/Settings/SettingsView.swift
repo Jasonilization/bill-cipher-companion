@@ -178,6 +178,12 @@ struct SettingsView: View {
             card("Activity") {
                 Toggle("Bill roams the screen", isOn: $preferences.isRoamingEnabled)
                 Toggle("Minimize-button mischief", isOn: $preferences.isMinimizeMischiefEnabled)
+                Toggle("Push windows aside", isOn: $preferences.isWindowPushingEnabled)
+                if preferences.isWindowPushingEnabled {
+                    Text("Walking across an app window nudges it a few points aside — never the app you're using, and it needs the Accessibility permission. Off, on, and back on: it stops the instant you drag a window yourself.")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
                 Toggle("Launch Bill at login", isOn: Binding(
                     get: { preferences.launchAtLoginStatus == .enabled },
                     set: { preferences.setLaunchAtLogin($0) }
