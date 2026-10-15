@@ -2,9 +2,14 @@
 
 <p align="center">
   <img src="docs/assets/bill-demo.gif" width="236" alt="Bill summoning the Zodiac wheel">
-  <img src="docs/gifs/sans.gif" width="120" alt="Sans walking">
-  <img src="docs/gifs/knight.gif" width="220" alt="The Knight walking">
-  <img src="docs/gifs/niko.gif" width="110" alt="Niko walking">
+  <img src="docs/gifs/sans.gif" width="120" alt="Sans chugging ketchup">
+  <img src="docs/gifs/knight.gif" width="220" alt="The Knight nail slashing">
+  <img src="docs/gifs/niko.gif" width="110" alt="Niko twirling">
+</p>
+<p align="center">
+  <img src="docs/gifs/ralsei.gif" width="200" alt="Ralsei twirling his scarf">
+  <img src="docs/gifs/susie.gif" width="160" alt="Susie eating chalk">
+  <img src="docs/gifs/frisk.gif" width="110" alt="Frisk splashing water">
 </p>
 
 <h3 align="center">Bill Cipher lives on your desktop — and he brought friends.</h3>

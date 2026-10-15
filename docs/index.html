@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Bill Cipher — Desktop Companion for macOS</title>
+<title>Bill Cipher & Friends — Desktop Companion</title>
 <link rel="icon" type="image/png" href="assets/bill-hero.png">
 <style>
   :root { --yellow: #fac726; --ink: #121217; --paper: #faf9f5; --muted: #9b9aa5; --line: #2c2c36; }
@@ -25,7 +25,7 @@
   .btn { display: inline-block; padding: 12px 20px; font-weight: 700; font-size: 15px; }
   .btn-y { background: var(--yellow); color: var(--ink); border: 2px solid var(--ink); outline: 2px solid var(--yellow); }
   .btn-ghost { border: 2px solid var(--line); color: var(--paper); } .btn-ghost:hover { border-color: var(--yellow); text-decoration: none; }
-  .badges { margin-top: 22px; display: flex; gap: 8px; }
+  .badges { margin-top: 22px; display: flex; gap: 8px; flex-wrap: wrap; }
   .badge { font-size: 12px; padding: 4px 10px; border: 1px solid var(--line); color: var(--muted); }
   .hero-art { text-align: center; } .hero-art img { image-rendering: pixelated; }
   section { padding: 64px 0; border-top: 1px solid var(--line); }
@@ -41,6 +41,14 @@
   .plat { border: 1px solid var(--line); padding: 20px; background: #1a1a22; }
   .plat .os { font: 700 15px "SF Mono", monospace; } .plat p { font-size: 13px; color: var(--muted); margin-top: 6px; }
   .ok { color: #7bd88f; } .soon { color: var(--yellow); }
+  .roster { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; }
+  .char { border: 1px solid var(--line); background: #1a1a22; padding: 14px 16px 12px; }
+  .char .head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
+  .char h3 { font-size: 14px; color: var(--paper); }
+  .char .pack { font: 11px "SF Mono", monospace; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+  .char .anim { display: flex; align-items: flex-end; justify-content: center; gap: 14px; min-height: 150px; }
+  .char img { image-rendering: pixelated; }
+  .char .note { margin-top: 8px; font-size: 12px; color: var(--muted); text-align: center; }
   footer { border-top: 1px solid var(--line); padding: 40px 0 64px; color: var(--muted); font-size: 13px; }
   footer .sig { font-family: "SF Mono", monospace; color: var(--yellow); margin-top: 10px; }
   @media (max-width: 800px) { .hero { grid-template-columns: 1fr; } .grid, .plat-grid { grid-template-columns: 1fr; } }
@@ -51,45 +59,104 @@
 <img class="walker" src="assets/bill-walk.gif" alt="" aria-hidden="true">
 <main><div class="wrap">
   <div class="hero"><div>
-    <h1>Bill Cipher lives <span class="y">on your desktop.</span></h1>
-    <p class="tagline">A hand-drawn 380-sprite pixel-art companion — native Swift — who roams your screen, studies your apps, watches the sky, and chats back through his own speech bubbles.</p>
+    <h1>Bill lives on your desktop <span class="y">&mdash; and he brought friends.</span></h1>
+    <p class="tagline">Sixteen hand-labeled pixel companions across five games. They roam your screen, study your apps, watch the sky, and chat back through their own speech bubbles. Native Swift on macOS; Electron on Windows and Linux.</p>
     <div class="ctas">
       <a class="btn btn-y" href="https://github.com/Jasonilization/bill-cipher-companion/releases/latest">Download the DMG</a>
       <a class="btn btn-ghost" href="animations.html">Every Animation</a>
       <a class="btn btn-ghost" href="https://github.com/Jasonilization/bill-cipher-companion">GitHub</a>
     </div>
-    <div class="badges"><span class="badge">macOS 14+</span><span class="badge">MIT</span></div>
+    <div class="badges"><span class="badge">macOS 14+</span><span class="badge">Windows / Linux</span><span class="badge">MIT</span></div>
   </div><div class="hero-art">
     <img src="assets/bill-hero.png" alt="Bill Cipher" width="300"><br>
     <img src="assets/bill-demo.gif" alt="Bill animating" width="236">
   </div></div>
-  <section><h2>What he <span class="y">does</span></h2>
+
+  <section id="roster"><h2>The <span class="y">roster</span></h2>
+    <p class="tagline" style="margin-bottom:28px;max-width:52em">Switchable live from the menu bar. Two confirmed previews each &mdash; the sprites are hand-labeled and still being refined. More indie games to come.</p>
+    <div class="roster">
+      <div class="char"><div class="head"><h3>Bill Cipher</h3><span class="pack">Gravity Falls</span></div>
+        <div class="anim"><img src="gifs/bill.gif" width="130" alt="Bill ambling"><img src="gifs/bill-2.gif" width="130" alt="Bill power surge"></div>
+        <div class="note">the amble &middot; the power surge</div></div>
+      <div class="char"><div class="head"><h3>Sans</h3><span class="pack">Undertale</span></div>
+        <div class="anim"><img src="gifs/sans.gif" width="120" alt="Sans chugging ketchup"><img src="gifs/sans-2.gif" width="120" alt="Sans walking"></div>
+        <div class="note">ketchup &middot; the stroll</div></div>
+      <div class="char"><div class="head"><h3>Sans (Battle)</h3><span class="pack">Undertale</span></div>
+        <div class="anim"><img src="gifs/sansdt.gif" width="120" alt="Battle Sans gesturing"><img src="gifs/sansdt-2.gif" width="120" alt="Battle Sans laughing"></div>
+        <div class="note">the gesture &middot; the laugh</div></div>
+      <div class="char"><div class="head"><h3>Papyrus</h3><span class="pack">Undertale</span></div>
+        <div class="anim"><img src="gifs/papyrus.gif" width="100" alt="Papyrus being silly"><img src="gifs/papyrus-2.gif" width="100" alt="Papyrus walking left"></div>
+        <div class="note">NYEH HEH HEH &middot; the stride</div></div>
+      <div class="char"><div class="head"><h3>Toriel</h3><span class="pack">Undertale</span></div>
+        <div class="anim"><img src="gifs/toriel.gif" width="100" alt="Toriel reading in her chair"><img src="gifs/toriel-2.gif" width="100" alt="Toriel walking"></div>
+        <div class="note">story time &middot; the walk</div></div>
+      <div class="char"><div class="head"><h3>Frisk</h3><span class="pack">Undertale</span></div>
+        <div class="anim"><img src="gifs/frisk.gif" width="110" alt="Frisk splashing water"><img src="gifs/frisk-2.gif" width="110" alt="Frisk walking"></div>
+        <div class="note">the splash &middot; the march</div></div>
+      <div class="char"><div class="head"><h3>Flowey</h3><span class="pack">Undertale</span></div>
+        <div class="anim"><img src="gifs/flowey.gif" width="130" alt="Flowey grinning"><img src="gifs/flowey-2.gif" width="130" alt="Flowey shrinking"></div>
+        <div class="note">the grin &middot; the recoil</div></div>
+      <div class="char"><div class="head"><h3>Temmie</h3><span class="pack">Undertale</span></div>
+        <div class="anim"><img src="gifs/temmie.gif" width="120" alt="Temmie hOI"><img src="gifs/temmie-2.gif" width="120" alt="Temmie walking"></div>
+        <div class="note">hOI!!! &middot; the waddle</div></div>
+      <div class="char"><div class="head"><h3>Monster Kid</h3><span class="pack">Undertale</span></div>
+        <div class="anim"><img src="gifs/monsterkid.gif" width="110" alt="Monster Kid tripping"><img src="gifs/monsterkid-2.gif" width="110" alt="Monster Kid walking"></div>
+        <div class="note">the trip (41 frames!) &middot; the run</div></div>
+      <div class="char"><div class="head"><h3>Annoying Dog</h3><span class="pack">Undertale</span></div>
+        <div class="anim"><img src="gifs/annoyingdog.gif" width="110" alt="Annoying Dog eating a bone"><img src="gifs/annoyingdog-2.gif" width="110" alt="Annoying Dog sitting"></div>
+        <div class="note">the bone &middot; the sit</div></div>
+      <div class="char"><div class="head"><h3>Niko</h3><span class="pack">OneShot</span></div>
+        <div class="anim"><img src="gifs/niko.gif" width="110" alt="Niko twirling"><img src="gifs/niko-2.gif" width="110" alt="Niko walking"></div>
+        <div class="note">the twirl &middot; the walk</div></div>
+      <div class="char"><div class="head"><h3>Kris</h3><span class="pack">Deltarune</span></div>
+        <div class="anim"><img src="gifs/kris.gif" width="100" alt="Kris attack intro"><img src="gifs/kris-2.gif" width="100" alt="Kris walking"></div>
+        <div class="note">the stance &middot; the march</div></div>
+      <div class="char"><div class="head"><h3>Ralsei</h3><span class="pack">Deltarune</span></div>
+        <div class="anim"><img src="gifs/ralsei.gif" width="150" alt="Ralsei twirling his scarf"><img src="gifs/ralsei-2.gif" width="150" alt="Ralsei waving hi"></div>
+        <div class="note">the scarf &middot; the wave</div></div>
+      <div class="char"><div class="head"><h3>Susie</h3><span class="pack">Deltarune</span></div>
+        <div class="anim"><img src="gifs/susie.gif" width="130" alt="Susie eating chalk"><img src="gifs/susie-2.gif" width="130" alt="Susie rude buster"></div>
+        <div class="note">the chalk &middot; RUDE BUSTER</div></div>
+      <div class="char"><div class="head"><h3>The Knight</h3><span class="pack">Hollow Knight</span></div>
+        <div class="anim"><img src="gifs/knight.gif" width="210" alt="The Knight nail slashing"><img src="gifs/knight-2.gif" width="210" alt="The Knight walking"></div>
+        <div class="note">the nail arc (26 frames) &middot; the walk</div></div>
+      <div class="char"><div class="head"><h3>Hornet</h3><span class="pack">Hollow Knight</span></div>
+        <div class="anim"><img src="gifs/hornet.gif" width="130" alt="Hornet leaping"><img src="gifs/hornet-2.gif" width="130" alt="Hornet walking"></div>
+        <div class="note">the leap &middot; the prowl</div></div>
+    </div>
+    <p class="tagline" style="margin-top:24px;font-size:14px;color:var(--muted)">Sprite packs are a work in progress &mdash; hand-labeled and actively refined. More indie favorites to come; the pack system is built for it.</p>
+  </section>
+
+  <section><h2>What they <span class="y">do</span></h2>
     <div class="grid">
-      <div class="card"><h3>Studies your apps</h3><p>Bill offers to use his ChatGPT connection to write himself commentary for every app on your Mac — morning, midday, afternoon and night lines, plus transition quips.</p></div>
-      <div class="card"><h3>Reads the sky</h3><p>Keyless Open-Meteo nowcast, refreshed every five minutes. When it starts raining exactly outside, he tells you.</p></div>
-      <div class="card"><h3>Roams everything</h3><p>Walks the floor, climbs your windows, perches, falls with gravity.</p></div>
-      <div class="card"><h3>Presses buttons</h3><p>Occasionally leaps onto a background window's yellow minimize light and actually minimizes it.</p></div>
-      <div class="card"><h3>Talks back</h3><p>Right-click → Talk. Fixed-size pixel chat window, scrollable, dot-matrix header — nothing ever gets clipped.</p></div>
-      <div class="card"><h3>Has moods</h3><p>All 66+ animation families from idle, tiered by rarity. Poke him too much and find out.</p></div>
+      <div class="card"><h3>Roam everything</h3><p>Top-down strollers cross the whole screen. The Knight and Hornet leap between windows, wall-slide, climb. Flowey stays planted, because flower.</p></div>
+      <div class="card"><h3>Study your apps</h3><p>Per-character commentary for every app &mdash; generated through their own ChatGPT session, no API key, morning to night.</p></div>
+      <div class="card"><h3>React to you</h3><p>App launches, incognito windows, trash, clipboard, weather, time of day &mdash; each with in-character lines and animations.</p></div>
+      <div class="card"><h3>Press buttons</h3><p>Occasionally leaps onto a background window's yellow minimize light and actually minimizes it. Can also nudge windows aside (opt-in).</p></div>
+      <div class="card"><h3>Talk back</h3><p>Right-click &rarr; Talk. Every character has its own persona &mdash; sans types lowercase, Papyrus is VERY LOUD, the Knight speaks in lore tablets.</p></div>
+      <div class="card"><h3>Keep you company</h3><p>Idle beats, showcase performances of the whole sprite sheet, companions that wander and banter with each other.</p></div>
     </div>
   </section>
-  <section><h2>Summon <span class="y">him</span></h2>
+
+  <section><h2>Summon <span class="y">them</span></h2>
     <div class="steps">
       <div class="step"><span>Download <a href="https://github.com/Jasonilization/bill-cipher-companion/releases/latest"><b>Bill-macOS.dmg</b></a></span></div>
       <div class="step"><span>Open the DMG, drag <b>Bill</b> onto <b>Applications</b></span></div>
-      <div class="step"><span>First launch: <b>right-click → Open</b></span></div>
-      <div class="step"><span>Check the menu bar. He's already watching.</span></div>
+      <div class="step"><span>First launch: <b>right-click &rarr; Open</b></span></div>
+      <div class="step"><span>Pick your character from the menu bar. They're already watching.</span></div>
     </div>
   </section>
+
   <section><h2>Platform<span class="y">s</span></h2>
     <div class="plat-grid">
       <div class="plat"><div class="os"><span class="ok">&#10003;</span> macOS 14+</div><p>Native and first-class. Download it right now.</p></div>
-      <div class="plat"><div class="os"><span class="soon">◐</span> Windows</div><p>Coming soon.</p></div>
-      <div class="plat"><div class="os"><span class="soon">◐</span> Linux</div><p>Coming soon.</p></div>
+      <div class="plat"><div class="os"><span class="ok">&#10003;</span> Windows</div><p>Electron port in <a href="https://github.com/Jasonilization/bill-cipher-companion/tree/main/desktop">desktop/</a> &mdash; self-tested on Windows 11; installers build with <code>npm run dist:win</code>.</p></div>
+      <div class="plat"><div class="os"><span class="soon">◐</span> Linux</div><p>X11 via the same Electron port. Untested &mdash; build with <code>npm run dist:linux</code> and tell us how it went.</p></div>
     </div>
   </section>
+
   <footer>
-    <p>Unofficial, non-commercial fan project. Bill Cipher and Gravity Falls are &copy; Disney. Code is <a href="https://github.com/Jasonilization/bill-cipher-companion/blob/main/LICENSE">MIT</a>. Sprites: <a href="https://www.deviantart.com/kiernenking">Kelly Nora</a> / <a href="https://www.deviantart.com/jayhyperstarx/art/Bill-Cipher---Sprite-Sheet-910916786">JayHyperstarX</a>.</p>
+    <p>Unofficial, non-commercial fan project. Bill Cipher and Gravity Falls are &copy; Disney. Undertale & Deltarune &copy; Toby Fox. OneShot &copy; Eliza Velasquez & Nightcat Studios. Hollow Knight &copy; Team Cherry. Code is <a href="https://github.com/Jasonilization/bill-cipher-companion/blob/main/LICENSE">MIT</a>. Sprites hand-labeled from community rips with credit: <a href="https://www.deviantart.com/kiernenking">Kelly Nora</a> / <a href="https://www.deviantart.com/jayhyperstarx/art/Bill-Cipher---Sprite-Sheet-910916786">JayHyperStarX</a>, asym & collaborators (The Spriters Resource).</p>
     <p class="sig">REALITY IS AN ILLUSION, THE UNIVERSE IS A HOLOGRAM, BUY GOLD, BYE!</p>
   </footer>
 </div></main>
