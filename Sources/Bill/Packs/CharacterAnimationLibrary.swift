@@ -85,17 +85,21 @@ final class CharacterAnimationLibrary {
     }
 
     /// Body family → its labeled overlay effect (the zip's `_ effects/`
-    /// folders). Strict name correspondence only — no invented pairings.
-    private static let overlayFamilies: [String: String] = [
-        "nail_slash": "fx-slashes_effect",
-        "shadow_dash": "fx-shadow_dash_trail",
-        "dash_v2": "fx-dash_effect",
-        "cyclone_slash": "fx-cyclone_slash_effect",
-        "up_slash": "fx-up_slash_effect",
-        "down_slash_v2": "fx-down_slash_effect",
-        "charge_slash": "fx-charge_slash_effect",
-        "superdash": "fx-superdash_effect",
-        "focus_v2": "fx-nail_charge_effect",
+    /// folders) + the DELAY before the effect fires, measured from the
+    /// body frames: each effect belongs to its animation's action moment
+    /// (extent-spike analysis; the nail slash swings at frame ~13 of 26,
+    /// the dash lunges at frame ~3, the superdash releases at ~13).
+    /// Effects play at 0.06s/frame, one-shot bodies at 0.12s.
+    private static let overlayFamilies: [String: (fx: String, delay: TimeInterval)] = [
+        "nail_slash": ("fx-matntis_slash_left", 1.44),  // swing at f13; the clean 4f left arc (body canvas)
+        "up_slash": ("fx-up_slash_effect", 0.12),
+        "down_slash_v2": ("fx-down_slash_effect", 0.12),
+        "cyclone_slash": ("fx-cyclone_slash_effect", 0.12),
+        "charge_slash": ("fx-charge_slash_effect", 0.24),
+        "superdash": ("fx-superdash_effect", 1.44),    // release at f13
+        "dash_v2": ("fx-dash_effect", 0.24),           // lunge at f3
+        "shadow_dash": ("fx-shadow_dash_trail", 0),    // continuous trail
+        "focus_v2": ("fx-nail_charge_effect", 0),
     ]
 
     /// The effect clip to composite over the body animation for `state` —
@@ -104,12 +108,17 @@ final class CharacterAnimationLibrary {
     /// carries its effect along.
     func overlayClip(for state: BillState) -> AnimationClip? {
         guard let bodyFamily = resolvedFamily(for: state),
-              let effectName = Self.overlayFamilies[bodyFamily],
-              let mapped = resolveFamily(effectName),
-              mapped == effectName,
-              !catalog.frames(effectName).isEmpty
+              let effect = Self.overlayFamilies[bodyFamily],
+              let mapped = resolveFamily(effect.fx),
+              mapped == effect.fx,
+              !catalog.frames(effect.fx).isEmpty
         else { return nil }
-        return AnimationClip(textures: catalog.frames(effectName), frameDuration: 0.06, loop: .once)
+        return AnimationClip(
+            textures: catalog.frames(effect.fx),
+            frameDuration: 0.06,
+            loop: .once,
+            overlayDelay: effect.delay
+        )
     }
 
     /// The family a state resolves to (name only) — the same ladder the
@@ -311,10 +320,10 @@ final class CharacterAnimationLibrary {
         // "falling very slowly looks wrong" report).
         "knight": [
             .powerSurge: "nail_slash", .zodiacVision: "nail_slash", .summonRitual: "nail_slash",
-            .rampaging: "nail_slash", .zipAround: "dash_v2", .conjuring: "cast",
+            .rampaging: "nail_slash", .zipAround: "shadow_dash", .conjuring: "cast",
             .heatingUp: "quake", .sleeping: "sit", .charging: "focus_v2",
             .dazed: "stun", .thinking: "focus_v2", .caneFlourish: "focus_v2",
-            .focused: "focus_v2", .dashTarget: "shadow_dash",
+            .focused: "focus_v2", .dashTarget: "dash_v2",
             // Roaming physics → true folders.
             .falling: "fall", .landingSoft: "land", .landingHard: "hard_land",
             .launching: "jump", .rising: "jump", .edgePeek: "look_down",

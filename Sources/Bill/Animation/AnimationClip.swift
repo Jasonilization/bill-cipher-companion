@@ -58,6 +58,10 @@ struct AnimationClip {
     /// (see `BillStateMachine.play`); `false` leaves whatever facing
     /// the roam controller last set.
     var mirrored: Bool = false
+    /// Overlay effects only: seconds to wait before the effect appears —
+    /// the effect must fire at its animation's ACTION moment, not its
+    /// start (the nail slash winds up 12 frames before the swing).
+    var overlayDelay: TimeInterval = 0
 
     var singlePassDuration: TimeInterval {
         let textureDuration = textures.isEmpty ? 0 : Double(textures.count) * frameDuration

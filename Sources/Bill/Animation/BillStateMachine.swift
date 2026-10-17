@@ -600,7 +600,23 @@ final class BillStateMachine {
                 self.clearOverlay()
             }
         }
-        fx.run(SKAction.sequence([animate, hide]), withKey: Self.fxActionKey)
+        // Timed overlays: the effect fires at the body's action moment
+        // (measured per family — the nail slash's arc belongs to frame
+        // ~13 of 26, not the windup).
+        if overlay.overlayDelay > 0 {
+            fx.isHidden = true
+            fx.run(
+                SKAction.sequence([
+                    SKAction.wait(forDuration: overlay.overlayDelay),
+                    SKAction.run { fx.isHidden = false },
+                    animate,
+                    hide,
+                ]),
+                withKey: Self.fxActionKey
+            )
+        } else {
+            fx.run(SKAction.sequence([animate, hide]), withKey: Self.fxActionKey)
+        }
     }
 
     private func clearOverlay() {
