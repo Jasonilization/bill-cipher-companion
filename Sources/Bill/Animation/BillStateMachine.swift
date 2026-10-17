@@ -587,7 +587,10 @@ final class BillStateMachine {
         let fx = rig.fxNode
         fx.removeAction(forKey: Self.fxActionKey)
         fx.isHidden = false
-        fx.setScale(rig.fxScale)
+        // Match the body's current facing — HK characters mirror by
+        // direction and their effect arcs mirror with them.
+        fx.xScale = (rig.bodyNode.xScale < 0 ? -1 : 1) * rig.fxScale
+        fx.yScale = rig.fxScale
         let animate = SKAction.animate(
             with: overlay.textures,
             timePerFrame: overlay.frameDuration,

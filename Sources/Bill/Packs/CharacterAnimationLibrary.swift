@@ -92,14 +92,16 @@ final class CharacterAnimationLibrary {
     /// Effects play at 0.06s/frame, one-shot bodies at 0.12s.
     private static let overlayFamilies: [String: (fx: String, delay: TimeInterval)] = [
         "nail_slash": ("fx-matntis_slash_left", 1.44),  // swing at f13; the clean 4f left arc (body canvas)
-        "up_slash": ("fx-up_slash_effect", 0.12),
-        "down_slash_v2": ("fx-down_slash_effect", 0.12),
+        "up_slash": ("fx-mantis_up_slash", 0.12),       // the MANTIS CLAW arcs
+        "down_slash_v2": ("fx-mantis_down_slash", 0.12),
         "cyclone_slash": ("fx-cyclone_slash_effect", 0.12),
         "charge_slash": ("fx-charge_slash_effect", 0.24),
         "superdash": ("fx-superdash_effect", 1.44),    // release at f13
         "dash_v2": ("fx-dash_effect", 0.24),           // lunge at f3
         "shadow_dash": ("fx-shadow_dash_trail", 0),    // continuous trail
         "focus_v2": ("fx-nail_charge_effect", 0),
+        "collect_normal": ("fx-bling", 0),            // the geo sparkle
+        "superdash_wall_hit": ("fx-wall_puff", 0),    // wall-contact dust
     ]
 
     /// The effect clip to composite over the body animation for `state` —

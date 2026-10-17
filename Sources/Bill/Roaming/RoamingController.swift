@@ -1072,6 +1072,12 @@ final class RoamingController {
     // MARK: - Animation + window
 
     private func applyMotionState() {
+        // A dash leg owns the body: the sim's motion is still "walking"
+        // during a dash, but mapping it would swap the dash art back to
+        // the walk one tick in ("he doesn't move when dash" — the dash
+        // clip kept getting stomped). The dash case re-asserts its own
+        // state each tick.
+        if case .dashing = step { return }
         let state: BillState
         switch sim.motion {
         case .resting:               state = .idle
@@ -1118,16 +1124,19 @@ final class RoamingController {
         characterEngine.animationLibrary?.walkDirection = dx > 0 ? 1 : -1
         guard want != facing else { return }
         facing = want
-        // The sheet's left/right rows are genuine art, not mirrors — the
-        // library picks them via walkDirection. Only Bill (whose sheet is
-        // authored left-facing single-sided) flips via xScale; pack
-        // characters NEVER auto-mirror. If a pack family needs flipping,
-        // the user labels it "Faces right (mirror)" in Settings.
-        if characterEngine.character.isBill {
-            characterEngine.rig.bodyNode.xScale = want * characterEngine.character.displayScale
-        } else {
-            characterEngine.rig.bodyNode.xScale = characterEngine.character.displayScale
-        }
+        // Bill's sheet is authored left-facing single-sided, and the HK
+        // art is too — those MIRROR by direction (the user's explicit
+        // call: "mirror his animations"). The UT/DR/OS sheets carry real
+        // left/right rows, so those characters never auto-mirror — the
+        // library picks their directional art via walkDirection, and any
+        // exception is the user's Settings "Faces right (mirror)" label.
+        let mirrors = characterEngine.character.isBill
+            || characterEngine.character.packID == "hollowknight"
+        let sign: CGFloat = mirrors ? want : 1
+        characterEngine.rig.bodyNode.xScale = sign * characterEngine.character.displayScale
+        // The effect overlay mirrors WITH the body — the slash arcs and
+        // dash streaks are directional art.
+        characterEngine.rig.fxNode.xScale = sign * characterEngine.rig.fxScale
     }
 
     func resetFacing() {
