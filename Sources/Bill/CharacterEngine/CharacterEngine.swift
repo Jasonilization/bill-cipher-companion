@@ -83,6 +83,9 @@ final class CharacterEngine {
                 restTexture: packCatalog.restTexture,
                 idleVariants: { library.idleVariant($0) }
             )
+            // Labeled effect overlays (slash arcs, dash trails) composite
+            // over the matching body animation as it plays.
+            stateMachine.overlayProvider = { library.overlayClip(for: $0) }
         }
     }
 
@@ -124,6 +127,7 @@ final class CharacterEngine {
                 restTexture: packCatalog.restTexture,
                 idleVariants: { library.idleVariant($0) }
             )
+            stateMachine.overlayProvider = { library.overlayClip(for: $0) }
         }
         // Defensive scale re-apply: every "the new sprite shows up small"
         // report traces back to some stale scale surviving the swap — the

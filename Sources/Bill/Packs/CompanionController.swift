@@ -69,6 +69,7 @@ final class CompanionController {
             restTexture: packCatalog.restTexture,
             idleVariants: { library.idleVariant($0) }
         )
+        stateMachine.overlayProvider = { library.overlayClip(for: $0) }
         rig.root.name = "companionRoot"
     }
 

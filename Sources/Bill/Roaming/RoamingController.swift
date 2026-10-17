@@ -40,6 +40,9 @@ final class RoamingController {
     /// The step of the plan currently being executed.
     private enum Step {
         case approach(x: CGFloat, running: Bool)
+        /// A dash leg: full-speed burst toward x (the Knight's dash —
+        /// body at dash art, fx trail on the overlay node).
+        case dashing(toX: CGFloat, since: Date)
         case crouch(until: Date, target: CGPoint)
         case launch(target: CGPoint)
         case airborne
@@ -84,6 +87,15 @@ final class RoamingController {
     /// The point the top-down stroll is currently walking toward, in
     /// screen coordinates (feet position).
     private var walk2DTarget: CGPoint?
+
+    /// True when the character's sheet carries real dash art (the
+    /// Knight's dash_v2/shadow_dash) — dash legs are earned, not assumed.
+    private var hasDashArt: Bool {
+        guard let library = characterEngine.animationLibrary else { return false }
+        return !library.catalog.frames("dash_v2").isEmpty
+            || !library.catalog.frames("shadow_dash").isEmpty
+            || !library.catalog.frames("dash").isEmpty
+    }
     /// Feet position while in top-down mode (kept in panel-derived
     /// coordinates via `feetPosition(panel:)` each tick).
     private var topDownLegs = 0
@@ -585,7 +597,15 @@ final class RoamingController {
         guard let goal else { step = .done; return }
         switch goal {
         case .stroll(let x):
-            step = .approach(x: x, running: abs(x - sim.feet.x) > 240)
+            let distance = abs(x - sim.feet.x)
+            // A dash-arted character (the Knight) sometimes DASHES a long
+            // leg instead of running it — full burst, dash art, fx trail.
+            if distance > 260, hasDashArt, sim.isGrounded,
+               Double.random(in: 0..<1) < 0.35 {
+                step = .dashing(toX: x, since: Date())
+            } else {
+                step = .approach(x: x, running: distance > 240)
+            }
 
         case .walk2D:
             // Driven by `stepTopDown`, never by the plan ladder.
@@ -893,6 +913,29 @@ final class RoamingController {
     /// Issues the commands the current plan step needs, each tick.
     private func driveStep() {
         switch step {
+        case .dashing(let x, let since):
+            // The dash: burst toward x while grounded. Ends on arrival,
+            // after 0.55s (a dash is a beat, not a commute), or the
+            // moment the ground disappears (falls through with the
+            // air state taking over via applyMotionState).
+            let direction: CGFloat = x > sim.feet.x ? 1 : -1
+            if sim.isGrounded {
+                sim.dash(direction: direction)
+                updateFacing(direction)
+                applyState(.dashTarget)
+            }
+            if abs(x - sim.feet.x) <= 30
+                || Date().timeIntervalSince(since) > 0.55 {
+                if sim.isGrounded { sim.stop() }
+                applyState(.idle)
+                replanCount += 1
+                if replanCount > Self.maxReplans {
+                    step = .settle(until: Date().addingTimeInterval(0.3))
+                } else {
+                    planNextStep()
+                }
+            }
+
         case .approach(let x, let running):
             // The stationary rule: a reaction clip that fires mid-beat must
             // pause the walk — Bill only moves while the walk (or a roam

@@ -564,11 +564,20 @@ final class CharacterWindowController: NSObject {
         // 6.2x-scale Sans walks at Bill-speed (72pt/s of tiny steps, reading
         // as standing still while shuffling).
         if let roaming = roaming {
-            // Normalize to Bill's body-unit conversion: every character
-            // renders at the same visual height, so pt/s speeds and jump
-            // arcs must be identical across the roster (the Knight was
-            // visibly slow-marching at his 1.4x scale).
-            roaming.characterScale = BillRigNode.displayScale * preferences.characterScale
+            // Physics scale by RENDERED BODY SIZE relative to Bill: the
+            // sim's speeds and jump heights were tuned on Bill's body, and
+            // a character half Bill's size must jump half as high and take
+            // proportionally smaller strides ("the knight jumps too
+            // insanely high"). Body size = the rest frame's content height
+            // at the character's display scale — canvas size lies (HK
+            // sheets carry huge empty margins).
+            let bodyH = CGFloat(characterEngine.catalog?.restContentHeight ?? 0)
+                * definition.displayScale
+            let billBodyH = CGFloat(CharacterSpriteCatalog.pixelContentHeight(
+                of: BillSpriteCatalog.restTexture)) * BillRigNode.displayScale
+            let sizeRatio = bodyH > 0 && billBodyH > 0 ? bodyH / billBodyH : 1
+            roaming.characterScale = BillRigNode.displayScale
+                * preferences.characterScale * sizeRatio
         }
 
         // The roaming controller caches the desktop's window topology against

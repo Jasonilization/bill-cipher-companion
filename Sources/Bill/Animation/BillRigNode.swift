@@ -18,6 +18,13 @@ struct BillRigNode {
     let parts: [BillPart: SKNode]
     let homes: [BillPart: PartHome]
     let rightHandAnchor: SKNode
+    /// The overlay layer: labeled effect animations (slash arcs, dash
+    /// trails, charge particles) composite ON TOP of the body here. Hidden
+    /// while idle. nil never happens — every rig gets one.
+    let fxNode: SKSpriteNode
+    /// The display scale fx textures render at (effects ship at the same
+    /// game-pixel density as the body, so the fx node scales by this too).
+    let fxScale: CGFloat
     let bodyNode: SKSpriteNode
 
     /// Bill's source frames are ~55-70px on their long axis; scaled up for
@@ -43,6 +50,15 @@ struct BillRigNode {
         body.position = .zero
         root.addChild(body)
 
+        // The effect overlay: same anchor/position as the body, above it.
+        // Hidden until a clip's matching fx family plays; per-frame
+        // resizing (resize: true) is safe here — effects never mirror.
+        let fx = SKSpriteNode()
+        fx.isHidden = true
+        fx.zPosition = body.zPosition + 1
+        fx.position = body.position
+        root.addChild(fx)
+
         let handAnchor = SKNode()
         handAnchor.position = CGPoint(x: body.size.width * 0.34, y: -body.size.height * 0.08)
         body.addChild(handAnchor)
@@ -52,6 +68,8 @@ struct BillRigNode {
             parts: [.body: body],
             homes: [.body: PartHome()],
             rightHandAnchor: handAnchor,
+            fxNode: fx,
+            fxScale: scale,
             bodyNode: body
         )
     }

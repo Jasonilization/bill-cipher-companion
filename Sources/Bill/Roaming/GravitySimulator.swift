@@ -19,6 +19,10 @@ struct RoamPhysics {
     var walkSpeed: CGFloat = 72
     var runSpeed: CGFloat = 155
     var climbSpeed: CGFloat = 95
+    /// The Knight's mid-run dash burst (the "dash should actually dash"
+    /// feature): roughly 3.6x the run speed, capped so window collisions
+    /// stay resolvable by the swept tests at the tick rate.
+    var dashSpeed: CGFloat = 560
     /// Stops a long drop turning into an un-animatable blur.
     var terminalVelocity: CGFloat = 1500
     var maxLaunchSpeedX: CGFloat = 520
@@ -151,6 +155,16 @@ final class GravitySimulator {
     func walk(direction: CGFloat, running: Bool = false) {
         guard isGrounded else { return }
         let speed = (running ? physics.runSpeed : physics.walkSpeed) * scale
+        velocity.dx = direction >= 0 ? speed : -speed
+        motion = .walking(dx: velocity.dx)
+    }
+
+    /// A dash leg: full horizontal burst while grounded — the caller ends
+    /// it (arrival or timeout) with `stop()`. Ends itself the moment the
+    /// character leaves the ground (a ledge drop mid-dash).
+    func dash(direction: CGFloat) {
+        guard isGrounded else { return }
+        let speed = physics.dashSpeed * scale
         velocity.dx = direction >= 0 ? speed : -speed
         motion = .walking(dx: velocity.dx)
     }

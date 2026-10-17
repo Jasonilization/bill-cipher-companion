@@ -131,6 +131,13 @@ final class BillStateMachine {
     /// gaming, coding, heatingUp, charging) keep running until something else
     /// interrupts them; one-shot beats (happy, annoyed, surprised,
     /// celebrating) settle back to idle on their own.
+    /// Overlay effects ("the effect animations go on top of whichever
+    /// animation they correspond to"): given the state being played, an
+    /// optional clip whose textures run on `rig.fxNode` simultaneously.
+    /// Pack characters set this from their animation library's
+    /// family→effect mapping; nil plays no overlay.
+    var overlayProvider: ((BillState) -> AnimationClip?)?
+
     func request(_ state: BillState, force: Bool = false) {
         if state == .idle {
             settleToIdle()
@@ -479,6 +486,7 @@ final class BillStateMachine {
         if clip.mirrored {
             rig.bodyNode.xScale = -abs(rig.bodyNode.xScale)
         }
+        playOverlay(for: state)
         holdWork?.cancel()
         holdWork = nil
         if state.isContinuous {
@@ -528,6 +536,7 @@ final class BillStateMachine {
         currentState = .idle
         equipProp(.none)
         applyFX(nil)
+        clearOverlay()
 
         for (part, node) in rig.parts {
             node.removeAction(forKey: Self.actionKey)
@@ -569,6 +578,37 @@ final class BillStateMachine {
         pendingWork = work
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3, execute: work)
     }
+
+    /// Runs the state's matching effect family on the overlay node —
+    /// resize: true because effect canvases differ per frame (the body's
+    /// anti-resize rule does not apply: effects never mirror).
+    private func playOverlay(for state: BillState) {
+        guard let overlay = overlayProvider?(state), !overlay.textures.isEmpty else { return }
+        let fx = rig.fxNode
+        fx.removeAction(forKey: Self.fxActionKey)
+        fx.isHidden = false
+        fx.setScale(rig.fxScale)
+        let animate = SKAction.animate(
+            with: overlay.textures,
+            timePerFrame: overlay.frameDuration,
+            resize: true,
+            restore: false
+        )
+        let hide = SKAction.run { [weak self] in
+            guard let self else { return }
+            if self.currentState == state {
+                self.clearOverlay()
+            }
+        }
+        fx.run(SKAction.sequence([animate, hide]), withKey: Self.fxActionKey)
+    }
+
+    private func clearOverlay() {
+        rig.fxNode.removeAction(forKey: Self.fxActionKey)
+        rig.fxNode.isHidden = true
+    }
+
+    private static let fxActionKey = "fxOverlay"
 
     private func setClipActive(_ active: Bool) {
         isClipActive = active

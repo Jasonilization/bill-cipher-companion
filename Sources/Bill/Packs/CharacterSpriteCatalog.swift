@@ -20,18 +20,26 @@ final class CharacterSpriteCatalog {
     /// The rest frame's transparent bottom margin in source pixels — see
     /// the init's doc comment; the window geometry compensates it.
     private(set) var restGap: Int = 0
+    /// The rest frame's CONTENT height in source pixels — the character's
+    /// rendered body height. The roaming sim scales physics by body-size
+    /// ratio to Bill so jumps and strides match each character's visual
+    /// size (the Knight was leaping Bill-height arcs).
+    private(set) var restContentHeight: Int = 0
 
     /// Rows of transparent padding under the content at the texture's
-    /// bottom edge. SpriteKit textures have their origin at the bottom-left.
+    /// bottom edge. CGImage bitmap memory row 0 is the TOP scanline —
+    /// scanning row = h-1-y from y=0 upward finds the first opaque row
+    /// FROM THE BOTTOM. (The first version scanned row = y and measured
+    /// the TOP gap — the Knight compensated 54px instead of 4px and sank
+    /// half his body through the window's bottom edge.)
     private static func pixelBottomGap(of texture: SKTexture) -> Int {
         let cg = texture.cgImage()
         guard let data = cg.dataProvider?.data, let bytes = CFDataGetBytePtr(data) else { return 0 }
         guard cg.bitsPerPixel == 32 else { return 0 }
         let bpr = cg.bytesPerRow, bpp = 4
         let w = cg.width, h = cg.height
-        // Scan rows from the bottom for the first opaque pixel.
         for y in 0..<h {
-            let row = y // bitmap row 0 IS the bottom row for CG images
+            let row = h - 1 - y // memory row 0 = top scanline
             var x = 0
             while x < w {
                 if bytes[row * bpr + x * bpp + 3] > 30 { return y }
@@ -39,6 +47,31 @@ final class CharacterSpriteCatalog {
             }
         }
         return h
+    }
+
+    /// The vertical extent of actual content in a texture, in source
+    /// pixels (top gap + bottom gap excluded). Used for per-character
+    /// physics scaling.
+    static func pixelContentHeight(of texture: SKTexture) -> Int {
+        let cg = texture.cgImage()
+        guard let data = cg.dataProvider?.data, let bytes = CFDataGetBytePtr(data) else { return 0 }
+        guard cg.bitsPerPixel == 32 else { return 0 }
+        let bpr = cg.bytesPerRow, bpp = 4
+        let w = cg.width, h = cg.height
+        func rowOpaque(_ row: Int) -> Bool {
+            var x = 0
+            while x < w {
+                if bytes[row * bpr + x * bpp + 3] > 30 { return true }
+                x += 1
+            }
+            return false
+        }
+        var top = 0
+        while top < h, !rowOpaque(top) { top += 1 }
+        var bottom = h - 1
+        while bottom > top, !rowOpaque(bottom) { bottom -= 1 }
+        guard bottom >= top else { return 0 }
+        return bottom - top + 1
     }
 
     init(definition: CharacterDefinition) {
@@ -75,6 +108,7 @@ final class CharacterSpriteCatalog {
         // so visual feet land where everyone else's do. Workbench
         // characters are bottom-anchored, so this is 0 for them.
         restGap = Self.pixelBottomGap(of: restTexture)
+        restContentHeight = Self.pixelContentHeight(of: restTexture)
     }
 
     /// Every family this character ships with, from the manifest.

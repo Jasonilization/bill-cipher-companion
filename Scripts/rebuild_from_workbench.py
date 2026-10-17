@@ -370,9 +370,12 @@ def rebuild_knight_verbatim():
     are already transparent). Any "improvement" here destroys the
     author's frame alignment (the historical walk/slash misalignment bug).
 
-    `_ effects` and `_ unnamed` are non-character content — skipped.
-    displayScale stays 1.0: the art is authored at native desktop
-    resolution (body ~128px tall ≈ the UT cast at their 4.0 cap).
+    `_ effects/` holds the labeled OVERLAY effect sequences (slash arcs,
+    dash trails, charge particles) — extracted as `fx-<name>` families on
+    their own per-effect canvases. The rig composites the matching one on
+    top of the body animation when it plays ("the effects go on top of
+    whichever animation they correspond to").
+    `_ unnamed/` is 96 identical 162-byte placeholder PNGs — skipped.
     """
     import zipfile
     zip_path = SHEETS / (
@@ -384,6 +387,10 @@ def rebuild_knight_verbatim():
     out_dir.mkdir(parents=True, exist_ok=True)
     for old in out_dir.glob("knight_*.png"):
         old.unlink()
+
+    def natkey(p):
+        return [int(t) if t.isdigit() else t
+                for t in re.split(r"(\d+)", p.name)]
 
     import tempfile
     with tempfile.TemporaryDirectory() as tmp:
@@ -400,9 +407,6 @@ def rebuild_knight_verbatim():
         fam_counts = {}
         canvas = None
         for folder in folders:
-            def natkey(p):
-                return [int(t) if t.isdigit() else t
-                        for t in re.split(r"(\d+)", p.name)]
             frames = sorted(folder.glob("*.png"), key=natkey)
             if not frames:
                 continue
@@ -417,6 +421,24 @@ def rebuild_knight_verbatim():
             fam_counts[folder.name] = len(frames)
         if canvas is None:
             sys.exit("FATAL: knight zip contained no animation folders")
+
+        # Labeled overlay effects: `_ effects/<name>/` → `fx-<name>`
+        # families, frames VERBATIM on their own per-effect canvases (the
+        # rig's fx node composites them over the matching animation).
+        effects_dir = base / "_ effects"
+        fx_count = 0
+        if effects_dir.is_dir():
+            for folder in sorted(d for d in effects_dir.iterdir() if d.is_dir()):
+                frames = sorted(folder.glob("*.png"), key=natkey)
+                if not frames:
+                    continue
+                for i, f in enumerate(frames, 1):
+                    shutil.copy(str(f), out_dir / f"knight_fx-{folder.name}_{i:02d}.png")
+                fam_counts[f"fx-{folder.name}"] = len(frames)
+                fx_count += len(frames)
+        if fx_count:
+            print(f"  knight: {fx_count} overlay effect frames "
+                  f"across {sum(1 for k in fam_counts if k.startswith('fx-'))} fx families")
     return {
         "canvas": [int(canvas[0]), int(canvas[1])],
         "idle_h": int(canvas[1]),  # uniform canvas: scale = 185/186 ≈ 1.0

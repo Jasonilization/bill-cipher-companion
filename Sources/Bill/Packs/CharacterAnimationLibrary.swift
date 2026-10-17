@@ -77,8 +77,57 @@ final class CharacterAnimationLibrary {
             guard !["idle", "idle_still", "down", "left", "right", "up"].contains(fam) else { return false }
             // Death/impairment poses are never idle theatre — the Knight
             // keeling over dead at random reads as a crash, not a show.
-            return !fam.contains("death") && fam != "stun" && fam != "spike"
+            guard !fam.contains("death"), fam != "stun", fam != "spike" else { return false }
+            // Overlay effects are not standalone performances — they play
+            // composited on top of their body animation only.
+            return !fam.hasPrefix("fx-")
         }
+    }
+
+    /// Body family → its labeled overlay effect (the zip's `_ effects/`
+    /// folders). Strict name correspondence only — no invented pairings.
+    private static let overlayFamilies: [String: String] = [
+        "nail_slash": "fx-slashes_effect",
+        "shadow_dash": "fx-shadow_dash_trail",
+        "dash_v2": "fx-dash_effect",
+        "cyclone_slash": "fx-cyclone_slash_effect",
+        "up_slash": "fx-up_slash_effect",
+        "down_slash_v2": "fx-down_slash_effect",
+        "charge_slash": "fx-charge_slash_effect",
+        "superdash": "fx-superdash_effect",
+        "focus_v2": "fx-nail_charge_effect",
+    ]
+
+    /// The effect clip to composite over the body animation for `state` —
+    /// resolved through the same family the body clip will play, so a
+    /// Settings reassignment that changes the body family automatically
+    /// carries its effect along.
+    func overlayClip(for state: BillState) -> AnimationClip? {
+        guard let bodyFamily = resolvedFamily(for: state),
+              let effectName = Self.overlayFamilies[bodyFamily],
+              let mapped = resolveFamily(effectName),
+              mapped == effectName,
+              !catalog.frames(effectName).isEmpty
+        else { return nil }
+        return AnimationClip(textures: catalog.frames(effectName), frameDuration: 0.06, loop: .once)
+    }
+
+    /// The family a state resolves to (name only) — the same ladder the
+    /// clip builder uses, minus the custom-assignment shortcut so the
+    /// overlay always follows the character's OWN body family mapping.
+    private func resolvedFamily(for state: BillState) -> String? {
+        let id = catalog.definition.id
+        if let special = Self.specialsByCharacter[id]?[state],
+           !catalog.frames(special).isEmpty {
+            return special
+        }
+        if let extra = extraFamily(for: state) {
+            return extra
+        }
+        if let resolved = resolveFamily(family(for: state)) {
+            return resolved
+        }
+        return nil
     }
 
     init(catalog: CharacterSpriteCatalog) {
