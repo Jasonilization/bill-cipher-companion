@@ -275,9 +275,10 @@ for (character, pack) in anchorCheckList {
         continue
     }
     // Workbench characters are bottom-anchored by OUR pipeline (must be 0);
-    // the HK zip's frames are aligned BY THE AUTHOR with small intentional
-    // gaps (2-12px) — anything larger means a misaligned rebuild.
-    let maxGap: Int = pack == "hollowknight" ? 12 : 0
+    // HK sheets are aligned BY THE AUTHOR (game pivots, gaps up to ~55px on
+    // uniform canvases) — the window geometry compensates rest gaps at
+    // runtime (CharacterSpriteCatalog.restGap), so large gaps are legal.
+    let maxGap: Int = pack == "hollowknight" ? 60 : 0
     check(analysis.bottomPadding <= maxGap,
           "\(character)/\(family): content floats \(analysis.bottomPadding)px above the canvas bottom (allowed ≤ \(maxGap))")
     check(analysis.cornersTransparent,

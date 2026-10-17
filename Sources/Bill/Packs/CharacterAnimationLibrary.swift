@@ -274,10 +274,15 @@ final class CharacterAnimationLibrary {
             .gaming: "sit_map_write", .coding: "sit_map_look",
             .channeling: "cast", .happy: "look_up",
         ],
+        // Hornet's families are the VERBATIM named-frame animations.
         "hornet": [
-            .powerSurge: "throw", .zipAround: "jump", .rampaging: "throw",
-            .landingHard: "land", .landingSoft: "land", .launching: "jump",
+            .powerSurge: "throw_side", .zipAround: "jump", .rampaging: "throw_side",
+            .landingHard: "hard_land", .landingSoft: "hard_land", .launching: "jump",
             .rising: "jump", .falling: "jump",
+        ],
+        "weaver": [
+            .walking: "crawl", .running: "crawl", .zipAround: "crawl",
+            .falling: "crawl", .edgePeek: "idle_to_crawl",
         ],
         "undyne": [
             .powerSurge: "attack", .zodiacVision: "attack", .rampaging: "attack",

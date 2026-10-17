@@ -264,6 +264,100 @@ def rebuild_workbench_character(char, labels, sheets_cache):
     }
 
 
+def rebuild_hk_named_frames(char_id, zip_glob, inner_path, out_prefix):
+    """HK characters shipped as '<Char> - <anim><NN>.png' inside the Google
+    Drive Unity dumps: the frames are ALREADY MADE and their animation ids
+    are IN THE FILENAMES — used VERBATIM (uniform canvas preserved, family
+    names = the ids, '#' atlas-reference duplicates of a frame number are
+    hash-deduped; the largest-content copy wins if variants differ).
+
+    zip_glob: glob under ~/Downloads (e.g. 'Bosses-*.zip').
+    inner_path: path prefix inside the zip (e.g. 'Bosses/Hornet/').
+    """
+    import zipfile
+    candidates = sorted(pathlib.Path.home().joinpath("Downloads").glob(zip_glob))
+    if not candidates:
+        sys.exit(f"FATAL: no zip matches {zip_glob}")
+    entries = None
+    used_zip = None
+    for z in candidates:
+        with zipfile.ZipFile(z) as zf:
+            names = [n for n in zf.namelist()
+                     if n.startswith(inner_path) and n.endswith(".png")
+                     and "atlas" not in n]
+            if names:
+                entries, used_zip = names, z
+                break
+    if not entries:
+        sys.exit(f"FATAL: no named frames under {inner_path} in {zip_glob}")
+
+    out_dir = PACKS / "hollowknight" / "Sprites"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    for old in out_dir.glob(f"{out_prefix}_*.png"):
+        old.unlink()
+
+    # Group by animation id + frame number; dedup '#' atlas references.
+    frame_re = re.compile(r"^.+? - (?P<anim>[^0-9#]+?)(?P<num>\d+)(?: #(?P<ref>\d+))?\.png$")
+    grouped = {}
+    for name in entries:
+        m = frame_re.match(name.rsplit("/", 1)[-1])
+        if not m:
+            continue
+        grouped.setdefault((m["anim"], int(m["num"])), []).append(name)
+
+    import io
+    # Pass 1: decode every variant, learn the majority canvas size —
+    # the '#' atlas references include content-cropped copies at DIFFERENT
+    # canvas sizes; mixing them breaks the shared-canvas convention
+    # (resize:false renders every frame at the first frame's node size).
+    with zipfile.ZipFile(used_zip) as zf:
+        variant_info = {}  # (anim, num) -> [(canvas, opaque, name)]
+        for (anim, num), names in sorted(grouped.items()):
+            for n in names:
+                arr = np.asarray(Image.open(io.BytesIO(zf.read(n))).convert("RGBA"))
+                op = int((arr[:, :, 3] > 30).sum())
+                variant_info.setdefault((anim, num), []).append(
+                    ((arr.shape[1], arr.shape[0]), op, n))
+        from collections import Counter
+        size_votes = Counter(
+            v[0] for variants in variant_info.values() for v in variants
+        )
+        if not size_votes:
+            sys.exit(f"FATAL: {char_id}: no frames decoded")
+        majority_canvas = size_votes.most_common(1)[0][0]
+        # Pass 2: per frame, keep only majority-canvas variants, most-opaque.
+        fam_files = {}
+        dropped = 0
+        for (anim, num), variants in sorted(variant_info.items()):
+            same_size = [v for v in variants if v[0] == majority_canvas]
+            if not same_size:
+                dropped += 1
+                continue
+            best = max(same_size, key=lambda v: v[1])
+            fam_files.setdefault(anim, []).append((num, best[2]))
+        if dropped:
+            print(f"    {char_id}: dropped {dropped} frame number(s) with no "
+                  f"variant at the majority canvas {majority_canvas}")
+        canvas = majority_canvas
+        # Write frames in frame-number order — verbatim bytes, no re-canvas.
+        fam_counts = {}
+        for anim, frames in sorted(fam_files.items()):
+            frames.sort(key=lambda x: x[0])
+            for i, (_, n) in enumerate(frames, 1):
+                (out_dir / f"{out_prefix}_{anim}_{i:02d}.png").write_bytes(zf.read(n))
+            fam_counts[anim] = len(frames)
+    if canvas is None:
+        sys.exit(f"FATAL: {char_id}: no frames decoded")
+    print(f"  {char_id} [hollowknight] NAMED-VERBATIM: {len(fam_counts)} families, "
+          f"{sum(fam_counts.values())} frames, canvas {canvas[0]}x{canvas[1]} "
+          f"(from {used_zip.name})")
+    return {
+        "canvas": [int(canvas[0]), int(canvas[1])],
+        "idle_h": int(canvas[1]),
+        "families": {k: int(v) for k, v in sorted(fam_counts.items())},
+    }
+
+
 def rebuild_knight_verbatim():
     """The Knight, VERBATIM from the user's zip — the authoritative audit.
 
@@ -447,13 +541,18 @@ def main():
                 print(f"  {cid} [{pack}]: {len(info['families'])} families, "
                       f"{total} frames, canvas {info['canvas']}")
 
-    # 2. The Knight VERBATIM from the zip; sansdt/hornet re-fit.
+    # 2. The Knight VERBATIM from the zip; Hornet + Weaver VERBATIM from
+    #    their named frames in the Drive dumps; sansdt re-fit.
     print("== recanvas existing ==")
     knight_info = rebuild_knight_verbatim()
     manifest["knight"] = knight_info
     print(f"  knight [hollowkit] VERBATIM: {len(knight_info['families'])} families, "
           f"{sum(knight_info['families'].values())} frames, canvas {knight_info['canvas']}")
-    for cid, pack in [("sansdt", "undertale"), ("hornet", "hollowknight")]:
+    hornet_info = rebuild_hk_named_frames("hornet", "Bosses-*.zip", "Bosses/Hornet/", "hornet")
+    manifest["hornet"] = hornet_info
+    weaver_info = rebuild_hk_named_frames("weaver", "NPCs-*.zip", "NPCs/Weavers/", "weaver")
+    manifest["weaver"] = weaver_info
+    for cid, pack in [("sansdt", "undertale")]:
         info = recanvas_existing(cid, pack)
         if info:
             manifest[cid] = info

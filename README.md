@@ -14,7 +14,7 @@
 
 <h3 align="center">Bill Cipher lives on your desktop — and he brought friends.</h3>
 
-<p align="center">Sixteen companions across five games. They study your apps, watch the sky, press buttons they shouldn't, roam the screen, and chat back through their own pixel speech bubbles.</p>
+<p align="center">Seventeen companions across five games. They study your apps, watch the sky, press buttons they shouldn't, roam the screen, and chat back through their own pixel speech bubbles.</p>
 
 <p align="center">
   <a href="https://github.com/Jasonilization/bill-cipher-companion/releases/latest"><b>Download the DMG</b></a> · <a href="https://jasonilization.github.io/bill-cipher-companion/">Homepage</a> · <a href="https://jasonilization.github.io/bill-cipher-companion/animations.html">Every animation, looping</a></p>
@@ -36,9 +36,9 @@ Native Swift end to end (AppKit + SpriteKit + WebKit): a hand-drawn **380-sprite
 
 | Gravity Falls | Undertale | Deltarune | OneShot | Hollow Knight |
 |---|---|---|---|---|
-| Bill Cipher | Sans, Sans (Battle), Papyrus, Toriel, Frisk, Flowey (stays planted), Temmie, Monster Kid, Annoying Dog | Kris, Ralsei, Susie — with light/dark world modes and a crossfade between them | Niko | The Knight, Hornet |
+| Bill Cipher | Sans, Sans (Battle), Papyrus, Toriel, Frisk, Flowey (stays planted), Temmie, Monster Kid, Annoying Dog | Kris, Ralsei, Susie — with light/dark world modes and a crossfade between them | Niko | The Knight, Hornet, Weaver |
 
-Switchable live from the menu bar or Settings. Companions ride along in the same window, wander on their own, banter, and bump.
+Seventeen companions now, switchable live from the menu bar or Settings. Companions ride along in the same window, wander on their own, banter, and bump.
 
 <p>
 <img src="docs/gifs/bill.gif" width="100">&nbsp;
@@ -57,7 +57,8 @@ Switchable live from the menu bar or Settings. Companions ride along in the same
 <img src="docs/gifs/ralsei.gif" width="160">&nbsp;
 <img src="docs/gifs/susie.gif" width="125">&nbsp;
 <img src="docs/gifs/knight.gif" width="200">&nbsp;
-<img src="docs/gifs/hornet.gif" width="140">
+<img src="docs/gifs/hornet.gif" width="140">&nbsp;
+<img src="docs/gifs/weaver.gif" width="90">
 </p>
 
 > ⚠️ **The sprite packs are a work in progress.** They're hand-labeled and actively being refined — backgrounds, scales, walk directions, more characters. Expect changes.

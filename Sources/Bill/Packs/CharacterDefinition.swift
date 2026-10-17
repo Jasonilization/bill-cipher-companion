@@ -181,9 +181,19 @@ enum CharacterRoster {
         dialogueResource: "dialogue_knight", companionID: nil,
         credit: "Hollow Knight sprites from the community atlas rips — spriters-resource.com"
     )
+    /// The Deepnest weaverling — built verbatim from its labeled named
+    /// frames (idle, crawl, crawl_turn, idle_to_crawl).
+    static let weaver = CharacterDefinition(
+        id: "weaver", displayName: "Weaver", packID: "hollowknight", packName: "Hollow Knight",
+        spritePrefix: "weaver", canvasSize: CGSize(width: 477, height: 417), displayScale: 0.44,
+        dialogueResource: nil, companionID: nil,
+        prefersGroundedRoaming: true,
+        isNPC: true,
+        credit: "Hollow Knight sprites from community rips (The Spriters Resource)"
+    )
     static let hornet = CharacterDefinition(
         id: "hornet", displayName: "Hornet", packID: "hollowknight", packName: "Hollow Knight",
-        spritePrefix: "hornet", canvasSize: CGSize(width: 244, height: 238), displayScale: 0.87,
+        spritePrefix: "hornet", canvasSize: CGSize(width: 381, height: 249), displayScale: 0.74,
         dialogueResource: "dialogue_hornet", companionID: nil,
         credit: "Hollow Knight sprites from the community atlas rips — spriters-resource.com"
     )
@@ -215,7 +225,7 @@ enum CharacterRoster {
         bill,
         sans, sansdt, papyrus, toriel, frisk, flowey, temmie, monsterkid, annoyingdog,
         niko,
-        knight, hornet,
+        knight, hornet, weaver,
         kris, ralsei, susie,
     ] + generatedEnemies
 

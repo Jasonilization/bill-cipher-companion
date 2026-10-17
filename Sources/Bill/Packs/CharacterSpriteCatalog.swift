@@ -17,6 +17,29 @@ final class CharacterSpriteCatalog {
     private var cache: [String: [SKTexture]] = [:]
     /// Set once at init; every state settles back onto it.
     let restTexture: SKTexture
+    /// The rest frame's transparent bottom margin in source pixels — see
+    /// the init's doc comment; the window geometry compensates it.
+    private(set) var restGap: Int = 0
+
+    /// Rows of transparent padding under the content at the texture's
+    /// bottom edge. SpriteKit textures have their origin at the bottom-left.
+    private static func pixelBottomGap(of texture: SKTexture) -> Int {
+        let cg = texture.cgImage()
+        guard let data = cg.dataProvider?.data, let bytes = CFDataGetBytePtr(data) else { return 0 }
+        guard cg.bitsPerPixel == 32 else { return 0 }
+        let bpr = cg.bytesPerRow, bpp = 4
+        let w = cg.width, h = cg.height
+        // Scan rows from the bottom for the first opaque pixel.
+        for y in 0..<h {
+            let row = y // bitmap row 0 IS the bottom row for CG images
+            var x = 0
+            while x < w {
+                if bytes[row * bpr + x * bpp + 3] > 30 { return y }
+                x += 1
+            }
+        }
+        return h
+    }
 
     init(definition: CharacterDefinition) {
         self.definition = definition
@@ -44,6 +67,14 @@ final class CharacterSpriteCatalog {
             restTexture = SKTexture(image: NSImage(size: NSSize(width: 1, height: 1)))
         }
         cache["idle"] = idle
+        // The rest frame's bottom gap, in source pixels: uniform-canvas
+        // sheets (Hollow Knight's named frames) position content per the
+        // game's pivot, NOT at the canvas bottom — a 27px gap here would
+        // read as the character floating that far off the floor. The
+        // window geometry subtracts `restGapPoints` from the body anchor
+        // so visual feet land where everyone else's do. Workbench
+        // characters are bottom-anchored, so this is 0 for them.
+        restGap = Self.pixelBottomGap(of: restTexture)
     }
 
     /// Every family this character ships with, from the manifest.

@@ -61,38 +61,17 @@
  },
  "hornet": {
   "canvas": [
-   244,
-   238
+   381,
+   249
   ],
   "families": {
-   "fight-attack": 6,
-   "fight-idle": 7,
-   "happy": 8,
-   "hardland": 6,
-   "harpoonside": 2,
+   "hard_land": 6,
+   "harpoon_side": 2,
    "idle": 2,
    "jump": 10,
-   "land": 6,
-   "oc-idle": 6,
-   "oc-talk": 3,
-   "oc-walk": 6,
-   "talking": 4,
-   "throw": 8,
-   "throwside": 8,
-   "walking": 6,
-   "x01": 2,
-   "x02": 6,
-   "x03": 6,
-   "x04": 6,
-   "x05": 7,
-   "x06": 9,
-   "x07": 2,
-   "x08": 3,
-   "x09": 2,
-   "x10": 3,
-   "x11": 3
+   "throw_side": 8
   },
-  "idle_h": 213
+  "idle_h": 249
  },
  "knight": {
   "canvas": [
@@ -548,5 +527,18 @@
    "up": 4
   },
   "idle_h": 52
+ },
+ "weaver": {
+  "canvas": [
+   477,
+   417
+  ],
+  "families": {
+   "crawl": 4,
+   "crawl_turn": 2,
+   "idle": 6,
+   "idle_to_crawl": 3
+  },
+  "idle_h": 417
  }
 }

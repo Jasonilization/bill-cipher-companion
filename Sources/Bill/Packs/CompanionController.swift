@@ -46,6 +46,14 @@ final class CompanionController {
         .idle, .talking, .happy, .annoyed, .surprised, .smug, .confused, .dazed,
     ]
 
+    /// The companion's rest-frame bottom gap, in unscaled points —
+    /// uniform-canvas sheets (HK named frames) need it subtracted from
+    /// their anchor so visual feet reach the floor (see
+    /// CharacterSpriteCatalog.restGap).
+    var restGapPoints: CGFloat {
+        CGFloat(catalog.restGap) * definition.displayScale
+    }
+
     init(definition: CharacterDefinition, barkSink: @escaping (String) -> Void) {
         self.definition = definition
         self.barkSink = barkSink

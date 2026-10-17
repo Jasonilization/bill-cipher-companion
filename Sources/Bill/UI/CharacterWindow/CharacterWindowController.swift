@@ -225,7 +225,8 @@ final class CharacterWindowController: NSObject {
     /// bark headroom stays universal (`barkWindowHeight`).
     private static func geometry(
         for definition: CharacterDefinition,
-        companions: [CharacterDefinition]
+        companions: [CharacterDefinition],
+        primaryRestGap: CGFloat = 0
     ) -> CharacterGeometry {
         guard !definition.isBill else { return .bill() }
         func displaySize(_ d: CharacterDefinition) -> (w: CGFloat, h: CGFloat) {
@@ -242,7 +243,11 @@ final class CharacterWindowController: NSObject {
         )
         let tallest = ([primary.h] + compSizes.map { $0.h }).max() ?? primary.h
         let windowH = max(170, tallest + 12)
-        let bodyAnchorY = 16 + tallest / 2
+        // Uniform-canvas sheets (Hollow Knight named frames) carry the
+        // game-pivot's transparent bottom margin on every frame; without
+        // subtracting it the character floats that far above the floor.
+        // Workbench characters are bottom-anchored, so their gap is 0.
+        let bodyAnchorY = 16 + tallest / 2 - primaryRestGap
 
         // Left→right: companions first, primary on the right end.
         var fractions: [CGFloat] = []
@@ -512,6 +517,7 @@ final class CharacterWindowController: NSObject {
             companion.rig.root.position = CGPoint(
                 x: newSize.width * fraction,
                 y: geometry.bodyAnchorY * scale * 0.99
+                    - companion.restGapPoints * scale
             )
             companion.rig.root.setScale(scale)
         }
@@ -526,7 +532,11 @@ final class CharacterWindowController: NSObject {
     func applyCharacter(_ definition: CharacterDefinition) {
         characterEngine.adopt(definition)
         let companions = resolveCompanions(for: definition)
-        geometry = Self.geometry(for: definition, companions: companions)
+        let primaryGap = CGFloat(characterEngine.catalog?.restGap ?? 0)
+            * definition.displayScale
+        geometry = Self.geometry(
+            for: definition, companions: companions, primaryRestGap: primaryGap
+        )
 
         // Companion swap: tear the old rigs out of the scene, build the new
         // ones, let them settle.
