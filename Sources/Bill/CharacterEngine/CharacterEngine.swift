@@ -86,6 +86,7 @@ final class CharacterEngine {
             // Labeled effect overlays (slash arcs, dash trails) composite
             // over the matching body animation as it plays.
             stateMachine.overlayProvider = { library.overlayClip(for: $0) }
+            stateMachine.allowsBillFX = false
         }
     }
 
@@ -112,7 +113,9 @@ final class CharacterEngine {
             stateMachine.adopt(
                 clipProvider: activeClipProvider,
                 restTexture: BillSpriteCatalog.restTexture,
-                idleVariants: nil
+                idleVariants: nil,
+                overlayProvider: nil,
+                allowsBillFX: true
             )
         } else {
             let packCatalog = CharacterSpriteCatalog(definition: newCharacter)
@@ -125,9 +128,10 @@ final class CharacterEngine {
             stateMachine.adopt(
                 clipProvider: activeClipProvider,
                 restTexture: packCatalog.restTexture,
-                idleVariants: { library.idleVariant($0) }
+                idleVariants: { library.idleVariant($0) },
+                overlayProvider: { library.overlayClip(for: $0) },
+                allowsBillFX: false
             )
-            stateMachine.overlayProvider = { library.overlayClip(for: $0) }
         }
         // Defensive scale re-apply: every "the new sprite shows up small"
         // report traces back to some stale scale surviving the swap — the

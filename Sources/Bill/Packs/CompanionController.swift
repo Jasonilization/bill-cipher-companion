@@ -70,6 +70,7 @@ final class CompanionController {
             idleVariants: { library.idleVariant($0) }
         )
         stateMachine.overlayProvider = { library.overlayClip(for: $0) }
+        stateMachine.allowsBillFX = false
         rig.root.name = "companionRoot"
     }
 

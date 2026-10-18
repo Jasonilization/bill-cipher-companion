@@ -172,6 +172,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             self?.dialogueRefreshLogWindowController.show()
         }
         dialogueRefreshLogWindowController = DialogueRefreshLogWindowController(characterWindowController: characterWindowController)
+        runCharacterSelfTestIfRequested()
         enemySpawnController = EnemySpawnController(characterEngine: characterEngine, preferences: preferences)
         enemySpawnController?.attachEnemy = { [weak self] enemy in
             self?.characterWindowController.attach(enemy: enemy)
@@ -488,5 +489,61 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc func quit() {
         NSApp.terminate(nil)
+    }
+
+    /// BILL_SELFTEST=1 — deterministic cross-character contamination
+    /// verification: adopts the full switch matrix and checks every
+    /// per-character hook on the shared state machine. Prints PASS/FAIL
+    /// per check to stdout, then exits. This is the runtime proof that
+    /// no character ever inherits another's effects (the "Bill doing
+    /// Hollow Knight FX" leak class).
+    private func runCharacterSelfTestIfRequested() {
+        guard ProcessInfo.processInfo.environment["BILL_SELFTEST"] == "1" else { return }
+        var failures = 0
+        func check(_ name: String, _ ok: Bool) {
+            print("[selftest] \(ok ? "PASS" : "FAIL"): \(name)")
+            if !ok { failures += 1 }
+        }
+        guard let engine = characterEngine else {
+            print("[selftest] FAIL: engine missing")
+            exit(1)
+        }
+        let sm = engine.stateMachine
+
+        // Knight: his own overlays, no Bill particles.
+        engine.adopt(CharacterRoster.knight)
+        check("knight: overlayProvider set", sm.overlayProvider != nil)
+        check("knight: Bill FX off", sm.allowsBillFX == false)
+        let knightDash = sm.overlayProvider?(.dashTarget)
+        check("knight: dash overlay resolves (fx-dash_effect)",
+              (knightDash?.textures.isEmpty == false))
+        check("knight: spell state overlays nil (no spell VFX in zip)",
+              sm.overlayProvider?(.zodiacVision) == nil)
+
+        // Bill: the leak that shipped — provider must be GONE.
+        engine.adopt(CharacterRoster.bill)
+        check("bill: overlayProvider cleared (the leak fix)", sm.overlayProvider == nil)
+        check("bill: Bill FX on", sm.allowsBillFX == true)
+        check("bill: catalog cleared", engine.catalog == nil)
+        check("bill: fx node hidden after switch", engine.rig.fxNode.isHidden)
+
+        // Sans: own provider, no mapped overlays, no Bill particles.
+        engine.adopt(CharacterRoster.sans)
+        check("sans: overlayProvider set", sm.overlayProvider != nil)
+        check("sans: no mapped overlays (nil effect)", sm.overlayProvider?(.happy) == nil)
+        check("sans: Bill FX off", sm.allowsBillFX == false)
+
+        // Back to Bill once more (double-switch stability).
+        engine.adopt(CharacterRoster.bill)
+        check("bill (2nd): provider still nil", sm.overlayProvider == nil)
+        check("bill (2nd): Bill FX still on", sm.allowsBillFX == true)
+
+        // Restore the persisted character so the app continues normally
+        // if someone runs the selftest interactively.
+        engine.adopt(CharacterRoster.character(preferences.activeCharacterID))
+
+        print("[selftest] \(failures == 0 ? "ALL CHECKS PASSED" : "\(failures) FAILURE(S)")")
+        if failures > 0 { exit(1) }
+        exit(0)
     }
 }

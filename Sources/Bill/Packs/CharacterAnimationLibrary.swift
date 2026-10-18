@@ -321,9 +321,15 @@ final class CharacterAnimationLibrary {
         // wall_slide (falling used to render the WALK family — the
         // "falling very slowly looks wrong" report).
         "knight": [
-            .powerSurge: "nail_slash", .zodiacVision: "nail_slash", .summonRitual: "nail_slash",
-            .rampaging: "nail_slash", .zipAround: "shadow_dash", .conjuring: "cast",
-            .heatingUp: "quake", .sleeping: "sit", .charging: "focus_v2",
+            // The three SPELLS each own a state so they actually play:
+            // Vengeful Spirit, Howling Wraiths, Desolate Dive (the spell
+            // VFX themselves are not in the zip — only nail/dash/charge/
+            // geo effects were ripped; these are the full cast poses).
+            .powerSurge: "cast", .zodiacVision: "scream_cast_lvl_02",
+            .summonRitual: "quake", .heatingUp: "quake_cast_level_02_shadow",
+            .conjuring: "cast_v03", .channeling: "cast_level_02",
+            .rampaging: "nail_slash", .zipAround: "shadow_dash",
+            .sleeping: "sit", .charging: "focus_v2",
             .dazed: "stun", .thinking: "focus_v2", .caneFlourish: "focus_v2",
             .focused: "focus_v2", .dashTarget: "dash_v2",
             // Roaming physics → true folders.
@@ -332,7 +338,7 @@ final class CharacterAnimationLibrary {
             .ledgeGrabbing: "wall_slide", .hangingIdle: "wall_slide",
             .climbingUp: "wall_slide", .climbingDown: "wall_slide",
             .gaming: "sit_map_write", .coding: "sit_map_look",
-            .channeling: "cast", .happy: "look_up",
+            .happy: "look_up",
         ],
         // Hornet's families are the VERBATIM named-frame animations.
         "hornet": [

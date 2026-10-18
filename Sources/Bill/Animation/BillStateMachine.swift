@@ -107,11 +107,20 @@ final class BillStateMachine {
     func adopt(
         clipProvider: @escaping @MainActor (BillState) -> AnimationClip,
         restTexture: SKTexture,
-        idleVariants: ((AnimationClipLibrary.IdleVariant) -> AnimationClip?)? = nil
+        idleVariants: ((AnimationClipLibrary.IdleVariant) -> AnimationClip?)? = nil,
+        overlayProvider: ((BillState) -> AnimationClip?)? = nil,
+        allowsBillFX: Bool = true
     ) {
         self.clipProvider = clipProvider
         self.restTexture = restTexture
         self.idleVariantProvider = idleVariants
+        // EVERY character-specific hook is reassigned here — a leak in any
+        // one of them shows up as one character doing another's effects.
+        self.overlayProvider = overlayProvider
+        self.allowsBillFX = allowsBillFX
+        // A mid-play effect from the previous character must not keep
+        // running over the new one.
+        clearOverlay()
         holdWork?.cancel(); holdWork = nil
         pendingWork?.cancel()
         for (_, node) in rig.parts {
@@ -134,9 +143,14 @@ final class BillStateMachine {
     /// Overlay effects ("the effect animations go on top of whichever
     /// animation they correspond to"): given the state being played, an
     /// optional clip whose textures run on `rig.fxNode` simultaneously.
-    /// Pack characters set this from their animation library's
-    /// family→effect mapping; nil plays no overlay.
+    /// Set from each character's animation library via `adopt` — ALWAYS
+    /// reassigned there, so a provider can never leak across a character
+    /// switch (Bill inherited the Knight's effects when switching back).
     var overlayProvider: ((BillState) -> AnimationClip?)?
+    /// Bill's own particle FX (zzz, steam, confetti, sparkles) are Bill's —
+    /// pack characters use their labeled effect overlays instead. Set by
+    /// `adopt`; default true so the initial Bill build is unchanged.
+    var allowsBillFX = true
 
     func request(_ state: BillState, force: Bool = false) {
         if state == .idle {
@@ -476,7 +490,7 @@ final class BillStateMachine {
         // that can request a state.
         onClipStarted?(state)
         equipProp(AnimationClipLibrary.prop(for: state))
-        if areFXEnabled {
+        if areFXEnabled, allowsBillFX {
             applyFX(AnimationClipLibrary.fx(for: state))
         }
         let clip = clipProvider(state)
