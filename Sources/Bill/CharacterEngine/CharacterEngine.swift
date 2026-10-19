@@ -191,7 +191,21 @@ final class CharacterEngine {
     }
 
     /// Entry point for reactions: chat bridge, system monitor, debug menu.
+    /// The label law, enforced at the single funnel every state request
+    /// passes through: a pack character without art for a state never
+    /// plays it — no placeholder bob, no borrowed family. Bill keeps his
+    /// full table. Roaming locomotion is exempt (movement must work).
     func request(_ state: BillState, force: Bool = false) {
+        if !character.isBill, let library = ambientLibrary {
+            let locomotion = state == .walking || state == .running
+                || state == .falling || state == .rising
+                || state == .idle || state.isRoamingMotion
+            if !library.hasArt(for: state) && !locomotion {
+                // No label for this state: skip the animation entirely
+                // (the bark/dialogue layer still speaks on its own).
+                return
+            }
+        }
         stateMachine.request(state, force: force)
     }
 
@@ -328,11 +342,11 @@ final class CharacterEngine {
     /// that family (see `CharacterAnimationLibrary.showcaseFamily`).
     private func rollShowcase() -> Bool {
         guard let library = ambientLibrary else { return false }
-        // Only sheet-rich characters perform — on a five-family sheet the
-        // rotation reads as spamming the one weird frame (temmie's
-        // "feeling of being watched" on loop).
-        guard library.allFamilies.count >= 10 else { return false }
-        guard Double.random(in: 0..<1) < 1.0 / 6.0 else { return false }
+        // Small sheets perform too — at half frequency so everything
+        // labeled gets seen without spamming (toriel's chair, temmie's
+        // hOIVS, frisk's rain); rich sheets at the usual one-in-six.
+        let chance = library.allFamilies.count >= 10 ? 1.0 / 6.0 : 1.0 / 12.0
+        guard Double.random(in: 0..<1) < chance else { return false }
         var candidates = library.showcaseCandidates
         guard !candidates.isEmpty else { return false }
         // Fresh first; once everything has been seen, start a new act.
@@ -363,8 +377,12 @@ final class CharacterEngine {
     }
 
     private func playIdle(_ states: [BillState]) {
-        let candidates = states.filter { $0 != lastIdleState && isAmbientSafe($0) }
-        guard let state = candidates.randomElement() ?? states.randomElement() else { return }
+        // The label law: only states this character actually has.
+        let owned = states.filter { state in
+            character.isBill || ambientLibrary?.hasArt(for: state) == true
+        }
+        let candidates = owned.filter { $0 != lastIdleState && isAmbientSafe($0) }
+        guard let state = candidates.randomElement() ?? owned.randomElement() else { return }
         lastIdleState = state
         stateMachine.request(state, force: true)
         holdBeat(for: state)
@@ -467,7 +485,11 @@ final class CharacterEngine {
         // `coverage.pick` rather than `randomElement`: it will not hand back
         // whatever played last, and it prefers eggs that have not been seen
         // today, so they cycle rather than clustering.
-        guard let event = coverage.pick(from: BillState.rareEasterEggs.filter(isAmbientSafe)) else { return false }
+        guard let event = coverage.pick(
+            from: BillState.rareEasterEggs.filter {
+                isAmbientSafe($0)
+                    && (character.isBill || ambientLibrary?.hasArt(for: $0) == true)
+            }) else { return false }
         lastRareEventDate = Date()
         stateMachine.request(event, force: true)
         holdBeat(for: event)

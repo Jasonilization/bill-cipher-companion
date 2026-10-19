@@ -542,6 +542,51 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // if someone runs the selftest interactively.
         engine.adopt(CharacterRoster.character(preferences.activeCharacterID))
 
+        // === THE LABEL LAW: a character has exactly their labeled
+        // animations, nothing borrowed, nothing placeholder. ===
+        func labelChecks(_ id: String) {
+            engine.adopt(CharacterRoster.character(id))
+            let lib = engine.animationLibrary
+            check("\(id): library present", lib != nil)
+            guard let lib else { return }
+            for state: BillState in [.surprised, .happy, .confused, .sleeping,
+                                     .dazed, .grooving, .celebrating, .powerSurge,
+                                     .annoyed, .thinking] {
+                if lib.hasArt(for: state) {
+                    // Has art — the resolved family must be REAL (frames on
+                    // disk), never an invented name.
+                    let clip = lib.clip(for: state)
+                    check("\(id): .\(state.rawValue) has real frames",
+                          clip.textures.isEmpty == false)
+                } else {
+                    let clip = lib.clip(for: state)
+                    check("\(id): .\(state.rawValue) correctly has NO art (no-op)",
+                          clip.textures.isEmpty)
+                }
+            }
+        }
+        labelChecks("niko")     // walks + spins only
+        labelChecks("sans")     // walks + shrug + sleep
+        labelChecks("toriel")   // walks + chair (showcase)
+        labelChecks("frisk")    // walks + rain/drop (showcase)
+        labelChecks("temmie")   // walks + talk + hOIVS
+        labelChecks("flowey")   // face-grow + talking
+        labelChecks("kris")     // battle set + dance + hurt
+        labelChecks("ralsei")   // battle set + laugh + heal + dances
+        labelChecks("susie")    // rude-buster + laugh + hit + dancing
+        labelChecks("papyrus")  // silly + admiration
+        labelChecks("monsterkid")
+        labelChecks("annoyingdog")
+
+        // Neko-specific spot checks (the user's exact example):
+        engine.adopt(CharacterRoster.niko)
+        check("niko: walking available (her whole vocabulary)",
+              engine.animationLibrary?.hasArt(for: .walking) == true)
+        check("niko: NO surprised (user's explicit example)",
+              engine.animationLibrary?.hasArt(for: .surprised) == false)
+
+        engine.adopt(CharacterRoster.character(preferences.activeCharacterID))
+
         print("[selftest] \(failures == 0 ? "ALL CHECKS PASSED" : "\(failures) FAILURE(S)")")
         if failures > 0 { exit(1) }
         exit(0)

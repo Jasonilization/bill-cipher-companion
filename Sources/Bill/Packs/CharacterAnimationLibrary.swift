@@ -128,17 +128,35 @@ final class CharacterAnimationLibrary {
     /// overlay always follows the character's OWN body family mapping.
     private func resolvedFamily(for state: BillState) -> String? {
         let id = catalog.definition.id
-        if let special = Self.specialsByCharacter[id]?[state],
-           !catalog.frames(special).isEmpty {
-            return special
+        // The explicit label table only — no ladder, no extras, no
+        // invented fallbacks. A state not in the character's table has
+        // no family, period.
+        guard let family = Self.statesByCharacter[id]?[state],
+              !catalog.frames(family).isEmpty
+        else { return nil }
+        return family
+    }
+
+    /// The states this character ACTUALLY has, from their labels: the
+    /// explicit table's states, plus walking/running (directional label
+    /// rows) and idle (the rest family). The engine gates every beat,
+    /// rare roll and reaction on this — a character without a label for
+    /// a state never plays it (no placeholder anything).
+    var availableStates: Set<BillState> {
+        var states: Set<BillState> = []
+        if let mapped = Self.statesByCharacter[catalog.definition.id] {
+            states.formUnion(mapped.keys)
         }
-        if let extra = extraFamily(for: state) {
-            return extra
-        }
-        if let resolved = resolveFamily(family(for: state)) {
-            return resolved
-        }
-        return nil
+        if hasDirectionalWalk { states.insert(.walking) }
+        states.insert(.idle)
+        return states
+    }
+
+    /// True when the character has real art for `state` — the engine's
+    /// gate before requesting anything.
+    func hasArt(for state: BillState) -> Bool {
+        if state == .showcasing { return true }
+        return availableStates.contains(state)
     }
 
     init(catalog: CharacterSpriteCatalog) {
@@ -260,7 +278,8 @@ final class CharacterAnimationLibrary {
             case "light": return wantsDark ? 3 : 0
             default: break
             }
-            let isDark = f.contains("dark") || f.hasPrefix("darkw")
+            // Ralsei's butler rows are her dark-world outfit.
+            let isDark = f.contains("dark") || f.hasPrefix("darkw") || f.contains("butler")
             let isLight = f.contains("light") && !isDark
             return wantsDark ? (isDark ? 1 : (isLight ? 2 : 1))
                              : (isLight ? 1 : (isDark ? 2 : 1))
@@ -314,12 +333,14 @@ final class CharacterAnimationLibrary {
     /// Specials that only some characters ship with — checked before the
     /// generic ladder so e.g. the Knight's attack actually plays its
     /// seventeen-frame nail arc.
-    private static let specialsByCharacter: [String: [BillState: String]] = [
-        // The Knight's families are the VERBATIM zip folder names — the
-        // mapping below is the only place they're interpreted. Physics
-        // states point at their true folders: fall, land, hard_land,
-        // wall_slide (falling used to render the WALK family — the
-        // "falling very slowly looks wrong" report).
+    /// THE explicit state map, hand-written from each character's actual
+    /// labels (workbench_export.json / verbatim zip folder names). A state
+    /// listed here plays its family; a state NOT listed simply does not
+    /// exist for that character — no borrowed families, no placeholder
+    /// stand-ins (Niko has walks and spins, so Niko never plays
+    /// "surprised"). This is the single place pack characters are mapped.
+    private static let statesByCharacter: [String: [BillState: String]] = [
+        // === Hollow Knight — VERBATIM zip folder / named-frame labels ===
         "knight": [
             // The three SPELLS each own a state so they actually play:
             // Vengeful Spirit, Howling Wraiths, Desolate Dive (the spell
@@ -332,7 +353,6 @@ final class CharacterAnimationLibrary {
             .sleeping: "sit", .charging: "focus_v2",
             .dazed: "stun", .thinking: "focus_v2", .caneFlourish: "focus_v2",
             .focused: "focus_v2", .dashTarget: "dash_v2",
-            // Roaming physics → true folders.
             .falling: "fall", .landingSoft: "land", .landingHard: "hard_land",
             .launching: "jump", .rising: "jump", .edgePeek: "look_down",
             .ledgeGrabbing: "wall_slide", .hangingIdle: "wall_slide",
@@ -340,30 +360,65 @@ final class CharacterAnimationLibrary {
             .gaming: "sit_map_write", .coding: "sit_map_look",
             .happy: "look_up",
         ],
-        // Hornet's families are the VERBATIM named-frame animations.
         "hornet": [
-            .powerSurge: "throw_side", .zipAround: "jump", .rampaging: "throw_side",
-            .landingHard: "hard_land", .landingSoft: "hard_land", .launching: "jump",
-            .rising: "jump", .falling: "jump",
+            .powerSurge: "throw_side", .zipAround: "jump",
+            .rampaging: "throw_side",
+            .landingHard: "hard_land", .landingSoft: "hard_land",
+            .launching: "jump", .rising: "jump", .falling: "jump",
         ],
         "weaver": [
             .walking: "crawl", .running: "crawl", .zipAround: "crawl",
             .falling: "crawl", .edgePeek: "idle_to_crawl",
         ],
-        "undyne": [
-            .powerSurge: "attack", .zodiacVision: "attack", .rampaging: "attack",
-            .zipAround: "attack", .conjuring: "attack",
+
+        // === Undertale — workbench labels, nothing else ===
+        "sans": [
+            .confused: "shrug",          // his shrug
+            .sleeping: "sleep",
         ],
+        "sansdt": [
+            .talking: "talk", .happy: "happy", .annoyed: "annoyed",
+            .surprised: "surprised",    // the label exists verbatim
+            .dazed: "dazed", .confused: "nervous", .focused: "serious",
+            .celebrating: "grin", .powerSurge: "eyeflash",  // THE eye flash
+        ],
+        "papyrus": [
+            .happy: "silly", .smug: "admiration",
+        ],
+        "toriel": [BillState: String](),               // walks + the chair (showcase)
+        "frisk": [BillState: String](),                // walks (+ drop-water/rain, showcase)
         "flowey": [
-            .powerSurge: "evil", .zodiacVision: "evil", .summonRitual: "evil",
-            .meltdown: "laugh", .celebrating: "laugh", .grooving: "laugh",
+            .powerSurge: "face-grow",  // the iconic evil grin
+            .talking: "talking",
         ],
-        "susie": [
-            .celebrating: "laugh", .meltdown: "laugh", .grooving: "laugh",
+        "temmie": [
+            .talking: "talk",
+        ],
+        "annoyingdog": [
+            .happy: "happy", .sleeping: "sleepy",
         ],
         "monsterkid": [
-            .powerSurge: "goner", .zodiacVision: "goner", .ghostPale: "goner",
+            .tumbling: "right-face-fall-stand-left-face-fall",  // the trip
         ],
+
+        // === Deltarune — workbench labels ===
+        "kris": [
+            .powerSurge: "battle-attack-intro", .dazed: "hurt",
+            .grooving: "dance",
+        ],
+        "ralsei": [
+            .powerSurge: "attack", .surprised: "battle-idle-shocked-face-left",
+            .happy: "laugh", .channeling: "heal", .grooving: "dance",
+            .celebrating: "dance-light", .falling: "falling",
+            .thinking: "fiddle-with-glasses",
+        ],
+        "susie": [
+            .powerSurge: "rude-buster", .happy: "laugh", .dazed: "hit",
+            .grooving: "dancing",
+        ],
+
+        // === OneShot ===
+        "niko": [BillState: String](),  // walks and spins, exactly as labeled — nothing else
     ]
 
     // MARK: - Full-sheet extras
@@ -450,37 +505,28 @@ final class CharacterAnimationLibrary {
             return clip(for: state, family: chosen)
         }
 
-        // Character specials first.
-        if let special = Self.specialsByCharacter[id]?[state],
-           !catalog.frames(special).isEmpty {
-            return clip(for: state, family: special)
+        // The explicit label table: a pack character's ONLY state→family
+        // source. No ladder, no extras auto-claiming unlabeled rows, no
+        // borrowed families — "absolute equal to the json file".
+        if let explicit = resolvedFamily(for: state) {
+            return clip(for: state, family: explicit)
         }
 
-        // Full-sheet extras: reaction/egg states each claim their own row
-        // before falling back to the shared ladder.
-        if let extra = extraFamily(for: state) {
-            return clip(for: state, family: extra)
+        // Idle settles onto the rest chain (each character's real rest
+        // label: sans "down", kris "battle-idle", knight "idle_still"…).
+        if state == .idle || state == .poked {
+            for candidate in ["idle", "idle_still", "battle-idle", "down",
+                              "forward-walk", "default", "defualt"] {
+                if !catalog.frames(candidate).isEmpty {
+                    return clip(for: state, family: candidate)
+                }
+            }
+            return AnimationClip(textures: [catalog.restTexture], frameDuration: 0.2, loop: .loop)
         }
 
-        // Try the standard family name, then workbench-label alternatives,
-        // then the generic fallback.
-        let standard = family(for: state)
-        if let resolved = resolveFamily(standard) {
-            return clip(for: state, family: resolved)
-        }
-        if let fallback = resolveFamily(fallbackFamily(for: state)) {
-            return clip(for: state, family: fallback)
-        }
-        // Last resort: try the literal family name (might be empty → transform-only)
-        return clip(for: state, family: standard)
-    }
-
-    private func fallbackFamily(for state: BillState) -> String {
-        switch state {
-        case .idle, .poked: return "idle"
-        case .walking, .running: return "idle"   // transform-only glide
-        default: return "idle"
-        }
+        // A state with no label for this character plays NOTHING — a
+        // no-op clip, not a placeholder bob, not someone else's family.
+        return AnimationClip(textures: [], frameDuration: 0.2, loop: .once)
     }
 
     /// The facing the user labeled for this family in Settings:
